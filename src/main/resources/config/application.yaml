@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: user-admin
+
+powsybl-ws:
+  database:
+    name: useradmin
+
+useradmin:
+  admins:
+#    - admin1
+#    - admin2
