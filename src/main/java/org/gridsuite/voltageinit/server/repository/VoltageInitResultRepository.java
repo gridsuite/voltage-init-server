@@ -23,6 +23,10 @@ public class VoltageInitResultRepository {
 
     private GlobalStatusRepository globalStatusRepository;
 
+    public VoltageInitResultRepository(GlobalStatusRepository globalStatusRepository) {
+        this.globalStatusRepository = globalStatusRepository;
+    }
+
     @Transactional
     public void delete(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);

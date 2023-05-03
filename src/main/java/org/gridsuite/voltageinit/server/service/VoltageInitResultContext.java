@@ -71,12 +71,12 @@ public class VoltageInitResultContext {
         String userId = (String) headers.get(HEADER_USER_ID);
         List<UUID> otherNetworkUuids = getHeaderList(headers, "otherNetworkUuids");
 
-        OpenReacParameters parameters;
-        try {
-            parameters = objectMapper.readValue(message.getPayload(), OpenReacParameters.class);
-        } catch (JsonProcessingException e) {
-            throw new UncheckedIOException(e);
-        }
+        OpenReacParameters parameters = new OpenReacParameters();
+//        try {
+//            parameters = objectMapper.readValue(message.getPayload(), OpenReacParameters.class);
+//        } catch (JsonProcessingException e) {
+//            throw new UncheckedIOException(e);
+//        }
         UUID reportUuid = headers.containsKey(REPORT_UUID_HEADER) ? UUID.fromString((String) headers.get(REPORT_UUID_HEADER)) : null;
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
         VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid,

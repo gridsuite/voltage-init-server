@@ -38,7 +38,7 @@ public class VoltageIniController {
         this.voltageInitService = voltageInitService;
     }
 
-    @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/networks/{networkUuid}/run", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
     @Operation(summary = "Run a voltage init on a network")
     @ApiResponses(value = {@ApiResponse(responseCode = "200",
             description = "The voltage init analysis has been performed")})
