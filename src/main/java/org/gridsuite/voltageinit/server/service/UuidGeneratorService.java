@@ -4,16 +4,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.voltageinit.server.repository;
+package org.gridsuite.voltageinit.server.service;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
-@Repository
-public interface VoltageInitRepository extends JpaRepository<VoltageInitEntity, UUID> {
+@Service
+public class UuidGeneratorService {
+
+    public UUID generate() {
+        return UUID.randomUUID();
+    }
 }

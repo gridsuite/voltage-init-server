@@ -16,9 +16,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SuppressWarnings("checkstyle:HideUtilityClassConstructor")
 @SpringBootApplication
 public class VoltageInitApplication {
-
-	public static void main(String[] args) {
-		Utils.initProperties();
-		SpringApplication.run(VoltageInitApplication.class, args);
-	}
+    public static void main(String[] args) {
+        Utils.initProperties();
+        SpringApplication.run(VoltageInitApplication.class, args);
+    }
 }
