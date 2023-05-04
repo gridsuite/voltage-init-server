@@ -191,7 +191,7 @@ public class VoltageInitWorkerService {
 
 //                resultRepository.insert(resultContext.getResultUuid(), result);
                 resultRepository.insertStatus(List.of(resultContext.getResultUuid()), result.getStatus().name());
-                LOGGER.info("Status : {}", result.getStatus()   );
+                LOGGER.info("Status : {}", result.getStatus());
                 LOGGER.info("Reactive slacks : {}", result.getReactiveSlacks());
                 LOGGER.info("Indicators : {}", result.getIndicators());
                 long finalNanoTime = System.nanoTime();
