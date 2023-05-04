@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
@@ -110,28 +111,12 @@ public class VoltageInitWorkerService {
         LOGGER.info("Run voltage init...");
         Network network = getNetwork(context.getNetworkUuid(), context.getOtherNetworkUuids(), context.getVariantId());
 
-        Reporter rootReporter = Reporter.NO_OP;
-        Reporter reporter = Reporter.NO_OP;
-        if (context.getReportUuid() != null) {
-            String rootReporterId = context.getReporterId() == null ? VOLTAGE_INIT_TYPE_REPORT : context.getReporterId() + "@" + VOLTAGE_INIT_TYPE_REPORT;
-            rootReporter = new ReporterModel(rootReporterId, rootReporterId);
-            reporter = rootReporter.createSubReporter(VOLTAGE_INIT_TYPE_REPORT, VOLTAGE_INIT_TYPE_REPORT + " (${providerToUse})", "providerToUse", new OpenReacTool().getCommand().getName()/*TODO fix*/);
-        }
+        CompletableFuture<OpenReacResult> future = runVoltageInitAsync(context, network, resultUuid);
 
-        CompletableFuture<OpenReacResult> future = runVoltageInitAsync(context, network, reporter, resultUuid);
-
-        OpenReacResult result = future == null ? null : future.get();
-
-        if (context.getReportUuid() != null) {
-            reportService.sendReport(context.getReportUuid(), rootReporter);
-        }
-        return result;
+        return future == null ? null : future.get();
     }
 
-    private CompletableFuture<OpenReacResult> runVoltageInitAsync(VoltageInitRunContext context,
-                                                                                       Network network,
-                                                                                       Reporter reporter,
-                                                                                       UUID resultUuid) {
+    public CompletableFuture<OpenReacResult> runVoltageInitAsync(VoltageInitRunContext context, Network network, UUID resultUuid) {
         lockRunAndCancelVoltageInit.lock();
         try {
             if (resultUuid != null && cancelComputationRequests.get(resultUuid) != null) {

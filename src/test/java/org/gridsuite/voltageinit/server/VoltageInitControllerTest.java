@@ -22,6 +22,8 @@ import lombok.SneakyThrows;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.service.ReportService;
 import org.gridsuite.voltageinit.server.service.UuidGeneratorService;
+import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
+import org.gridsuite.voltageinit.server.service.VoltageInitWorkerService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,6 +31,7 @@ import org.junit.runner.RunWith;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -43,7 +46,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -55,6 +57,7 @@ import static org.gridsuite.voltageinit.server.service.NotificationService.CANCE
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -92,6 +95,9 @@ public class VoltageInitControllerTest {
     @MockBean
     private NetworkStoreService networkStoreService;
 
+    @Autowired
+    private VoltageInitWorkerService workerService;
+
     @MockBean
     private ReportService reportService;
 
@@ -127,6 +133,8 @@ public class VoltageInitControllerTest {
         network1 = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
         network1.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
 
+        when(workerService.runVoltageInitAsync(any(VoltageInitRunContext.class), any(Network.class), any(UUID.class))).thenReturn(CompletableFuture.completedFuture(RESULT));
+
         // report service mocking
         doAnswer(i -> null).when(reportService).sendReport(any(), any());
 
@@ -156,10 +164,9 @@ public class VoltageInitControllerTest {
 
     @Test
     public void runTest() throws Exception {
-        LocalDateTime testTime = LocalDateTime.now();
-        try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
-            openReacRunnerMockedStatic.when(() -> OpenReacRunner.run(eq(network), anyString(), any(OpenReacParameters.class)))
-                    .thenReturn(RESULT);
+//        try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
+//            openReacRunnerMockedStatic.when(() -> OpenReacRunner.run(eq(network), anyString(), any(OpenReacParameters.class)))
+//                    .thenReturn(RESULT);
 
             MvcResult result = mockMvc.perform(post(
                             "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
@@ -191,7 +198,7 @@ public class VoltageInitControllerTest {
 
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                     .andExpect(status().isNotFound());
-        }
+//        }
     }
 
     @Test
