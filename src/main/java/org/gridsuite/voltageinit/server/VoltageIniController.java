@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
 import org.gridsuite.voltageinit.server.service.VoltageInitService;
 import org.springframework.http.MediaType;
@@ -38,7 +39,7 @@ public class VoltageIniController {
         this.voltageInitService = voltageInitService;
     }
 
-    @PostMapping(value = "/networks/{networkUuid}/run", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
     @Operation(summary = "Run a voltage init on a network")
     @ApiResponses(value = {@ApiResponse(responseCode = "200",
             description = "The voltage init analysis has been performed")})
@@ -48,6 +49,7 @@ public class VoltageIniController {
                                            @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver,
                                            @Parameter(description = "reportUuid") @RequestParam(name = "reportUuid", required = false) UUID reportUuid,
                                            @Parameter(description = "reporterId") @RequestParam(name = "reporterId", required = false) String reporterId,
+                                           @RequestBody(required = false) OpenReacParameters parameters,
                                            @RequestHeader(HEADER_USER_ID) String userId) {
         List<UUID> nonNullOtherNetworkUuids = getNonNullOtherNetworkUuids(otherNetworkUuids);
         UUID resultUuid = voltageInitService.runAndSaveResult(new VoltageInitRunContext(networkUuid, variantId, nonNullOtherNetworkUuids, receiver, new OpenReacParameters(), reportUuid, reporterId, userId));
@@ -93,14 +95,14 @@ public class VoltageIniController {
         return ResponseEntity.ok().body(result);
     }
 
-//    @PutMapping(value = "/results/invalidate-status", produces = APPLICATION_JSON_VALUE)
-//    @Operation(summary = "Invalidate the short circuit analysis status from the database")
-//    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The short circuit analysis status has been invalidated")})
-//    public ResponseEntity<Void> invalidateStatus(@Parameter(description = "Result uuids") @RequestParam(name = "resultUuid") List<UUID> resultUuids) {
-//        shortCircuitService.setStatus(resultUuids, ShortCircuitAnalysisStatus.NOT_DONE.name());
-//        return ResponseEntity.ok().build();
-//    }
-//
+    @PutMapping(value = "/results/invalidate-status", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Invalidate the voltage init status from the database")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage init status has been invalidated")})
+    public ResponseEntity<Void> invalidateStatus(@Parameter(description = "Result uuids") @RequestParam(name = "resultUuid") List<UUID> resultUuids) {
+        voltageInitService.setStatus(resultUuids, VoltageInitStatus.NOT_DONE.name());
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping(value = "/results/{resultUuid}/stop", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Stop a voltage init computation")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage init has been stopped")})
