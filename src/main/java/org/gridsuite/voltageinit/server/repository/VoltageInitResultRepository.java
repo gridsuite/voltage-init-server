@@ -54,4 +54,8 @@ public class VoltageInitResultRepository {
             return null;
         }
     }
+
+    public void deleteAll() {
+        globalStatusRepository.deleteAll();
+    }
 }

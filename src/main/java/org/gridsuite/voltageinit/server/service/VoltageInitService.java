@@ -9,8 +9,6 @@ package org.gridsuite.voltageinit.server.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.repository.VoltageInitResultRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +21,6 @@ import java.util.UUID;
  */
 @Service
 public class VoltageInitService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(VoltageInitService.class);
-
     @Autowired
     NotificationService notificationService;
 
@@ -56,7 +52,7 @@ public class VoltageInitService {
     }
 
     public void deleteResults() {
-//        resultRepository.deleteAll();
+        resultRepository.deleteAll();
     }
 
     public String getStatus(UUID resultUuid) {

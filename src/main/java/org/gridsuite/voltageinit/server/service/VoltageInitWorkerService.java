@@ -6,7 +6,6 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.computation.CompletableFutureTask;
@@ -46,15 +45,9 @@ public class VoltageInitWorkerService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VoltageInitWorkerService.class);
 
-    private static final String VOLTAGE_INIT_TYPE_REPORT = "VoltageInit";
-
     private NetworkStoreService networkStoreService;
 
-    private ReportService reportService;
-
     private VoltageInitResultRepository resultRepository;
-
-    private ObjectMapper objectMapper;
 
     private Map<UUID, CompletableFuture<OpenReacResult>> futures = new ConcurrentHashMap<>();
 
@@ -69,12 +62,9 @@ public class VoltageInitWorkerService {
     @Autowired
     NotificationService notificationService;
 
-    public VoltageInitWorkerService(NetworkStoreService networkStoreService, ReportService reportService,
-                                    VoltageInitResultRepository resultRepository, ObjectMapper objectMapper) {
+    public VoltageInitWorkerService(NetworkStoreService networkStoreService, VoltageInitResultRepository resultRepository) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
-        this.reportService = Objects.requireNonNull(reportService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
-        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     private Network getNetwork(UUID networkUuid, String variantId) {
@@ -158,7 +148,7 @@ public class VoltageInitWorkerService {
     @Bean
     public Consumer<Message<String>> consumeRun() {
         return message -> {
-            VoltageInitResultContext resultContext = VoltageInitResultContext.fromMessage(message, objectMapper);
+            VoltageInitResultContext resultContext = VoltageInitResultContext.fromMessage(message);
             try {
                 runRequests.add(resultContext.getResultUuid());
                 AtomicReference<Long> startTime = new AtomicReference<>();
@@ -168,7 +158,6 @@ public class VoltageInitWorkerService {
                 long nanoTime = System.nanoTime();
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
-//                resultRepository.insert(resultContext.getResultUuid(), result);
                 resultRepository.insertStatus(List.of(resultContext.getResultUuid()), result.getStatus().name());
                 LOGGER.info("Status : {}", result.getStatus());
                 LOGGER.info("Reactive slacks : {}", result.getReactiveSlacks());
