@@ -9,6 +9,7 @@ package org.gridsuite.voltageinit.server.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.computation.CompletableFutureTask;
 import com.powsybl.iidm.mergingview.MergingView;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
@@ -62,6 +63,8 @@ public class VoltageInitWorkerService {
     private Set<UUID> runRequests = Sets.newConcurrentHashSet();
 
     private final Lock lockRunAndCancelVoltageInit = new ReentrantLock();
+
+    private final Executor threadPool = ForkJoinPool.commonPool();
 
     @Autowired
     NotificationService notificationService;
@@ -119,13 +122,8 @@ public class VoltageInitWorkerService {
                 return null;
             }
 
-            CompletableFuture<OpenReacResult> future = new CompletableFuture<>();
+            CompletableFuture<OpenReacResult> future = CompletableFutureTask.runAsync(() -> OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), context.getParameters()), this.threadPool);
 
-            Executors.newCachedThreadPool().submit(() -> {
-                OpenReacResult result = OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), context.getParameters());
-                future.complete(result);
-                return null;
-            });
             if (resultUuid != null) {
                 futures.put(resultUuid, future);
             }
