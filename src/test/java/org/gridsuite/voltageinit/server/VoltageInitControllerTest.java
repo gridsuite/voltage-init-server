@@ -19,7 +19,6 @@ import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
 import lombok.SneakyThrows;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
-import org.gridsuite.voltageinit.server.service.ReportService;
 import org.gridsuite.voltageinit.server.service.UuidGeneratorService;
 import org.junit.After;
 import org.junit.Before;
@@ -71,7 +70,6 @@ public class VoltageInitControllerTest {
 
     private static final UUID NETWORK_UUID = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
     private static final UUID RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5d");
-    private static final UUID OTHER_RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5a");
     private static final UUID NETWORK_FOR_MERGING_VIEW_UUID = UUID.fromString("11111111-7977-4592-ba19-88027e4254e4");
     private static final UUID OTHER_NETWORK_FOR_MERGING_VIEW_UUID = UUID.fromString("22222222-7977-4592-ba19-88027e4254e4");
     private static final Map<String, String> INDICATORS = Map.of("defaultPmax", "1000.000000", "defaultQmax", "300.000000", "minimalQPrange", "1.000000");
@@ -91,9 +89,6 @@ public class VoltageInitControllerTest {
 
     @MockBean
     private NetworkStoreService networkStoreService;
-
-    @MockBean
-    private ReportService reportService;
 
     @MockBean
     private UuidGeneratorService uuidGeneratorService;
@@ -127,9 +122,6 @@ public class VoltageInitControllerTest {
 
         network1 = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
         network1.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
-
-        // report service mocking
-        doAnswer(i -> null).when(reportService).sendReport(any(), any());
 
         // UUID service mocking to always generate the same result UUID
         given(uuidGeneratorService.generate()).willReturn(RESULT_UUID);
