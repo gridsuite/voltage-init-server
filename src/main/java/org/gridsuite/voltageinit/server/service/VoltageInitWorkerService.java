@@ -162,8 +162,6 @@ public class VoltageInitWorkerService {
                 LOGGER.info("Status : {}", result.getStatus());
                 LOGGER.info("Reactive slacks : {}", result.getReactiveSlacks());
                 LOGGER.info("Indicators : {}", result.getIndicators());
-                long finalNanoTime = System.nanoTime();
-                LOGGER.info("Stored in {}s", TimeUnit.NANOSECONDS.toSeconds(finalNanoTime - startTime.getAndSet(finalNanoTime)));
 
                 if (result != null) {  // result available
                     notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver());
