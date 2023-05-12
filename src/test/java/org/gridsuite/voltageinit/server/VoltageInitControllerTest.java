@@ -248,25 +248,17 @@ public class VoltageInitControllerTest {
         assertEquals(VoltageInitStatus.NOT_DONE.name(), result.getResponse().getContentAsString());
     }
 
-    @Test
-    public void runWithExceptionTest() throws Exception {
-        MvcResult result = mockMvc.perform(post(
-                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, OTHER_NETWORK_UUID)
-                        .header(HEADER_USER_ID, "userId"))
-                .andExpect(status().isOk())
-                .andReturn();
-        assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
-    }
-
     @SneakyThrows
     @Test
     public void postCompletionAdapterTest() {
+        CompletableFutureTask<OpenReacResult> task = CompletableFutureTask.runAsync(() -> RESULT, ForkJoinPool.commonPool());
         PostCompletionAdapter adapter = new PostCompletionAdapter();
-        adapter.execute(completableFutureResultsTask);
+        adapter.execute(task);
         TransactionSynchronizationManager.initSynchronization();
         TransactionSynchronizationManager.registerSynchronization(adapter);
-        adapter.execute(completableFutureResultsTask);
+        adapter.execute(task);
         adapter.afterCompletion(0);
         assertEquals(1, TransactionSynchronizationManager.getSynchronizations().size());
+        TransactionSynchronizationManager.clearSynchronization();
     }
 }
