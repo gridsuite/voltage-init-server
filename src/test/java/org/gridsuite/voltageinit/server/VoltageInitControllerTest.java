@@ -248,6 +248,16 @@ public class VoltageInitControllerTest {
         assertEquals(VoltageInitStatus.NOT_DONE.name(), result.getResponse().getContentAsString());
     }
 
+    @Test
+    public void runWithExceptionTest() throws Exception {
+        MvcResult result = mockMvc.perform(post(
+                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, OTHER_NETWORK_UUID)
+                        .header(HEADER_USER_ID, "userId"))
+                .andExpect(status().isOk())
+                .andReturn();
+        assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
+    }
+
     @SneakyThrows
     @Test
     public void postCompletionAdapterTest() {
