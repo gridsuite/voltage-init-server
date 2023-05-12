@@ -21,6 +21,7 @@ import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
 import lombok.SneakyThrows;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.service.UuidGeneratorService;
+import org.gridsuite.voltageinit.server.util.annotations.PostCompletionAdapter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,6 +42,7 @@ import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.Map;
@@ -55,7 +57,6 @@ import static org.gridsuite.voltageinit.server.service.NotificationService.CANCE
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -229,7 +230,7 @@ public class VoltageInitControllerTest {
 
     @SneakyThrows
     @Test
-    public void testStatus() {
+    public void getStatusTest() {
         MvcResult result = mockMvc.perform(get(
                         "/" + VERSION + "/results/{resultUuid}/status", RESULT_UUID))
                 .andExpect(status().isOk())
@@ -245,5 +246,17 @@ public class VoltageInitControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
         assertEquals(VoltageInitStatus.NOT_DONE.name(), result.getResponse().getContentAsString());
+    }
+
+    @SneakyThrows
+    @Test
+    public void postCompletionAdapterTest() {
+        PostCompletionAdapter adapter = new PostCompletionAdapter();
+        adapter.execute(completableFutureResultsTask);
+        TransactionSynchronizationManager.initSynchronization();
+        TransactionSynchronizationManager.registerSynchronization(adapter);
+        adapter.execute(completableFutureResultsTask);
+        adapter.afterCompletion(0);
+        assertEquals(1, TransactionSynchronizationManager.getSynchronizations().size());
     }
 }
