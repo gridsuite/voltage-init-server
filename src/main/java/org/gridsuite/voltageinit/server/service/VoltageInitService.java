@@ -6,7 +6,6 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.repository.VoltageInitResultRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,13 +27,10 @@ public class VoltageInitService {
 
     private VoltageInitResultRepository resultRepository;
 
-    private ObjectMapper objectMapper;
-
-    public VoltageInitService(NotificationService notificationService, UuidGeneratorService uuidGeneratorService, VoltageInitResultRepository resultRepository, ObjectMapper objectMapper) {
+    public VoltageInitService(NotificationService notificationService, UuidGeneratorService uuidGeneratorService, VoltageInitResultRepository resultRepository) {
         this.notificationService = Objects.requireNonNull(notificationService);
         this.uuidGeneratorService = Objects.requireNonNull(uuidGeneratorService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
-        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     public UUID runAndSaveResult(VoltageInitRunContext runContext) {
@@ -43,7 +39,7 @@ public class VoltageInitService {
 
         // update status to running status
         setStatus(List.of(resultUuid), VoltageInitStatus.RUNNING.name());
-        notificationService.sendRunMessage(new VoltageInitResultContext(resultUuid, runContext).toMessage(objectMapper));
+        notificationService.sendRunMessage(new VoltageInitResultContext(resultUuid, runContext).toMessage());
         return resultUuid;
     }
 

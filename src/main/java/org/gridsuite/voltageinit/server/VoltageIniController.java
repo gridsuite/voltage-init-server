@@ -52,7 +52,7 @@ public class VoltageIniController {
                                            @RequestBody(required = false) OpenReacParameters parameters,
                                            @RequestHeader(HEADER_USER_ID) String userId) {
         List<UUID> nonNullOtherNetworkUuids = getNonNullOtherNetworkUuids(otherNetworkUuids);
-        UUID resultUuid = voltageInitService.runAndSaveResult(new VoltageInitRunContext(networkUuid, variantId, nonNullOtherNetworkUuids, receiver, new OpenReacParameters(), reportUuid, reporterId, userId));
+        UUID resultUuid = voltageInitService.runAndSaveResult(new VoltageInitRunContext(networkUuid, variantId, nonNullOtherNetworkUuids, receiver, reportUuid, reporterId, userId));
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultUuid);
     }
 
