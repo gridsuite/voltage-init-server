@@ -73,8 +73,6 @@ public class VoltageInitControllerTest {
     private static final UUID NETWORK_UUID = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
     private static final UUID OTHER_NETWORK_UUID = UUID.fromString("06824085-db85-4883-9458-8c5c9f1585d6");
     private static final UUID RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5d");
-
-    private static final UUID UNKNOWN_STATUS_UUID = UUID.fromString("0a22c4e4-630c-434e-9b29-980a3fea7391");
     private static final UUID NETWORK_FOR_MERGING_VIEW_UUID = UUID.fromString("11111111-7977-4592-ba19-88027e4254e4");
     private static final UUID OTHER_NETWORK_FOR_MERGING_VIEW_UUID = UUID.fromString("22222222-7977-4592-ba19-88027e4254e4");
     private static final Map<String, String> INDICATORS = Map.of("defaultPmax", "1000.000000", "defaultQmax", "300.000000", "minimalQPrange", "1.000000");
