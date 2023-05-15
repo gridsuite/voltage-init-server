@@ -32,10 +32,10 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RestController
 @RequestMapping(value = "/" + VoltageInitApi.API_VERSION)
 @Tag(name = "Voltage init server")
-public class VoltageIniController {
+public class VoltageInitController {
     private final VoltageInitService voltageInitService;
 
-    public VoltageIniController(VoltageInitService voltageInitService) {
+    public VoltageInitController(VoltageInitService voltageInitService) {
         this.voltageInitService = voltageInitService;
     }
 
