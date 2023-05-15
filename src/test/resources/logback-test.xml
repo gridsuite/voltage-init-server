@@ -39,6 +39,6 @@ java.io.IOException: Connexion ré-initialisée par le correspondant
     -->
     <logger name="org.springframework.test" level="warn"/>
     <logger name="org.springframework.boot.test" level="warn"/>
-    <logger name="org.gridsuite.shortcircuit.server" level="trace"/>
+    <logger name="org.gridsuite.voltageinit.server" level="trace"/>
 
 </configuration>

@@ -69,8 +69,8 @@ public class VoltageIniController {
     }
 
     @DeleteMapping(value = "/results", produces = APPLICATION_JSON_VALUE)
-    @Operation(summary = "Delete all short circuit analysis results from the database")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "All short circuit analysis results have been deleted")})
+    @Operation(summary = "Delete all voltage init results from the database")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "All voltage init results have been deleted")})
     public ResponseEntity<Void> deleteResults() {
         voltageInitService.deleteResults();
         return ResponseEntity.ok().build();

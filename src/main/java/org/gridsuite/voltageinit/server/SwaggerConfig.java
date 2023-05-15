@@ -21,8 +21,8 @@ public class SwaggerConfig {
     public OpenAPI openAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("User Admin API")
-                        .description("This is the documentation of the user admin REST API")
+                        .title("Voltage Init API")
+                        .description("This is the documentation of the voltage init REST API")
                         .version(VoltageInitApi.API_VERSION));
     }
 }

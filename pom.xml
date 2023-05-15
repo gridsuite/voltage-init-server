@@ -16,13 +16,13 @@
         <version>10</version>
     </parent>
 
-
+    <groupId>org.gridsuite</groupId>
     <artifactId>gridsuite-voltage-init-server</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
+    <packaging>jar</packaging>
     <name>Voltage init server</name>
     <description>Voltage init server</description>
-
     <url>http://www.gridsuite.org/</url>
 
     <licenses>
@@ -34,7 +34,7 @@
 
     <scm>
         <connection>scm:git:https://github.com/gridsuite/voltage-init-store.git</connection>
-        <developerConnection>scm:git:https://github.com/gridsuite/voltage-init-store.git</developerConnection>
+        <developerConnection>scm:git:https://github.com/gridsuite/voltage-init-server.git</developerConnection>
         <url>https://github.com/gridsuite/voltage-init-store</url>
     </scm>
 
