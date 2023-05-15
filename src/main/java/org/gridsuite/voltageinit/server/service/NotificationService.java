@@ -35,7 +35,7 @@ public class NotificationService {
     private static final Logger FAILED_MESSAGE_LOGGER = LoggerFactory.getLogger(FAILED_CATEGORY_BROKER_OUTPUT);
 
     public static final String CANCEL_MESSAGE = "Voltage init was canceled";
-    public static final String FAIL_MESSAGE = "Voltage init analysis has failed";
+    public static final String FAIL_MESSAGE = "Voltage init has failed";
 
     public static final String HEADER_RESULT_UUID = "resultUuid";
     public static final String HEADER_RECEIVER = "receiver";
