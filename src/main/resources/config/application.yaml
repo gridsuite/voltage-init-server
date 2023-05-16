@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: voltage-init-server
+
+  cloud:
+    function:
+      definition: consumeRun;consumeCancel
+    stream:
+      bindings:
+        consumeRun-in-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}voltageinit.run
+          group: voltageinitGroup
+          consumer:
+            concurrency: 2
+        publishRun-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}voltageinit.run
+        publishResult-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}voltageinit.result
+        consumeCancel-in-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}voltageinit.cancel
+        publishCancel-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}voltageinit.cancel
+        publishStopped-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}voltageinit.stopped
+        publishFailed-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}voltageinit.failed
+      source: publishRun;publishResult;publishCancel;publishStopped;publishFailed
+
+powsybl-ws:
+  database:
+    name: voltageinit
