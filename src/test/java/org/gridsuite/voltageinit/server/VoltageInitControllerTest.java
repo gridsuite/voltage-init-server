@@ -179,6 +179,13 @@ public class VoltageInitControllerTest {
                 .andExpect(status().isOk())
                 .andReturn();
         assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
+
+        result = mockMvc.perform(get(
+                        "/" + VERSION + "/results/{resultUuid}/status", RESULT_UUID))
+                .andExpect(status().isOk())
+                .andReturn();
+        // assert result is empty
+        assertEquals("", result.getResponse().getContentAsString());
     }
 
     @Test
