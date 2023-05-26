@@ -7,11 +7,18 @@
 package org.gridsuite.voltageinit.server.repository;
 
 import org.gridsuite.voltageinit.server.entities.GlobalStatusEntity;
+import org.gridsuite.voltageinit.server.entities.ReactiveSlackEmbeddable;
+import org.gridsuite.voltageinit.server.entities.VoltageInitResultEntity;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.powsybl.openreac.parameters.output.OpenReacResult;
+
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -22,15 +29,27 @@ import java.util.stream.Collectors;
 public class VoltageInitResultRepository {
 
     private GlobalStatusRepository globalStatusRepository;
+    private ResultRepository resultRepository;
 
-    public VoltageInitResultRepository(GlobalStatusRepository globalStatusRepository) {
+    public VoltageInitResultRepository(GlobalStatusRepository globalStatusRepository,
+                                       ResultRepository resultRepository) {
         this.globalStatusRepository = globalStatusRepository;
+        this.resultRepository = resultRepository;
+    }
+
+    private static VoltageInitResultEntity toVoltageInitResultEntity(UUID resultUuid, OpenReacResult result) {
+        Map<String, String> indicators = result.getIndicators();
+        List<ReactiveSlackEmbeddable> reactiveSlacks = result.getReactiveSlacks().stream().map(rs ->
+                new ReactiveSlackEmbeddable(rs.getBusId(), rs.getSlack()))
+            .collect(Collectors.toList());
+        return new VoltageInitResultEntity(resultUuid, ZonedDateTime.now(), indicators, reactiveSlacks);
     }
 
     @Transactional
     public void delete(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
         globalStatusRepository.deleteByResultUuid(resultUuid);
+        resultRepository.deleteByResultUuid(resultUuid);
     }
 
     @Transactional
@@ -57,5 +76,20 @@ public class VoltageInitResultRepository {
 
     public void deleteAll() {
         globalStatusRepository.deleteAll();
+        resultRepository.deleteAll();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<VoltageInitResultEntity> find(UUID resultUuid) {
+        Objects.requireNonNull(resultUuid);
+        return resultRepository.findByResultUuid(resultUuid);
+    }
+
+    @Transactional
+    public void insert(UUID resultUuid, OpenReacResult result) {
+        Objects.requireNonNull(resultUuid);
+        if (result != null) {
+            resultRepository.save(toVoltageInitResultEntity(resultUuid, result));
+        }
     }
 }

@@ -6,14 +6,19 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
+import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
+import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
+import org.gridsuite.voltageinit.server.entities.VoltageInitResultEntity;
 import org.gridsuite.voltageinit.server.repository.VoltageInitResultRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -41,6 +46,18 @@ public class VoltageInitService {
         setStatus(List.of(resultUuid), VoltageInitStatus.RUNNING.name());
         notificationService.sendRunMessage(new VoltageInitResultContext(resultUuid, runContext).toMessage());
         return resultUuid;
+    }
+
+    public VoltageInitResult getResult(UUID resultUuid) {
+        Optional<VoltageInitResultEntity> result = resultRepository.find(resultUuid);
+        return result.map(r -> fromEntity(r)).orElse(null);
+    }
+
+    private static VoltageInitResult fromEntity(VoltageInitResultEntity resultEntity) {
+        List<ReactiveSlack> reactiveSlacks = resultEntity.getReactiveSlacks().stream()
+                .map(slack -> new ReactiveSlack(slack.getBusId(), slack.getSlack()))
+                .collect(Collectors.toList());
+        return new VoltageInitResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), resultEntity.getIndicators(), reactiveSlacks);
     }
 
     public void deleteResult(UUID resultUuid) {
