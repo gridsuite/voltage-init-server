@@ -19,6 +19,7 @@ import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
 import lombok.SneakyThrows;
+import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.service.UuidGeneratorService;
 import org.gridsuite.voltageinit.server.util.annotations.PostCompletionAdapter;
@@ -73,6 +74,7 @@ public class VoltageInitControllerTest {
     private static final UUID NETWORK_UUID = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
     private static final UUID OTHER_NETWORK_UUID = UUID.fromString("06824085-db85-4883-9458-8c5c9f1585d6");
     private static final UUID RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5d");
+    private static final UUID OTHER_RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5a");
     private static final UUID NETWORK_FOR_MERGING_VIEW_UUID = UUID.fromString("11111111-7977-4592-ba19-88027e4254e4");
     private static final UUID OTHER_NETWORK_FOR_MERGING_VIEW_UUID = UUID.fromString("22222222-7977-4592-ba19-88027e4254e4");
     private static final Map<String, String> INDICATORS = Map.of("defaultPmax", "1000.000000", "defaultQmax", "300.000000", "minimalQPrange", "1.000000");
@@ -168,6 +170,27 @@ public class VoltageInitControllerTest {
             Message<byte[]> resultMessage = output.receive(TIMEOUT, "voltageinit.result");
             assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
+
+            result = mockMvc.perform(get(
+                            "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andReturn();
+
+            VoltageInitResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), VoltageInitResult.class);
+                assertEquals(RESULT_UUID, resultDto.getResultUuid());
+                assertEquals(INDICATORS, resultDto.getIndicators());
+                assertEquals(1, resultDto.getReactiveSlacks().size());
+                assertEquals("bus1", resultDto.getReactiveSlacks().get(0).getBusId());
+                assertEquals(10.5, resultDto.getReactiveSlacks().get(0).getSlack(), 0.0001);
+            // should throw not found if result does not exist
+            mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
+                   .andExpect(status().isNotFound());
+            // test one result deletion
+            mockMvc.perform(delete("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+                    .andExpect(status().isOk());
+            mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+                    .andExpect(status().isNotFound());
         }
     }
 
