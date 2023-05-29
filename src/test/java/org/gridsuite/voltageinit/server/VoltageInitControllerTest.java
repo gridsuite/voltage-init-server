@@ -177,12 +177,12 @@ public class VoltageInitControllerTest {
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
 
-            VoltageInitResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), VoltageInitResult.class);
-                assertEquals(RESULT_UUID, resultDto.getResultUuid());
-                assertEquals(INDICATORS, resultDto.getIndicators());
-                assertEquals(1, resultDto.getReactiveSlacks().size());
-                assertEquals("bus1", resultDto.getReactiveSlacks().get(0).getBusId());
-                assertEquals(10.5, resultDto.getReactiveSlacks().get(0).getSlack(), 0.0001);
+            VoltageInitResult resultDto = mapper.readValue(result.getResponse().getContentAsString(),VoltageInitResult.class);
+            assertEquals(RESULT_UUID, resultDto.getResultUuid());
+            assertEquals(INDICATORS, resultDto.getIndicators());
+            assertEquals(1, resultDto.getReactiveSlacks().size());
+            assertEquals("bus1", resultDto.getReactiveSlacks().get(0).getBusId());
+            assertEquals(10.5, resultDto.getReactiveSlacks().get(0).getSlack(), 0.0001);
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
                    .andExpect(status().isNotFound());
