@@ -177,7 +177,7 @@ public class VoltageInitControllerTest {
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
 
-            VoltageInitResult resultDto = mapper.readValue(result.getResponse().getContentAsString(),VoltageInitResult.class);
+            VoltageInitResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), VoltageInitResult.class);
             assertEquals(RESULT_UUID, resultDto.getResultUuid());
             assertEquals(INDICATORS, resultDto.getIndicators());
             assertEquals(1, resultDto.getReactiveSlacks().size());
