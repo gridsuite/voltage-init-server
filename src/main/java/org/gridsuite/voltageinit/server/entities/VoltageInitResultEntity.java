@@ -16,7 +16,6 @@ import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
@@ -40,7 +39,7 @@ public class VoltageInitResultEntity {
     @Column
     private ZonedDateTime writeTimeStamp;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection
     @CollectionTable
     private Map<String, String> indicators;
 
