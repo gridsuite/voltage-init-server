@@ -12,6 +12,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
 import org.gridsuite.voltageinit.server.service.VoltageInitService;
@@ -58,6 +60,16 @@ public class VoltageInitController {
 
     private static List<UUID> getNonNullOtherNetworkUuids(List<UUID> otherNetworkUuids) {
         return otherNetworkUuids != null ? otherNetworkUuids : Collections.emptyList();
+    }
+
+    @GetMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get a voltage init result from the database")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage init result"),
+        @ApiResponse(responseCode = "404", description = "Voltage init result has not been found")})
+    public ResponseEntity<VoltageInitResult> getResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
+        VoltageInitResult result = voltageInitService.getResult(resultUuid);
+        return result != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(result)
+                : ResponseEntity.notFound().build();
     }
 
     @DeleteMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE)
