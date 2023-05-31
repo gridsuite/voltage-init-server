@@ -13,6 +13,7 @@ import org.gridsuite.voltageinit.server.entities.VoltageInitResultEntity;
 import org.gridsuite.voltageinit.server.repository.VoltageInitResultRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -48,6 +49,7 @@ public class VoltageInitService {
         return resultUuid;
     }
 
+    @Transactional(readOnly = true)
     public VoltageInitResult getResult(UUID resultUuid) {
         Optional<VoltageInitResultEntity> result = resultRepository.find(resultUuid);
         return result.map(r -> fromEntity(r)).orElse(null);
