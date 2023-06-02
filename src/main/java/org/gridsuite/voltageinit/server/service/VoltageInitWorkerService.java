@@ -18,7 +18,6 @@ import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.openreac.OpenReacConfig;
 import com.powsybl.openreac.OpenReacRunner;
-import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.voltageinit.server.repository.VoltageInitResultRepository;

@@ -25,7 +25,7 @@ public class OpenReactParametersDeserializer extends StdDeserializer<OpenReacPar
     @Override
     public OpenReacParameters deserialize(JsonParser parser, DeserializationContext deserializationContext, OpenReacParameters parameters) throws IOException {
         TypeReference<HashMap<String, VoltageLimitOverride>> specificVoltageLimitType
-                = new TypeReference<HashMap<String, VoltageLimitOverride>>() {};
+                = new TypeReference<HashMap<String, VoltageLimitOverride>>() { };
 
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             switch (parser.getCurrentName()) {
