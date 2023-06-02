@@ -6,6 +6,7 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.computation.CompletableFutureTask;
@@ -62,12 +63,15 @@ public class VoltageInitWorkerService {
 
     private final Executor threadPool = ForkJoinPool.commonPool();
 
+    private ObjectMapper objectMapper;
+
     @Autowired
     NotificationService notificationService;
 
-    public VoltageInitWorkerService(NetworkStoreService networkStoreService, VoltageInitResultRepository resultRepository) {
+    public VoltageInitWorkerService(NetworkStoreService networkStoreService, VoltageInitResultRepository resultRepository, ObjectMapper objectMapper) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
+        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     private Network getNetwork(UUID networkUuid, String variantId) {
@@ -116,7 +120,7 @@ public class VoltageInitWorkerService {
             }
 
             OpenReacConfig config = OpenReacConfig.load();
-            CompletableFuture<OpenReacResult> future = CompletableFutureTask.runAsync(() -> OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), new OpenReacParameters(), config, LocalComputationManager.getDefault()), this.threadPool);
+            CompletableFuture<OpenReacResult> future = CompletableFutureTask.runAsync(() -> OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), context.getParameters(), config, LocalComputationManager.getDefault()), this.threadPool);
             if (resultUuid != null) {
                 futures.put(resultUuid, future);
             }
@@ -151,7 +155,7 @@ public class VoltageInitWorkerService {
     @Bean
     public Consumer<Message<String>> consumeRun() {
         return message -> {
-            VoltageInitResultContext resultContext = VoltageInitResultContext.fromMessage(message);
+            VoltageInitResultContext resultContext = VoltageInitResultContext.fromMessage(message, objectMapper);
             try {
                 runRequests.add(resultContext.getResultUuid());
                 AtomicReference<Long> startTime = new AtomicReference<>();
