@@ -84,6 +84,8 @@ public class VoltageInitControllerTest {
     private static final String VARIANT_2_ID = "variant_2";
     private static final String VARIANT_3_ID = "variant_3";
 
+    private static final String OPEN_REAC_PARAMETERS_JSON = "{\"specificVoltageLimits\":{\"VL1\":{\"deltaLowVoltageLimit\":15.0,\"deltaHighVoltageLimit\":123.0}},\"variableShuntCompensators\":[],\"constantQGenerators\":[],\"variableTwoWindingsTransformers\":[],\"genericParamsList\":[],\"objective\":\"MIN_GENERATION\",\"allAlgorithmParams\":[\"MIN_GENERATION\"]}";
+
     private static final int TIMEOUT = 1000;
 
     @Autowired
@@ -160,8 +162,8 @@ public class VoltageInitControllerTest {
                     .thenReturn(completableFutureResultsTask);
 
             MvcResult result = mockMvc.perform(post(
-                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
-                            .header(HEADER_USER_ID, "userId"))
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID).content(OPEN_REAC_PARAMETERS_JSON)
+                            .header(HEADER_USER_ID, "userId").contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();

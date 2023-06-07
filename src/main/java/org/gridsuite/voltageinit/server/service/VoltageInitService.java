@@ -6,6 +6,7 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
@@ -33,10 +34,13 @@ public class VoltageInitService {
 
     private VoltageInitResultRepository resultRepository;
 
-    public VoltageInitService(NotificationService notificationService, UuidGeneratorService uuidGeneratorService, VoltageInitResultRepository resultRepository) {
+    private ObjectMapper objectMapper;
+
+    public VoltageInitService(NotificationService notificationService, UuidGeneratorService uuidGeneratorService, VoltageInitResultRepository resultRepository, ObjectMapper objectMapper) {
         this.notificationService = Objects.requireNonNull(notificationService);
         this.uuidGeneratorService = Objects.requireNonNull(uuidGeneratorService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
+        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     public UUID runAndSaveResult(VoltageInitRunContext runContext) {
@@ -45,7 +49,7 @@ public class VoltageInitService {
 
         // update status to running status
         setStatus(List.of(resultUuid), VoltageInitStatus.RUNNING.name());
-        notificationService.sendRunMessage(new VoltageInitResultContext(resultUuid, runContext).toMessage());
+        notificationService.sendRunMessage(new VoltageInitResultContext(resultUuid, runContext).toMessage(objectMapper));
         return resultUuid;
     }
 
