@@ -34,18 +34,26 @@ public class OpenReactParametersDeserializer extends StdDeserializer<OpenReacPar
 
     @Override
     public OpenReacParameters deserialize(JsonParser parser, DeserializationContext deserializationContext, OpenReacParameters parameters) throws IOException {
-        TypeReference<HashMap<String, VoltageLimitOverride>> specificVoltageLimitType
-                = new TypeReference<HashMap<String, VoltageLimitOverride>>() { };
+        TypeReference<List<String>> stringListTypeReference = new TypeReference<List<String>>() { };
 
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             switch (parser.getCurrentName()) {
                 case "specificVoltageLimits":
                     parser.nextToken();
-                    parameters.addSpecificVoltageLimits(parser.readValueAs(specificVoltageLimitType));
+                    parameters.addSpecificVoltageLimits(parser.readValueAs(new TypeReference<HashMap<String, VoltageLimitOverride>>() { }));
                     break;
                 case "variableShuntCompensators":
+                    parser.nextToken();
+                    parameters.addVariableShuntCompensators(parser.readValueAs(stringListTypeReference));
+                    break;
                 case "constantQGenerators":
+                    parser.nextToken();
+                    parameters.addSpecificVoltageLimits(parser.readValueAs(stringListTypeReference));
+                    break;
                 case "variableTwoWindingsTransformers":
+                    parser.nextToken();
+                    parameters.addSpecificVoltageLimits(parser.readValueAs(stringListTypeReference));
+                    break;
                 case "genericParamsList":
                 case "objective":
                 case "objectiveDistance":
