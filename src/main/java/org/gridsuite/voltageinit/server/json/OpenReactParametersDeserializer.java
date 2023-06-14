@@ -48,11 +48,11 @@ public class OpenReactParametersDeserializer extends StdDeserializer<OpenReacPar
                     break;
                 case "constantQGenerators":
                     parser.nextToken();
-                    parameters.addSpecificVoltageLimits(parser.readValueAs(stringListTypeReference));
+                    parameters.addConstantQGenerators(parser.readValueAs(stringListTypeReference));
                     break;
                 case "variableTwoWindingsTransformers":
                     parser.nextToken();
-                    parameters.addSpecificVoltageLimits(parser.readValueAs(stringListTypeReference));
+                    parameters.addVariableTwoWindingsTransformers(parser.readValueAs(stringListTypeReference));
                     break;
                 case "genericParamsList":
                 case "objective":
