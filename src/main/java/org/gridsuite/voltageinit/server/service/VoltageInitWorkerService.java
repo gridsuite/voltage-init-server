@@ -19,6 +19,7 @@ import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.openreac.OpenReacConfig;
 import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
+import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.voltageinit.server.repository.VoltageInitResultRepository;
 import org.slf4j.Logger;
@@ -47,6 +48,9 @@ import static org.gridsuite.voltageinit.server.service.NotificationService.FAIL_
 public class VoltageInitWorkerService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VoltageInitWorkerService.class);
+
+    private static final String ERROR_KEY = "error";
+    private static final String ERROR_DURING_VOLTAGE_PROFILE_INITIALISATION = "Error during voltage profile initialization";
 
     private NetworkStoreService networkStoreService;
 
@@ -183,8 +187,12 @@ public class VoltageInitWorkerService {
             } catch (Exception e) {
                 LOGGER.error(FAIL_MESSAGE, e);
                 if (!(e instanceof CancellationException)) {
+                    Map<String, String> errorIndicator = new HashMap<>();
+                    errorIndicator.put(ERROR_KEY, ERROR_DURING_VOLTAGE_PROFILE_INITIALISATION);
+
+                    resultRepository.insert(resultContext.getResultUuid(), new OpenReacResult(OpenReacStatus.NOT_OK, Collections.emptyList() , errorIndicator));
+                    resultRepository.insertStatus(List.of(resultContext.getResultUuid()), OpenReacStatus.NOT_OK.name());
                     notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), e.getMessage(), resultContext.getRunContext().getUserId());
-                    resultRepository.delete(resultContext.getResultUuid());
                 }
             } finally {
                 futures.remove(resultContext.getResultUuid());
