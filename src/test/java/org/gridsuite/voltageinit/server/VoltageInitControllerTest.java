@@ -86,6 +86,8 @@ public class VoltageInitControllerTest {
 
     private static final String OPEN_REAC_PARAMETERS_JSON = "{\"specificVoltageLimits\":{\"VL1\":{\"deltaLowVoltageLimit\":15.0,\"deltaHighVoltageLimit\":123.0}},\"variableShuntCompensators\":[],\"constantQGenerators\":[],\"variableTwoWindingsTransformers\":[],\"genericParamsList\":[],\"objective\":\"MIN_GENERATION\",\"allAlgorithmParams\":[\"MIN_GENERATION\"]}";
 
+    private static final String NOT_OK_RESULT = "NOT_OK";
+
     private static final int TIMEOUT = 1000;
 
     @Autowired
@@ -209,8 +211,12 @@ public class VoltageInitControllerTest {
                         "/" + VERSION + "/results/{resultUuid}/status", RESULT_UUID))
                 .andExpect(status().isOk())
                 .andReturn();
-        // assert result is empty
-        assertEquals("", result.getResponse().getContentAsString());
+        // assert result is NOT_OK
+        assertEquals(NOT_OK_RESULT, result.getResponse().getContentAsString());
+
+        // should return some results since we store failed result into database
+        mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+            .andExpect(status().isOk());
     }
 
     @Test
