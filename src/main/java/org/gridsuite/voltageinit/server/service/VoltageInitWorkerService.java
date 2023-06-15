@@ -190,7 +190,7 @@ public class VoltageInitWorkerService {
                     Map<String, String> errorIndicator = new HashMap<>();
                     errorIndicator.put(ERROR_KEY, ERROR_DURING_VOLTAGE_PROFILE_INITIALISATION);
 
-                    resultRepository.insert(resultContext.getResultUuid(), new OpenReacResult(OpenReacStatus.NOT_OK, Collections.emptyList() , errorIndicator));
+                    resultRepository.insert(resultContext.getResultUuid(), new OpenReacResult(OpenReacStatus.NOT_OK, Collections.emptyList(), errorIndicator));
                     resultRepository.insertStatus(List.of(resultContext.getResultUuid()), OpenReacStatus.NOT_OK.name());
                     notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), e.getMessage(), resultContext.getRunContext().getUserId());
                 }
