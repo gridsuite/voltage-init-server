@@ -13,7 +13,7 @@
     <parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-parent-ws</artifactId>
-        <version>10</version>
+        <version>11</version>
     </parent>
 
     <groupId>org.gridsuite</groupId>
@@ -48,8 +48,6 @@
     </developers>
 
     <properties>
-        <java.version>11</java.version>
-
         <gridsuite-dependencies.version>23</gridsuite-dependencies.version>
         <commons-lang3.version>3.9</commons-lang3.version>
         <powsybl-open-reac.version>0.1.0</powsybl-open-reac.version>
