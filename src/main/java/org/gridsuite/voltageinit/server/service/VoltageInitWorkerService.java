@@ -49,7 +49,7 @@ public class VoltageInitWorkerService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VoltageInitWorkerService.class);
 
-    private static final String ERROR_KEY = "error";
+    private static final String ERROR = "error";
     private static final String ERROR_DURING_VOLTAGE_PROFILE_INITIALISATION = "Error during voltage profile initialization";
 
     private NetworkStoreService networkStoreService;
@@ -188,7 +188,7 @@ public class VoltageInitWorkerService {
                 LOGGER.error(FAIL_MESSAGE, e);
                 if (!(e instanceof CancellationException)) {
                     Map<String, String> errorIndicator = new HashMap<>();
-                    errorIndicator.put(ERROR_KEY, ERROR_DURING_VOLTAGE_PROFILE_INITIALISATION);
+                    errorIndicator.put(ERROR, ERROR_DURING_VOLTAGE_PROFILE_INITIALISATION);
 
                     resultRepository.insert(resultContext.getResultUuid(), new OpenReacResult(OpenReacStatus.NOT_OK, Collections.emptyList(), errorIndicator));
                     resultRepository.insertStatus(List.of(resultContext.getResultUuid()), OpenReacStatus.NOT_OK.name());
