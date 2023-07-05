@@ -120,10 +120,6 @@ public class VoltageInitControllerTest {
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_3_ID);
 
-        openReacParameters = new OpenReacParameters();
-        openReacResult = new OpenReacResult(OpenReacStatus.OK, new OpenReacAmplIOFiles(openReacParameters, network, false), INDICATORS);
-        completableFutureResultsTask = CompletableFutureTask.runAsync(() -> openReacResult, ForkJoinPool.commonPool());
-
         given(networkStoreService.getNetwork(NETWORK_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willReturn(network);
         given(networkStoreService.getNetwork(OTHER_NETWORK_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willThrow(new PowsyblException("Not found"));
 
@@ -135,6 +131,11 @@ public class VoltageInitControllerTest {
 
         network1 = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
         network1.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
+
+        // openReac run mocking
+        openReacParameters = new OpenReacParameters();
+        openReacResult = new OpenReacResult(OpenReacStatus.OK, new OpenReacAmplIOFiles(openReacParameters, network, false), INDICATORS);
+        completableFutureResultsTask = CompletableFutureTask.runAsync(() -> openReacResult, ForkJoinPool.commonPool());
 
         // UUID service mocking to always generate the same result UUID
         given(uuidGeneratorService.generate()).willReturn(RESULT_UUID);
