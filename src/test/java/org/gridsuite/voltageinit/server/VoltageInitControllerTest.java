@@ -102,22 +102,27 @@ public class VoltageInitControllerTest {
     private final RestTemplateConfig restTemplateConfig = new RestTemplateConfig();
     private final ObjectMapper mapper = restTemplateConfig.objectMapper();
 
-    private Network network = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
+    private Network network;
     private Network network1;
     private Network networkForMergingView;
     private Network otherNetworkForMergingView;
-    OpenReacParameters openReacParameters = new OpenReacParameters();
-    OpenReacResult openReacResult = new OpenReacResult(OpenReacStatus.OK, new OpenReacAmplIOFiles(openReacParameters, network, false), INDICATORS);
-    CompletableFutureTask<OpenReacResult> completableFutureResultsTask = CompletableFutureTask.runAsync(() -> openReacResult, ForkJoinPool.commonPool());
+    OpenReacParameters openReacParameters;
+    OpenReacResult openReacResult;
+    CompletableFutureTask<OpenReacResult> completableFutureResultsTask;
 
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
         // network store service mocking
+        network = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_1_ID);
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_3_ID);
+
+        openReacParameters = new OpenReacParameters();
+        openReacResult = new OpenReacResult(OpenReacStatus.OK, new OpenReacAmplIOFiles(openReacParameters, network, false), INDICATORS);
+        completableFutureResultsTask = CompletableFutureTask.runAsync(() -> openReacResult, ForkJoinPool.commonPool());
 
         given(networkStoreService.getNetwork(NETWORK_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willReturn(network);
         given(networkStoreService.getNetwork(OTHER_NETWORK_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willThrow(new PowsyblException("Not found"));
