@@ -187,10 +187,10 @@ public class VoltageInitWorkerService {
             } catch (Exception e) {
                 LOGGER.error(FAIL_MESSAGE, e);
                 if (!(e instanceof CancellationException)) {
-                    Map<String, String> errorIndicator = new HashMap<>();
-                    errorIndicator.put(ERROR, ERROR_DURING_VOLTAGE_PROFILE_INITIALISATION);
+                    Map<String, String> errorIndicators = new HashMap<>();
+                    errorIndicators.put(ERROR, ERROR_DURING_VOLTAGE_PROFILE_INITIALISATION);
 
-                    resultRepository.insert(resultContext.getResultUuid(), new OpenReacResult(OpenReacStatus.NOT_OK, Collections.emptyList(), errorIndicator));
+                    resultRepository.insertErrorResult(resultContext.getResultUuid(), errorIndicators);
                     resultRepository.insertStatus(List.of(resultContext.getResultUuid()), OpenReacStatus.NOT_OK.name());
                     notificationService.publishFail(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), e.getMessage(), resultContext.getRunContext().getUserId());
                 }
