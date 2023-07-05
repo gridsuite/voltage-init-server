@@ -15,9 +15,10 @@ import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.network.store.iidm.impl.NetworkFactoryImpl;
+import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
+import com.powsybl.openreac.parameters.input.*;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
-import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
 import lombok.SneakyThrows;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
@@ -45,7 +46,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -78,13 +78,10 @@ public class VoltageInitControllerTest {
     private static final UUID NETWORK_FOR_MERGING_VIEW_UUID = UUID.fromString("11111111-7977-4592-ba19-88027e4254e4");
     private static final UUID OTHER_NETWORK_FOR_MERGING_VIEW_UUID = UUID.fromString("22222222-7977-4592-ba19-88027e4254e4");
     private static final Map<String, String> INDICATORS = Map.of("defaultPmax", "1000.000000", "defaultQmax", "300.000000", "minimalQPrange", "1.000000");
-    private static final OpenReacResult RESULT = new OpenReacResult(OpenReacStatus.OK, List.of(new ReactiveSlackOutput.ReactiveSlack("bus1", "vl1", 10.5)), INDICATORS);
 
     private static final String VARIANT_1_ID = "variant_1";
     private static final String VARIANT_2_ID = "variant_2";
     private static final String VARIANT_3_ID = "variant_3";
-
-    private static final String OPEN_REAC_PARAMETERS_JSON = "{\"specificVoltageLimits\":{\"VL1\":{\"deltaLowVoltageLimit\":15.0,\"deltaHighVoltageLimit\":123.0}},\"variableShuntCompensators\":[],\"constantQGenerators\":[],\"variableTwoWindingsTransformers\":[],\"genericParamsList\":[],\"objective\":\"MIN_GENERATION\",\"allAlgorithmParams\":[\"MIN_GENERATION\"]}";
 
     private static final String NOT_OK_RESULT = "NOT_OK";
 
@@ -109,7 +106,9 @@ public class VoltageInitControllerTest {
     private Network network1;
     private Network networkForMergingView;
     private Network otherNetworkForMergingView;
-    CompletableFutureTask<OpenReacResult> completableFutureResultsTask = CompletableFutureTask.runAsync(() -> RESULT, ForkJoinPool.commonPool());
+    OpenReacParameters openReacParameters;
+    OpenReacResult openReacResult;
+    CompletableFutureTask<OpenReacResult> completableFutureResultsTask;
 
     @Before
     public void setUp() throws Exception {
@@ -132,6 +131,11 @@ public class VoltageInitControllerTest {
 
         network1 = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
         network1.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
+
+        // OpenReac run mocking
+        openReacParameters = new OpenReacParameters();
+        openReacResult = new OpenReacResult(OpenReacStatus.OK, new OpenReacAmplIOFiles(openReacParameters, network, false), INDICATORS);
+        completableFutureResultsTask = CompletableFutureTask.runAsync(() -> openReacResult, ForkJoinPool.commonPool());
 
         // UUID service mocking to always generate the same result UUID
         given(uuidGeneratorService.generate()).willReturn(RESULT_UUID);
@@ -164,7 +168,7 @@ public class VoltageInitControllerTest {
                     .thenReturn(completableFutureResultsTask);
 
             MvcResult result = mockMvc.perform(post(
-                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID).content(OPEN_REAC_PARAMETERS_JSON)
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID).content(mapper.writeValueAsString(openReacParameters))
                             .header(HEADER_USER_ID, "userId").contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -184,9 +188,6 @@ public class VoltageInitControllerTest {
             VoltageInitResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), VoltageInitResult.class);
             assertEquals(RESULT_UUID, resultDto.getResultUuid());
             assertEquals(INDICATORS, resultDto.getIndicators());
-            assertEquals(1, resultDto.getReactiveSlacks().size());
-            assertEquals("bus1", resultDto.getReactiveSlacks().get(0).getBusId());
-            assertEquals(10.5, resultDto.getReactiveSlacks().get(0).getSlack(), 0.0001);
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
                    .andExpect(status().isNotFound());
@@ -287,7 +288,7 @@ public class VoltageInitControllerTest {
     @SneakyThrows
     @Test
     public void postCompletionAdapterTest() {
-        CompletableFutureTask<OpenReacResult> task = CompletableFutureTask.runAsync(() -> RESULT, ForkJoinPool.commonPool());
+        CompletableFutureTask<OpenReacResult> task = CompletableFutureTask.runAsync(() -> openReacResult, ForkJoinPool.commonPool());
         PostCompletionAdapter adapter = new PostCompletionAdapter();
         adapter.execute(task);
         TransactionSynchronizationManager.initSynchronization();

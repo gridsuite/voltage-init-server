@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.powsybl.commons.reporter.ReporterModelDeserializer;
 import com.powsybl.commons.reporter.ReporterModelJsonModule;
-import org.gridsuite.voltageinit.server.json.VoltageInitJsonModule;
+import com.powsybl.openreac.parameters.input.json.OpenReactJsonModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -51,7 +51,7 @@ public class RestTemplateConfig {
         var objectMapper = Jackson2ObjectMapperBuilder.json().build();
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         objectMapper.registerModule(new ReporterModelJsonModule());
-        objectMapper.registerModule(new VoltageInitJsonModule());
+        objectMapper.registerModule(new OpenReactJsonModule());
         objectMapper.setInjectableValues(new InjectableValues.Std().addValue(ReporterModelDeserializer.DICTIONARY_VALUE_ID, null));
         return objectMapper;
     }

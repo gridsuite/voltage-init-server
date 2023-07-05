@@ -92,4 +92,10 @@ public class VoltageInitResultRepository {
             resultRepository.save(toVoltageInitResultEntity(resultUuid, result));
         }
     }
+
+    @Transactional
+    public void insertErrorResult(UUID resultUuid, Map<String, String> errorIndicators) {
+        Objects.requireNonNull(resultUuid);
+        resultRepository.save(new VoltageInitResultEntity(resultUuid, ZonedDateTime.now(), errorIndicators, List.of()));
+    }
 }
