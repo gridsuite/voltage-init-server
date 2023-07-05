@@ -132,7 +132,7 @@ public class VoltageInitControllerTest {
         network1 = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
         network1.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
 
-        // openReac run mocking
+        // OpenReac run mocking
         openReacParameters = new OpenReacParameters();
         openReacResult = new OpenReacResult(OpenReacStatus.OK, new OpenReacAmplIOFiles(openReacParameters, network, false), INDICATORS);
         completableFutureResultsTask = CompletableFutureTask.runAsync(() -> openReacResult, ForkJoinPool.commonPool());
@@ -188,7 +188,6 @@ public class VoltageInitControllerTest {
             VoltageInitResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), VoltageInitResult.class);
             assertEquals(RESULT_UUID, resultDto.getResultUuid());
             assertEquals(INDICATORS, resultDto.getIndicators());
-
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
                    .andExpect(status().isNotFound());
