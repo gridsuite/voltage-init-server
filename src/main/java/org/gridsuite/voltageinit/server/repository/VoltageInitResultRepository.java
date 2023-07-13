@@ -37,12 +37,12 @@ public class VoltageInitResultRepository {
         this.resultRepository = resultRepository;
     }
 
-    private static VoltageInitResultEntity toVoltageInitResultEntity(UUID resultUuid, OpenReacResult result) {
+    private static VoltageInitResultEntity toVoltageInitResultEntity(UUID resultUuid, OpenReacResult result, UUID modificationsGroupUuid) {
         Map<String, String> indicators = result.getIndicators();
         List<ReactiveSlackEmbeddable> reactiveSlacks = result.getReactiveSlacks().stream().map(rs ->
                 new ReactiveSlackEmbeddable(rs.getBusId(), rs.getSlack()))
             .collect(Collectors.toList());
-        return new VoltageInitResultEntity(resultUuid, ZonedDateTime.now(), indicators, reactiveSlacks);
+        return new VoltageInitResultEntity(resultUuid, ZonedDateTime.now(), indicators, reactiveSlacks, modificationsGroupUuid);
     }
 
     @Transactional
@@ -79,6 +79,10 @@ public class VoltageInitResultRepository {
         resultRepository.deleteAll();
     }
 
+    public List<VoltageInitResultEntity> findAll() {
+        return resultRepository.findAll();
+    }
+
     @Transactional(readOnly = true)
     public Optional<VoltageInitResultEntity> find(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
@@ -86,16 +90,16 @@ public class VoltageInitResultRepository {
     }
 
     @Transactional
-    public void insert(UUID resultUuid, OpenReacResult result) {
+    public void insert(UUID resultUuid, OpenReacResult result, UUID modificationsGroupUuid) {
         Objects.requireNonNull(resultUuid);
         if (result != null) {
-            resultRepository.save(toVoltageInitResultEntity(resultUuid, result));
+            resultRepository.save(toVoltageInitResultEntity(resultUuid, result, modificationsGroupUuid));
         }
     }
 
     @Transactional
     public void insertErrorResult(UUID resultUuid, Map<String, String> errorIndicators) {
         Objects.requireNonNull(resultUuid);
-        resultRepository.save(new VoltageInitResultEntity(resultUuid, ZonedDateTime.now(), errorIndicators, List.of()));
+        resultRepository.save(new VoltageInitResultEntity(resultUuid, ZonedDateTime.now(), errorIndicators, List.of(), null));
     }
 }

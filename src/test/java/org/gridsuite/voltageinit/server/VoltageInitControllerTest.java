@@ -9,6 +9,7 @@ package org.gridsuite.voltageinit.server;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.computation.CompletableFutureTask;
+import com.powsybl.iidm.modification.GeneratorModification;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
 import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
@@ -20,8 +21,14 @@ import com.powsybl.openreac.parameters.input.*;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import lombok.SneakyThrows;
+import okhttp3.HttpUrl;
+import okhttp3.mockwebserver.Dispatcher;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
+import org.gridsuite.voltageinit.server.service.NetworkModificationService;
 import org.gridsuite.voltageinit.server.service.UuidGeneratorService;
 import org.gridsuite.voltageinit.server.util.annotations.PostCompletionAdapter;
 import org.junit.After;
@@ -47,6 +54,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
@@ -78,6 +86,7 @@ public class VoltageInitControllerTest {
     private static final UUID NETWORK_FOR_MERGING_VIEW_UUID = UUID.fromString("11111111-7977-4592-ba19-88027e4254e4");
     private static final UUID OTHER_NETWORK_FOR_MERGING_VIEW_UUID = UUID.fromString("22222222-7977-4592-ba19-88027e4254e4");
     private static final Map<String, String> INDICATORS = Map.of("defaultPmax", "1000.000000", "defaultQmax", "300.000000", "minimalQPrange", "1.000000");
+    private static final UUID MODIFICATIONS_GROUP_UUID = UUID.fromString("33333333-aaaa-bbbb-cccc-dddddddddddd");
 
     private static final String VARIANT_1_ID = "variant_1";
     private static final String VARIANT_2_ID = "variant_2";
@@ -92,6 +101,9 @@ public class VoltageInitControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private NetworkModificationService networkModificationService;
 
     @MockBean
     private NetworkStoreService networkStoreService;
@@ -110,9 +122,33 @@ public class VoltageInitControllerTest {
     OpenReacResult openReacResult;
     CompletableFutureTask<OpenReacResult> completableFutureResultsTask;
 
+    private MockWebServer server;
+
+    private OpenReacResult buildOpenReacResult() {
+        OpenReacAmplIOFiles openReacAmplIOFiles = new OpenReacAmplIOFiles(openReacParameters, network, false);
+
+        GeneratorModification.Modifs m1 = new GeneratorModification.Modifs();
+        m1.setTargetV(228.);
+        openReacAmplIOFiles.getNetworkModifications().getGeneratorModifications().add(new GeneratorModification("GEN", m1));
+
+        GeneratorModification.Modifs m2 = new GeneratorModification.Modifs();
+        m2.setTargetQ(50.);
+        openReacAmplIOFiles.getNetworkModifications().getGeneratorModifications().add(new GeneratorModification("GEN2", m2));
+
+        openReacResult = new OpenReacResult(OpenReacStatus.OK, openReacAmplIOFiles, INDICATORS);
+        return openReacResult;
+    }
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
+
+        server = new MockWebServer();
+        server.start();
+
+        HttpUrl baseHttpUrl = server.url("");
+        String baseUrl = baseHttpUrl.toString().substring(0, baseHttpUrl.toString().length() - 1);
+        networkModificationService.setNetworkModificationServerBaseUri(baseUrl);
 
         // network store service mocking
         network = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
@@ -134,11 +170,30 @@ public class VoltageInitControllerTest {
 
         // OpenReac run mocking
         openReacParameters = new OpenReacParameters();
-        openReacResult = new OpenReacResult(OpenReacStatus.OK, new OpenReacAmplIOFiles(openReacParameters, network, false), INDICATORS);
+        openReacResult = buildOpenReacResult();
+
         completableFutureResultsTask = CompletableFutureTask.runAsync(() -> openReacResult, ForkJoinPool.commonPool());
 
         // UUID service mocking to always generate the same result UUID
         given(uuidGeneratorService.generate()).willReturn(RESULT_UUID);
+
+        final Dispatcher dispatcher = new Dispatcher() {
+            @SneakyThrows
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                String path = Objects.requireNonNull(request.getPath());
+
+                if (path.matches("/v1/groups/.*") && request.getMethod().equals("DELETE")) {
+                    return new MockResponse().setResponseCode(200)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/groups/table-equipment-modification") && request.getMethod().equals("POST")) {
+                    return new MockResponse().setResponseCode(200).setBody("\"" + MODIFICATIONS_GROUP_UUID + "\"")
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
+                }
+                return new MockResponse().setResponseCode(418);
+            }
+        };
+        server.setDispatcher(dispatcher);
 
         // purge messages
         while (output.receive(1000, "voltageinit.result") != null) {
@@ -188,6 +243,15 @@ public class VoltageInitControllerTest {
             VoltageInitResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), VoltageInitResult.class);
             assertEquals(RESULT_UUID, resultDto.getResultUuid());
             assertEquals(INDICATORS, resultDto.getIndicators());
+
+            result = mockMvc.perform(get(
+                    "/" + VERSION + "/results/{resultUuid}/modifications-group", RESULT_UUID))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+            UUID modificationsGroupUuid = mapper.readValue(result.getResponse().getContentAsString(), UUID.class);
+            assertEquals(MODIFICATIONS_GROUP_UUID, modificationsGroupUuid);
+
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
                    .andExpect(status().isNotFound());

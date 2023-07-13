@@ -112,4 +112,14 @@ public class VoltageInitController {
         voltageInitService.stop(resultUuid, receiver);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping(value = "/results/{resultUuid}/modifications-group", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get the modifications group uuid associated to a result from the database")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The modifications group uuid"),
+        @ApiResponse(responseCode = "404", description = "The result has not been found")})
+    public ResponseEntity<UUID> getModificationsGroupUuid(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
+        UUID modificationsGroupUuid = voltageInitService.getModificationsGroupUuid(resultUuid);
+        return modificationsGroupUuid != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(modificationsGroupUuid)
+                : ResponseEntity.notFound().build();
+    }
 }

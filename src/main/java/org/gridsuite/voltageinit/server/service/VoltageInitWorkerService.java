@@ -54,6 +54,8 @@ public class VoltageInitWorkerService {
 
     private NetworkStoreService networkStoreService;
 
+    private NetworkModificationService networkModificationService;
+
     private VoltageInitResultRepository resultRepository;
 
     private Map<UUID, CompletableFuture<OpenReacResult>> futures = new ConcurrentHashMap<>();
@@ -71,8 +73,11 @@ public class VoltageInitWorkerService {
     @Autowired
     NotificationService notificationService;
 
-    public VoltageInitWorkerService(NetworkStoreService networkStoreService, VoltageInitResultRepository resultRepository, ObjectMapper objectMapper) {
+    public VoltageInitWorkerService(NetworkStoreService networkStoreService,
+                                    NetworkModificationService networkModificationService,
+                                    VoltageInitResultRepository resultRepository, ObjectMapper objectMapper) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
+        this.networkModificationService = Objects.requireNonNull(networkModificationService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
@@ -168,7 +173,8 @@ public class VoltageInitWorkerService {
                 long nanoTime = System.nanoTime();
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
-                resultRepository.insert(resultContext.getResultUuid(), result);
+                UUID modificationsGroupUuid = networkModificationService.createTableEquipmentModificationGroup(result);
+                resultRepository.insert(resultContext.getResultUuid(), result, modificationsGroupUuid);
                 resultRepository.insertStatus(List.of(resultContext.getResultUuid()), result.getStatus().name());
                 LOGGER.info("Status : {}", result.getStatus());
                 LOGGER.info("Reactive slacks : {}", result.getReactiveSlacks());
