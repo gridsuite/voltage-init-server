@@ -173,7 +173,7 @@ public class VoltageInitWorkerService {
                 long nanoTime = System.nanoTime();
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
-                UUID modificationsGroupUuid = networkModificationService.createTableEquipmentModificationGroup(result);
+                UUID modificationsGroupUuid = networkModificationService.createVoltageInitModificationGroup(result);
                 resultRepository.insert(resultContext.getResultUuid(), result, modificationsGroupUuid);
                 resultRepository.insertStatus(List.of(resultContext.getResultUuid()), result.getStatus().name());
                 LOGGER.info("Status : {}", result.getStatus());

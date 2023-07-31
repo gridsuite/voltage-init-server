@@ -11,10 +11,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
-import org.gridsuite.voltageinit.server.dto.AttributeModification;
 import org.gridsuite.voltageinit.server.dto.GeneratorModificationInfos;
-import org.gridsuite.voltageinit.server.dto.TableEquipmentModificationInfos;
-import org.gridsuite.voltageinit.server.dto.OperationType;
+import org.gridsuite.voltageinit.server.dto.VoltageInitModificationInfos;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -74,28 +72,28 @@ public class NetworkModificationService {
         }
     }
 
-    public UUID createTableEquipmentModificationGroup(OpenReacResult result) {
+    public UUID createVoltageInitModificationGroup(OpenReacResult result) {
         UUID modificationsGroupUuid = null;
 
         try {
-            TableEquipmentModificationInfos tableEquipmentModificationInfos = new TableEquipmentModificationInfos();
+            VoltageInitModificationInfos voltageInitModificationInfos = new VoltageInitModificationInfos();
 
             result.getGeneratorModifications().forEach(gm -> {
                 if (gm.getModifs().getTargetV() != null || gm.getModifs().getTargetQ() != null) {
                     GeneratorModificationInfos.GeneratorModificationInfosBuilder builder = GeneratorModificationInfos.builder()
-                        .equipmentId(gm.getGeneratorId());
+                        .generatorId(gm.getGeneratorId());
                     if (gm.getModifs().getTargetV() != null) {
-                        builder.voltageSetpoint(new AttributeModification<>(gm.getModifs().getTargetV(), OperationType.SET));
+                        builder.voltageSetpoint(gm.getModifs().getTargetV());
                     }
                     if (gm.getModifs().getTargetQ() != null) {
-                        builder.reactivePowerSetpoint(new AttributeModification<>(gm.getModifs().getTargetQ(), OperationType.SET));
+                        builder.reactivePowerSetpoint(gm.getModifs().getTargetQ());
                     }
-                    tableEquipmentModificationInfos.addModification(builder.build());
+                    voltageInitModificationInfos.addGeneratorModification(builder.build());
                 }
             });
 
             var uriComponentsBuilder = UriComponentsBuilder
-                    .fromUriString(getNetworkModificationServerURI() + "groups" + DELIMITER + "table-equipment-modification");
+                    .fromUriString(getNetworkModificationServerURI() + "groups" + DELIMITER + "modification");
             var path = uriComponentsBuilder
                     .buildAndExpand()
                     .toUriString();
@@ -103,7 +101,7 @@ public class NetworkModificationService {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            HttpEntity<String> httpEntity = new HttpEntity<>(objectMapper.writeValueAsString(tableEquipmentModificationInfos), headers);
+            HttpEntity<String> httpEntity = new HttpEntity<>(objectMapper.writeValueAsString(voltageInitModificationInfos), headers);
 
             modificationsGroupUuid = restTemplate.exchange(path, HttpMethod.POST, httpEntity, UUID.class)
                 .getBody();

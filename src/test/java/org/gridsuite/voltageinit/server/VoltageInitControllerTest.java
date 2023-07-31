@@ -186,7 +186,7 @@ public class VoltageInitControllerTest {
                 if (path.matches("/v1/groups/.*") && request.getMethod().equals("DELETE")) {
                     return new MockResponse().setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/groups/table-equipment-modification") && request.getMethod().equals("POST")) {
+                } else if (path.matches("/v1/groups/modification") && request.getMethod().equals("POST")) {
                     return new MockResponse().setResponseCode(200).setBody("\"" + MODIFICATIONS_GROUP_UUID + "\"")
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 }

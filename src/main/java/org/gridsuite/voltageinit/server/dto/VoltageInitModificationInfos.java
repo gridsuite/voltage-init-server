@@ -23,11 +23,11 @@ import java.util.List;
     use = JsonTypeInfo.Id.NAME,
     property = "type"
 )
-@JsonTypeName("TABLE_EQUIPMENT_MODIFICATION")
-public class TableEquipmentModificationInfos {
-    private List<EquipmentModificationInfos> modifications = new ArrayList<>();
+@JsonTypeName("VOLTAGE_INIT_MODIFICATION")
+public class VoltageInitModificationInfos {
+    private List<GeneratorModificationInfos> generators = new ArrayList<>();
 
-    public void addModification(EquipmentModificationInfos modificationInfos) {
-        modifications.add(modificationInfos);
+    public void addGeneratorModification(GeneratorModificationInfos generatorModificationInfos) {
+        generators.add(generatorModificationInfos);
     }
 }

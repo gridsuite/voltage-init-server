@@ -6,7 +6,6 @@
  */
 package org.gridsuite.voltageinit.server.dto;
 
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
@@ -17,8 +16,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @Getter
 @Setter
-@JsonTypeName("GENERATOR_MODIFICATION")
-public class GeneratorModificationInfos extends EquipmentModificationInfos {
-    private AttributeModification<Double> reactivePowerSetpoint;
-    private AttributeModification<Double> voltageSetpoint;
+public class GeneratorModificationInfos {
+    private String generatorId;
+    private Double voltageSetpoint;
+    private Double reactivePowerSetpoint;
 }
