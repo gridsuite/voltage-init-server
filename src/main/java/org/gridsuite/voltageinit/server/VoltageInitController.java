@@ -113,7 +113,7 @@ public class VoltageInitController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/results/{resultUuid}/modifications-group", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/results/{resultUuid}/modifications-group-uuid", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Get the modifications group uuid associated to a result from the database")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The modifications group uuid"),
         @ApiResponse(responseCode = "404", description = "The result has not been found")})

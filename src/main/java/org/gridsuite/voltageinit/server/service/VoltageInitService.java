@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -78,7 +79,7 @@ public class VoltageInitService {
         Optional<VoltageInitResultEntity> result = resultRepository.find(resultUuid);
         result.ifPresent(r -> {
             if (r.getModificationsGroupUuid() != null) {
-                networkModificationService.deleteModificationsGroup(r.getModificationsGroupUuid());
+                CompletableFuture.runAsync(() -> networkModificationService.deleteModificationsGroup(r.getModificationsGroupUuid()));
             }
         });
         resultRepository.delete(resultUuid);

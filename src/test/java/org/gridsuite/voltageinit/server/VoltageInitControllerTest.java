@@ -245,7 +245,7 @@ public class VoltageInitControllerTest {
             assertEquals(INDICATORS, resultDto.getIndicators());
 
             result = mockMvc.perform(get(
-                    "/" + VERSION + "/results/{resultUuid}/modifications-group", RESULT_UUID))
+                    "/" + VERSION + "/results/{resultUuid}/modifications-group-uuid", RESULT_UUID))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
