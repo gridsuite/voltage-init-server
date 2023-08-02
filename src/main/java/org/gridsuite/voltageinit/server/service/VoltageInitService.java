@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -30,14 +31,22 @@ public class VoltageInitService {
     @Autowired
     NotificationService notificationService;
 
+    @Autowired
+    NetworkModificationService networkModificationService;
+
     private UuidGeneratorService uuidGeneratorService;
 
     private VoltageInitResultRepository resultRepository;
 
     private ObjectMapper objectMapper;
 
-    public VoltageInitService(NotificationService notificationService, UuidGeneratorService uuidGeneratorService, VoltageInitResultRepository resultRepository, ObjectMapper objectMapper) {
+    public VoltageInitService(NotificationService notificationService,
+                              NetworkModificationService networkModificationService,
+                              UuidGeneratorService uuidGeneratorService,
+                              VoltageInitResultRepository resultRepository,
+                              ObjectMapper objectMapper) {
         this.notificationService = Objects.requireNonNull(notificationService);
+        this.networkModificationService = Objects.requireNonNull(networkModificationService);
         this.uuidGeneratorService = Objects.requireNonNull(uuidGeneratorService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
         this.objectMapper = Objects.requireNonNull(objectMapper);
@@ -67,10 +76,21 @@ public class VoltageInitService {
     }
 
     public void deleteResult(UUID resultUuid) {
+        Optional<VoltageInitResultEntity> result = resultRepository.find(resultUuid);
+        result.ifPresent(r -> {
+            if (r.getModificationsGroupUuid() != null) {
+                CompletableFuture.runAsync(() -> networkModificationService.deleteModificationsGroup(r.getModificationsGroupUuid()));
+            }
+        });
         resultRepository.delete(resultUuid);
     }
 
     public void deleteResults() {
+        resultRepository.findAll().forEach(r -> {
+            if (r.getModificationsGroupUuid() != null) {
+                networkModificationService.deleteModificationsGroup(r.getModificationsGroupUuid());
+            }
+        });
         resultRepository.deleteAll();
     }
 
@@ -85,4 +105,11 @@ public class VoltageInitService {
     public void stop(UUID resultUuid, String receiver) {
         notificationService.sendCancelMessage(new VoltageInitCancelContext(resultUuid, receiver).toMessage());
     }
+
+    @Transactional(readOnly = true)
+    public UUID getModificationsGroupUuid(UUID resultUuid) {
+        Optional<VoltageInitResultEntity> result = resultRepository.find(resultUuid);
+        return result.map(VoltageInitResultEntity::getModificationsGroupUuid).orElse(null);
+    }
+
 }
