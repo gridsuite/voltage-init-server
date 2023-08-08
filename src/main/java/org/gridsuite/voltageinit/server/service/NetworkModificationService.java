@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import org.gridsuite.voltageinit.server.dto.GeneratorModificationInfos;
+import org.gridsuite.voltageinit.server.dto.TransformerModificationInfos;
 import org.gridsuite.voltageinit.server.dto.VoltageInitModificationInfos;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -90,6 +91,14 @@ public class NetworkModificationService {
                     }
                     voltageInitModificationInfos.addGeneratorModification(builder.build());
                 }
+            });
+
+            result.getTapPositionModifications().forEach(tp -> {
+                TransformerModificationInfos.TransformerModificationInfosBuilder builder = TransformerModificationInfos.builder()
+                    .transformerId(tp.getTransformerId())
+                    .ratioTapChangerPosition(tp.getTapPosition())
+                    .legSide(tp.getLegSide());
+                voltageInitModificationInfos.addTransformerModification(builder.build());
             });
 
             var uriComponentsBuilder = UriComponentsBuilder
