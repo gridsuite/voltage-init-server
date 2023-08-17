@@ -27,7 +27,13 @@ import java.util.List;
 public class VoltageInitModificationInfos {
     private List<GeneratorModificationInfos> generators = new ArrayList<>();
 
+    private List<TransformerModificationInfos> transformers = new ArrayList<>();
+
     public void addGeneratorModification(GeneratorModificationInfos generatorModificationInfos) {
         generators.add(generatorModificationInfos);
+    }
+
+    public void addTransformerModification(TransformerModificationInfos transformerModificationInfos) {
+        transformers.add(transformerModificationInfos);
     }
 }
