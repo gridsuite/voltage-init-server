@@ -15,7 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
 
-import org.gridsuite.voltageinit.settings.dto.VoltageInitParametersInfos;
+import org.gridsuite.voltageinit.settings.dto.VoltageInitSettingInfos;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,11 +27,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(value = "/" + SettingsApi.API_VERSION)
 @Tag(name = "Voltage init settings")
-public class VoltageInitParametersController {
+public class VoltageInitSettingController {
 
-    private final VoltageInitParametersService settingsService;
+    private final VoltageInitSettingService settingsService;
 
-    public VoltageInitParametersController(VoltageInitParametersService settingsService) {
+    public VoltageInitSettingController(VoltageInitSettingService settingsService) {
         this.settingsService = settingsService;
     }
 
@@ -40,15 +40,15 @@ public class VoltageInitParametersController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "The setting was created"),
         @ApiResponse(responseCode = "404", description = "The setting was not found")})
-    public ResponseEntity<VoltageInitParametersInfos> createSetting(
-            @RequestBody VoltageInitParametersInfos settingInfos) {
+    public ResponseEntity<VoltageInitSettingInfos> createSetting(
+            @RequestBody VoltageInitSettingInfos settingInfos) {
         return ResponseEntity.ok().body(settingsService.createSetting(settingInfos));
     }
 
     @GetMapping(value = "/settings/{uuid}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get a setting")
     @ApiResponse(responseCode = "200", description = "The setting was returned")
-    public ResponseEntity<VoltageInitParametersInfos> getSetting(
+    public ResponseEntity<VoltageInitSettingInfos> getSetting(
             @Parameter(description = "Setting UUID") @PathVariable("uuid") UUID settingUuid) {
         return ResponseEntity.ok().body(settingsService.getSetting(settingUuid));
     }
@@ -56,7 +56,7 @@ public class VoltageInitParametersController {
     @GetMapping(value = "/settings", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get all settings")
     @ApiResponse(responseCode = "200", description = "The list of all settings was returned")
-    public ResponseEntity<List<VoltageInitParametersInfos>> getAllSettings() {
+    public ResponseEntity<List<VoltageInitSettingInfos>> getAllSettings() {
         return ResponseEntity.ok().body(settingsService.getAllSettings());
     }
 
@@ -65,7 +65,7 @@ public class VoltageInitParametersController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The setting was updated")})
     public ResponseEntity<Void> updateSetting(
             @Parameter(description = "Setting UUID") @PathVariable("uuid") UUID settingUuid,
-            @RequestBody VoltageInitParametersInfos settingInfos) {
+            @RequestBody VoltageInitSettingInfos settingInfos) {
         settingsService.updateSetting(settingUuid, settingInfos);
         return ResponseEntity.ok().build();
     }

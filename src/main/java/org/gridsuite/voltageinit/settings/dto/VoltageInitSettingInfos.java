@@ -13,7 +13,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import org.gridsuite.voltageinit.settings.entities.VoltageInitParametersEntity;
+import org.gridsuite.voltageinit.settings.entities.VoltageInitSettingEntity;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -24,9 +24,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @NoArgsConstructor
 @Getter
 @Setter
-@ToString(callSuper = true)
 @Schema(description = "Voltage init setting")
-public class VoltageInitParametersInfos {
+public class VoltageInitSettingInfos {
     @Schema(description = "Setting id")
     private UUID uuid;
 
@@ -36,7 +35,7 @@ public class VoltageInitParametersInfos {
     @Schema(description = "Setting name")
     private String name;
 
-    List<VoltageInitVoltageLimitsParameterInfos> voltageLimits;
+    List<VoltageLimitsParameterInfos> voltageLimits;
 
     List<FilterEquipments> constantQGenerators;
 
@@ -44,7 +43,7 @@ public class VoltageInitParametersInfos {
 
     List<FilterEquipments> variableShuntCompensators;
 
-    public VoltageInitParametersEntity toEntity() {
-        return new VoltageInitParametersEntity(this);
+    public VoltageInitSettingEntity toEntity() {
+        return new VoltageInitSettingEntity(this);
     }
 }

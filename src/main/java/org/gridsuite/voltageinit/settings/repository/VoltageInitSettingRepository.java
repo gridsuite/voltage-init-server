@@ -8,7 +8,7 @@ package org.gridsuite.voltageinit.settings.repository;
 
 import java.util.UUID;
 
-import org.gridsuite.voltageinit.settings.entities.VoltageInitParametersEntity;
+import org.gridsuite.voltageinit.settings.entities.VoltageInitSettingEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,5 +17,5 @@ import org.springframework.stereotype.Repository;
  */
 
 @Repository
-public interface VoltageInitParametersRepository extends JpaRepository<VoltageInitParametersEntity, UUID> {
+public interface VoltageInitSettingRepository extends JpaRepository<VoltageInitSettingEntity, UUID> {
 }

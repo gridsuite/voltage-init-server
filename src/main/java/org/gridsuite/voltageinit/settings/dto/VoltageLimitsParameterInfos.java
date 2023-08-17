@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 import org.gridsuite.voltageinit.settings.entities.FilterEquipmentsEmbeddable;
-import org.gridsuite.voltageinit.settings.entities.VoltageInitParametersVoltageLimitsEntity;
+import org.gridsuite.voltageinit.settings.entities.VoltageLimitsParameterEntity;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
@@ -24,7 +24,7 @@ import org.gridsuite.voltageinit.settings.entities.VoltageInitParametersVoltageL
 @AllArgsConstructor
 @Builder
 @NoArgsConstructor
-public class VoltageInitVoltageLimitsParameterInfos {
+public class VoltageLimitsParameterInfos {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Integer priority;
@@ -35,8 +35,8 @@ public class VoltageInitVoltageLimitsParameterInfos {
 
     List<FilterEquipments> filters;
 
-    public VoltageInitParametersVoltageLimitsEntity toEntity() {
-        return new VoltageInitParametersVoltageLimitsEntity(null, lowVoltageLimit, highVoltageLimit, priority,
+    public VoltageLimitsParameterEntity toEntity() {
+        return new VoltageLimitsParameterEntity(null, lowVoltageLimit, highVoltageLimit, priority,
                 FilterEquipmentsEmbeddable.toEmbeddableFilterEquipments(filters));
     }
 }

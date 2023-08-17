@@ -21,8 +21,8 @@ import java.util.UUID;
 @Setter
 @Entity
 @Builder
-@Table(name = "voltageInitParametersVoltageLimits")
-public class VoltageInitParametersVoltageLimitsEntity {
+@Table(name = "volatge_limits_parameter")
+public class VoltageLimitsParameterEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -40,8 +40,8 @@ public class VoltageInitParametersVoltageLimitsEntity {
 
     @ElementCollection
     @CollectionTable(
-            name = "voltageInitParametersVoltageLimitsEntityFilters",
-            joinColumns = @JoinColumn(name = "voltageLimitId", foreignKey = @ForeignKey(name = "voltageInitVoltageLimitsEntity_filters_fk"))
+            name = "VoltageLimitsParameterEntityFilters",
+            joinColumns = @JoinColumn(name = "voltageLimitId", foreignKey = @ForeignKey(name = "VoltageLimitsParameterEntity_filters_fk"))
     )
     private List<FilterEquipmentsEmbeddable> filters;
 }
