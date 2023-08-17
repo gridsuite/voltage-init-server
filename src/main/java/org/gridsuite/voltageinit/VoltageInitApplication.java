@@ -4,10 +4,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.voltageinit.server;
+package org.gridsuite.voltageinit;
 
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.ws.commons.Utils;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
@@ -17,7 +18,8 @@ import org.springframework.context.annotation.ComponentScan;
  */
 @SuppressWarnings("checkstyle:HideUtilityClassConstructor")
 @SpringBootApplication
-@ComponentScan(basePackageClasses = {VoltageInitApplication.class, NetworkStoreService.class})
+@ComponentScan(basePackageClasses = { VoltageInitApplication.class, NetworkStoreService.class },
+               basePackages = {"org.gridsuite.voltageinit.settings", "org.gridsuite.voltageinit.server" })
 public class VoltageInitApplication {
     public static void main(String[] args) {
         Utils.initProperties();

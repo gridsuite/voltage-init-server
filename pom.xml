@@ -52,7 +52,7 @@
         <commons-lang3.version>3.9</commons-lang3.version>
         <powsybl-open-reac.version>0.2.0</powsybl-open-reac.version>
         <mockito-inline.version>3.11.1</mockito-inline.version>
-        <liquibase-hibernate-package>org.gridsuite.voltageinit.server</liquibase-hibernate-package>
+        <liquibase-hibernate-package>org.gridsuite.voltageinit</liquibase-hibernate-package>
     </properties>
 
     <build>
