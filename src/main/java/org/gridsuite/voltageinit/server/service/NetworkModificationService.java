@@ -12,8 +12,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import org.gridsuite.voltageinit.server.dto.GeneratorModificationInfos;
+import org.gridsuite.voltageinit.server.dto.StaticVarCompensatorModificationInfos;
 import org.gridsuite.voltageinit.server.dto.TransformerModificationInfos;
 import org.gridsuite.voltageinit.server.dto.VoltageInitModificationInfos;
+import org.gridsuite.voltageinit.server.dto.VscConverterStationModificationInfos;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -79,26 +81,46 @@ public class NetworkModificationService {
         try {
             VoltageInitModificationInfos voltageInitModificationInfos = new VoltageInitModificationInfos();
 
+            // generator modifications
             result.getGeneratorModifications().forEach(gm -> {
                 if (gm.getModifs().getTargetV() != null || gm.getModifs().getTargetQ() != null) {
                     GeneratorModificationInfos.GeneratorModificationInfosBuilder builder = GeneratorModificationInfos.builder()
-                        .generatorId(gm.getGeneratorId());
-                    if (gm.getModifs().getTargetV() != null) {
-                        builder.voltageSetpoint(gm.getModifs().getTargetV());
-                    }
-                    if (gm.getModifs().getTargetQ() != null) {
-                        builder.reactivePowerSetpoint(gm.getModifs().getTargetQ());
-                    }
+                        .generatorId(gm.getGeneratorId())
+                        .voltageSetpoint(gm.getModifs().getTargetV())
+                        .reactivePowerSetpoint(gm.getModifs().getTargetQ());
                     voltageInitModificationInfos.addGeneratorModification(builder.build());
                 }
             });
 
+            // transformer modifications
             result.getTapPositionModifications().forEach(tp -> {
                 TransformerModificationInfos.TransformerModificationInfosBuilder builder = TransformerModificationInfos.builder()
                     .transformerId(tp.getTransformerId())
                     .ratioTapChangerPosition(tp.getTapPosition())
                     .legSide(tp.getLegSide());
                 voltageInitModificationInfos.addTransformerModification(builder.build());
+            });
+
+            // static var compensator modifications
+            result.getSvcModifications().forEach(staticVarCompensatorModification -> {
+                if (staticVarCompensatorModification.getVoltageSetpoint() != null || staticVarCompensatorModification.getReactivePowerSetpoint() != null) {
+                    StaticVarCompensatorModificationInfos.StaticVarCompensatorModificationInfosBuilder builder = StaticVarCompensatorModificationInfos.builder()
+                        .staticVarCompensatorId(staticVarCompensatorModification.getSvcId())
+                        .voltageSetpoint(staticVarCompensatorModification.getVoltageSetpoint())
+                        .reactivePowerSetpoint(staticVarCompensatorModification.getReactivePowerSetpoint());
+                    voltageInitModificationInfos.addStaticVarCompensatorModification(builder.build());
+                }
+            });
+
+            // vsc converter station modifications
+            result.getVscModifications().forEach(vscConverterStationModification -> {
+                if (vscConverterStationModification.getVoltageSetpoint() != null || vscConverterStationModification.getReactivePowerSetpoint() != null) {
+                    VscConverterStationModificationInfos.VscConverterStationModificationInfosBuilder builder = VscConverterStationModificationInfos.builder()
+                        .vscConverterStationId(vscConverterStationModification.getVscId())
+                        .voltageSetpoint(vscConverterStationModification.getVoltageSetpoint())
+                        .reactivePowerSetpoint(vscConverterStationModification.getReactivePowerSetpoint());
+                    voltageInitModificationInfos.addVscConverterStationModification(builder.build());
+                }
             });
 
             var uriComponentsBuilder = UriComponentsBuilder
