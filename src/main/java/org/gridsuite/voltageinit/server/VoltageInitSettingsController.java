@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
  */
 
 @RestController
-@RequestMapping(value = "/" + SettingsApi.API_VERSION)
+@RequestMapping(value = "/" + VoltageInitApi.API_VERSION)
 @Tag(name = "Voltage init settings")
 public class VoltageInitSettingsController {
 
