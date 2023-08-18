@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.voltageinit.settings;
+package org.gridsuite.voltageinit.server;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,7 +15,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
 
-import org.gridsuite.voltageinit.settings.dto.VoltageInitSettingInfos;
+import org.gridsuite.voltageinit.server.dto.settings.VoltageInitSettingInfos;
+import org.gridsuite.voltageinit.server.service.settings.VoltageInitSettingService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,11 +28,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(value = "/" + SettingsApi.API_VERSION)
 @Tag(name = "Voltage init settings")
-public class VoltageInitSettingController {
+public class VoltageInitSettingsController {
 
     private final VoltageInitSettingService settingsService;
 
-    public VoltageInitSettingController(VoltageInitSettingService settingsService) {
+    public VoltageInitSettingsController(VoltageInitSettingService settingsService) {
         this.settingsService = settingsService;
     }
 

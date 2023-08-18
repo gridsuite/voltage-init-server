@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.voltageinit.settings.dto;
+package org.gridsuite.voltageinit.server.dto.settings;
 
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -13,7 +13,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import org.gridsuite.voltageinit.settings.entities.VoltageInitSettingEntity;
+import org.gridsuite.voltageinit.server.entities.settings.VoltageInitSettingEntity;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

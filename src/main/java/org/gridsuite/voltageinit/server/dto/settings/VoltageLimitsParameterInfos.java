@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.voltageinit.settings.dto;
+package org.gridsuite.voltageinit.server.dto.settings;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -14,8 +14,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-import org.gridsuite.voltageinit.settings.entities.FilterEquipmentsEmbeddable;
-import org.gridsuite.voltageinit.settings.entities.VoltageLimitsParameterEntity;
+import org.gridsuite.voltageinit.server.entities.settings.FilterEquipmentsEmbeddable;
+import org.gridsuite.voltageinit.server.entities.settings.VoltageLimitsParameterEntity;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>

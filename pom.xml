@@ -53,7 +53,7 @@
         <powsybl-open-reac.version>0.2.0</powsybl-open-reac.version>
         <mockito-inline.version>3.11.1</mockito-inline.version>
         <assertj.version>3.24.2</assertj.version>
-        <liquibase-hibernate-package>org.gridsuite.voltageinit</liquibase-hibernate-package>
+        <liquibase-hibernate-package>org.gridsuite.voltageinit.server</liquibase-hibernate-package>
     </properties>
 
     <build>

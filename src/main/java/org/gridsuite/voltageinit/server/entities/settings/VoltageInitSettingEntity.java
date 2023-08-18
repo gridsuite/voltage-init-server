@@ -4,16 +4,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.voltageinit.settings.entities;
+package org.gridsuite.voltageinit.server.entities.settings;
 
 import lombok.*;
 
 import javax.persistence.*;
 import javax.transaction.Transactional;
 
-import org.gridsuite.voltageinit.settings.dto.FilterEquipments;
-import org.gridsuite.voltageinit.settings.dto.VoltageInitSettingInfos;
-import org.gridsuite.voltageinit.settings.dto.VoltageLimitsParameterInfos;
+import org.gridsuite.voltageinit.server.dto.settings.FilterEquipments;
+import org.gridsuite.voltageinit.server.dto.settings.VoltageInitSettingInfos;
+import org.gridsuite.voltageinit.server.dto.settings.VoltageLimitsParameterInfos;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;

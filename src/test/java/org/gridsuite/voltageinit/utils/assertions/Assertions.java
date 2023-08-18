@@ -7,7 +7,7 @@
 package org.gridsuite.voltageinit.utils.assertions;
 
 import org.assertj.core.util.CheckReturnValue;
-import org.gridsuite.voltageinit.settings.dto.VoltageInitSettingInfos;
+import org.gridsuite.voltageinit.server.dto.settings.VoltageInitSettingInfos;
 
 /**
  *  @author Tristan Chuine <tristan.chuine at rte-france.com>

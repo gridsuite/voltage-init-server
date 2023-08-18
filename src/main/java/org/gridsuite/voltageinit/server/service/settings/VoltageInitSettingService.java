@@ -4,14 +4,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.voltageinit.settings;
+package org.gridsuite.voltageinit.server.service.settings;
 
 import java.util.List;
 import java.util.UUID;
 
-import org.gridsuite.voltageinit.settings.dto.VoltageInitSettingInfos;
-import org.gridsuite.voltageinit.settings.entities.VoltageInitSettingEntity;
-import org.gridsuite.voltageinit.settings.repository.VoltageInitSettingRepository;
+import org.gridsuite.voltageinit.server.dto.settings.VoltageInitSettingInfos;
+import org.gridsuite.voltageinit.server.entities.settings.VoltageInitSettingEntity;
+import org.gridsuite.voltageinit.server.repository.settings.VoltageInitSettingRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
