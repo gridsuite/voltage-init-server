@@ -20,11 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
  */
 
 @Service
-public class VoltageInitSettingService {
+public class VoltageInitSettingsService {
 
     private final VoltageInitSettingRepository voltageInitSettingRepository;
 
-    public VoltageInitSettingService(VoltageInitSettingRepository voltageInitSettingRepository) {
+    public VoltageInitSettingsService(VoltageInitSettingRepository voltageInitSettingRepository) {
         this.voltageInitSettingRepository = voltageInitSettingRepository;
     }
 

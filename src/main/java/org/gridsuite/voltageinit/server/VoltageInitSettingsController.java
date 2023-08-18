@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.gridsuite.voltageinit.server.dto.settings.VoltageInitSettingInfos;
-import org.gridsuite.voltageinit.server.service.settings.VoltageInitSettingService;
+import org.gridsuite.voltageinit.server.service.settings.VoltageInitSettingsService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,9 +30,9 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Voltage init settings")
 public class VoltageInitSettingsController {
 
-    private final VoltageInitSettingService settingsService;
+    private final VoltageInitSettingsService settingsService;
 
-    public VoltageInitSettingsController(VoltageInitSettingService settingsService) {
+    public VoltageInitSettingsController(VoltageInitSettingsService settingsService) {
         this.settingsService = settingsService;
     }
 
