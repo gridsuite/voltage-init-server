@@ -27,7 +27,25 @@ import java.util.List;
 public class VoltageInitModificationInfos {
     private List<GeneratorModificationInfos> generators = new ArrayList<>();
 
+    private List<TransformerModificationInfos> transformers = new ArrayList<>();
+
+    private List<StaticVarCompensatorModificationInfos> staticVarCompensators = new ArrayList<>();
+
+    private List<VscConverterStationModificationInfos> vscConverterStations = new ArrayList<>();
+
     public void addGeneratorModification(GeneratorModificationInfos generatorModificationInfos) {
         generators.add(generatorModificationInfos);
+    }
+
+    public void addTransformerModification(TransformerModificationInfos transformerModificationInfos) {
+        transformers.add(transformerModificationInfos);
+    }
+
+    public void addStaticVarCompensatorModification(StaticVarCompensatorModificationInfos staticVarCompensatorModificationInfos) {
+        staticVarCompensators.add(staticVarCompensatorModificationInfos);
+    }
+
+    public void addVscConverterStationModification(VscConverterStationModificationInfos vscConverterStationModificationInfos) {
+        vscConverterStations.add(vscConverterStationModificationInfos);
     }
 }
