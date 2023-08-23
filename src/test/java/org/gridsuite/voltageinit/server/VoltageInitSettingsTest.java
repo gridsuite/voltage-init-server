@@ -130,7 +130,7 @@ public class VoltageInitSettingsTest {
     }
 
     @Test
-    public void testGetAllByType() throws Exception {
+    public void testGetAll() throws Exception {
         VoltageInitSettingInfos setting1 = buildSetting();
 
         VoltageInitSettingInfos setting2 = buildSettingUpdate();

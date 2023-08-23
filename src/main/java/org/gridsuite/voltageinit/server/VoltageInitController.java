@@ -6,7 +6,6 @@
  */
 package org.gridsuite.voltageinit.server;
 
-import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -15,7 +14,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
-import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
 import org.gridsuite.voltageinit.server.service.VoltageInitService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -41,7 +39,7 @@ public class VoltageInitController {
         this.voltageInitService = voltageInitService;
     }
 
-    @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/networks/{networkUuid}/run-and-save", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Run a voltage init on a network")
     @ApiResponses(value = {@ApiResponse(responseCode = "200",
             description = "The voltage init analysis has been performed")})
@@ -51,10 +49,10 @@ public class VoltageInitController {
                                            @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver,
                                            @Parameter(description = "reportUuid") @RequestParam(name = "reportUuid", required = false) UUID reportUuid,
                                            @Parameter(description = "reporterId") @RequestParam(name = "reporterId", required = false) String reporterId,
-                                           @RequestBody(required = false) OpenReacParameters parameters,
+                                           @Parameter(description = "settingUuid") @RequestParam(name = "settingUuid", required = false) UUID settingUuid,
                                            @RequestHeader(HEADER_USER_ID) String userId) {
         List<UUID> nonNullOtherNetworkUuids = getNonNullOtherNetworkUuids(otherNetworkUuids);
-        UUID resultUuid = voltageInitService.runAndSaveResult(new VoltageInitRunContext(networkUuid, variantId, nonNullOtherNetworkUuids, receiver, reportUuid, reporterId, userId, parameters));
+        UUID resultUuid = voltageInitService.runAndSaveResult(networkUuid, variantId, nonNullOtherNetworkUuids, receiver, reportUuid, reporterId, userId, settingUuid);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultUuid);
     }
 

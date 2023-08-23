@@ -43,7 +43,7 @@ public class FilterEquipmentsEmbeddable {
     public static List<FilterEquipments> fromEmbeddableFilterEquipments(List<FilterEquipmentsEmbeddable> filters) {
         return filters == null ? null :
                 filters.stream()
-                        .map(filter -> new FilterEquipments(filter.getFilterId(), filter.getFilterName()))
+                        .map(filter -> new FilterEquipments(filter.getFilterId(), filter.getFilterName(), null, null))
                         .toList();
     }
 }

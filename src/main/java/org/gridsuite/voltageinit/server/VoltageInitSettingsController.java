@@ -41,7 +41,7 @@ public class VoltageInitSettingsController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "The setting was created"),
         @ApiResponse(responseCode = "404", description = "The setting was not found")})
-    public ResponseEntity<VoltageInitSettingInfos> createSetting(
+    public ResponseEntity<UUID> createSetting(
             @RequestBody VoltageInitSettingInfos settingInfos) {
         return ResponseEntity.ok().body(settingsService.createSetting(settingInfos));
     }
@@ -51,7 +51,9 @@ public class VoltageInitSettingsController {
     @ApiResponse(responseCode = "200", description = "The setting was returned")
     public ResponseEntity<VoltageInitSettingInfos> getSetting(
             @Parameter(description = "Setting UUID") @PathVariable("uuid") UUID settingUuid) {
-        return ResponseEntity.ok().body(settingsService.getSetting(settingUuid));
+        VoltageInitSettingInfos setting = settingsService.getSetting(settingUuid);
+        return setting != null ? ResponseEntity.ok().body(settingsService.getSetting(settingUuid))
+                : ResponseEntity.notFound().build();
     }
 
     @GetMapping(value = "/settings", produces = MediaType.APPLICATION_JSON_VALUE)

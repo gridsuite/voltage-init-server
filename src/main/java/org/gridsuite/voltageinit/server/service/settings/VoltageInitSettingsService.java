@@ -28,12 +28,12 @@ public class VoltageInitSettingsService {
         this.voltageInitSettingRepository = voltageInitSettingRepository;
     }
 
-    public VoltageInitSettingInfos createSetting(VoltageInitSettingInfos settingInfos) {
-        return voltageInitSettingRepository.save(settingInfos.toEntity()).toVoltageInitSettingInfos();
+    public UUID createSetting(VoltageInitSettingInfos settingInfos) {
+        return voltageInitSettingRepository.save(settingInfos.toEntity()).toVoltageInitSettingInfos().getUuid();
     }
 
     public VoltageInitSettingInfos getSetting(UUID settingUuid) {
-        return voltageInitSettingRepository.findById(settingUuid).orElseThrow().toVoltageInitSettingInfos();
+        return voltageInitSettingRepository.findById(settingUuid).map(VoltageInitSettingEntity::toVoltageInitSettingInfos).orElse(null);
     }
 
     public List<VoltageInitSettingInfos> getAllSettings() {
