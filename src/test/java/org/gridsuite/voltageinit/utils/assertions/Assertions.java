@@ -7,7 +7,7 @@
 package org.gridsuite.voltageinit.utils.assertions;
 
 import org.assertj.core.util.CheckReturnValue;
-import org.gridsuite.voltageinit.server.dto.settings.VoltageInitSettingInfos;
+import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
 
 /**
  *  @author Tristan Chuine <tristan.chuine at rte-france.com>
@@ -15,7 +15,7 @@ import org.gridsuite.voltageinit.server.dto.settings.VoltageInitSettingInfos;
  */
 public class Assertions extends org.assertj.core.api.Assertions {
     @CheckReturnValue
-    public static DTOAssert<VoltageInitSettingInfos> assertThat(VoltageInitSettingInfos actual) {
+    public static DTOAssert<VoltageInitParametersInfos> assertThat(VoltageInitParametersInfos actual) {
         return new DTOAssert<>(actual);
     }
 }

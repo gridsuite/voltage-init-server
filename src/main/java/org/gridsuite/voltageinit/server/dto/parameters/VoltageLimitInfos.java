@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.voltageinit.server.dto.settings;
+package org.gridsuite.voltageinit.server.dto.parameters;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -14,8 +14,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-import org.gridsuite.voltageinit.server.entities.settings.FilterEquipmentsEmbeddable;
-import org.gridsuite.voltageinit.server.entities.settings.VoltageLimitsParameterEntity;
+import org.gridsuite.voltageinit.server.entities.parameters.FilterEquipmentsEmbeddable;
+import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
@@ -24,7 +24,7 @@ import org.gridsuite.voltageinit.server.entities.settings.VoltageLimitsParameter
 @AllArgsConstructor
 @Builder
 @NoArgsConstructor
-public class VoltageLimitsParameterInfos {
+public class VoltageLimitInfos {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Integer priority;
@@ -35,8 +35,8 @@ public class VoltageLimitsParameterInfos {
 
     List<FilterEquipments> filters;
 
-    public VoltageLimitsParameterEntity toEntity() {
-        return new VoltageLimitsParameterEntity(null, lowVoltageLimit, highVoltageLimit, priority,
+    public VoltageLimitEntity toEntity() {
+        return new VoltageLimitEntity(null, lowVoltageLimit, highVoltageLimit, priority,
                 FilterEquipmentsEmbeddable.toEmbeddableFilterEquipments(filters));
     }
 }

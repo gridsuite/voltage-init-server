@@ -13,13 +13,13 @@ import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
-import org.gridsuite.voltageinit.server.dto.settings.FilterEquipments;
+import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.gridsuite.voltageinit.server.entities.VoltageInitResultEntity;
-import org.gridsuite.voltageinit.server.entities.settings.FilterEquipmentsEmbeddable;
-import org.gridsuite.voltageinit.server.entities.settings.VoltageInitSettingEntity;
+import org.gridsuite.voltageinit.server.entities.parameters.FilterEquipmentsEmbeddable;
+import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.repository.VoltageInitResultRepository;
-import org.gridsuite.voltageinit.server.repository.settings.VoltageInitSettingRepository;
-import org.gridsuite.voltageinit.server.service.settings.FilterService;
+import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
+import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,7 +53,7 @@ public class VoltageInitService {
 
     private VoltageInitResultRepository resultRepository;
 
-    private VoltageInitSettingRepository voltageInitSettingRepository;
+    private VoltageInitParametersRepository voltageInitParametersRepository;
 
     private ObjectMapper objectMapper;
 
@@ -62,23 +62,23 @@ public class VoltageInitService {
                               FilterService filterService,
                               UuidGeneratorService uuidGeneratorService,
                               VoltageInitResultRepository resultRepository,
-                              VoltageInitSettingRepository voltageInitSettingRepository,
+                              VoltageInitParametersRepository voltageInitParametersRepository,
                               ObjectMapper objectMapper) {
         this.notificationService = Objects.requireNonNull(notificationService);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
         this.filterService = filterService;
         this.uuidGeneratorService = Objects.requireNonNull(uuidGeneratorService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
-        this.voltageInitSettingRepository = Objects.requireNonNull(voltageInitSettingRepository);
+        this.voltageInitParametersRepository = Objects.requireNonNull(voltageInitParametersRepository);
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
-    public UUID runAndSaveResult(UUID networkUuid, String variantId, List<UUID> nonNullOtherNetworkUuids, String receiver, UUID reportUuid, String reporterId, String userId, UUID settingUuid) {
-        Optional<VoltageInitSettingEntity> voltageInitSettingEntity = Optional.empty();
-        if (settingUuid != null) {
-            voltageInitSettingEntity = voltageInitSettingRepository.findById(settingUuid);
+    public UUID runAndSaveResult(UUID networkUuid, String variantId, List<UUID> nonNullOtherNetworkUuids, String receiver, UUID reportUuid, String reporterId, String userId, UUID parametersUuid) {
+        Optional<VoltageInitParametersEntity> voltageInitParametersEntity = Optional.empty();
+        if (parametersUuid != null) {
+            voltageInitParametersEntity = voltageInitParametersRepository.findById(parametersUuid);
         }
-        OpenReacParameters parameters = buildOpenReacParameters(voltageInitSettingEntity, networkUuid, variantId);
+        OpenReacParameters parameters = buildOpenReacParameters(voltageInitParametersEntity, networkUuid, variantId);
         VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, nonNullOtherNetworkUuids, receiver, reportUuid, reporterId, userId, parameters);
         Objects.requireNonNull(runContext);
         var resultUuid = uuidGeneratorService.generate();
@@ -89,15 +89,15 @@ public class VoltageInitService {
         return resultUuid;
     }
 
-    private OpenReacParameters buildOpenReacParameters(Optional<VoltageInitSettingEntity> voltageInitSettingEntity, UUID networkUuid, String variantId) {
+    private OpenReacParameters buildOpenReacParameters(Optional<VoltageInitParametersEntity> voltageInitParametersEntity, UUID networkUuid, String variantId) {
         OpenReacParameters parameters = new OpenReacParameters();
         Map<String, VoltageLimitOverride> specificVoltageLimits = new HashMap<>();
         List<String> constantQGenerators = new ArrayList<>();
         List<String> variableTwoWindingsTransformers = new ArrayList<>();
         List<String> variableShuntCompensators = new ArrayList<>();
-        voltageInitSettingEntity.ifPresent(voltageInitSetting -> {
-            if (voltageInitSetting.getVoltageLimits() != null) {
-                voltageInitSetting.getVoltageLimits().forEach(voltageLimit -> {
+        voltageInitParametersEntity.ifPresent(voltageInitParameters -> {
+            if (voltageInitParameters.getVoltageLimits() != null) {
+                voltageInitParameters.getVoltageLimits().forEach(voltageLimit -> {
                     var filterEquipments = filterService.exportFilters(voltageLimit.getFilters().stream().map(filter -> filter.getFilterId()).collect(Collectors.toList()), networkUuid, variantId);
                     filterEquipments.forEach(filterEquipment ->
                             filterEquipment.getIdentifiableAttributes().forEach(idenfiableAttribute ->
@@ -105,9 +105,9 @@ public class VoltageInitService {
                             )
                     );
                 });
-                constantQGenerators.addAll(toEquipmentIdsList(voltageInitSetting.getConstantQGenerators(), networkUuid, variantId));
-                variableTwoWindingsTransformers.addAll(toEquipmentIdsList(voltageInitSetting.getVariableTwoWindingsTransformers(), networkUuid, variantId));
-                variableShuntCompensators.addAll(toEquipmentIdsList(voltageInitSetting.getVariableShuntCompensators(), networkUuid, variantId));
+                constantQGenerators.addAll(toEquipmentIdsList(voltageInitParameters.getConstantQGenerators(), networkUuid, variantId));
+                variableTwoWindingsTransformers.addAll(toEquipmentIdsList(voltageInitParameters.getVariableTwoWindingsTransformers(), networkUuid, variantId));
+                variableShuntCompensators.addAll(toEquipmentIdsList(voltageInitParameters.getVariableShuntCompensators(), networkUuid, variantId));
             }
         });
         parameters.addSpecificVoltageLimits(specificVoltageLimits)

@@ -11,11 +11,11 @@ import static org.gridsuite.voltageinit.utils.assertions.Assertions.*;
 import java.util.List;
 import java.util.UUID;
 
-import org.gridsuite.voltageinit.server.dto.settings.FilterEquipments;
-import org.gridsuite.voltageinit.server.dto.settings.VoltageInitSettingInfos;
-import org.gridsuite.voltageinit.server.dto.settings.VoltageLimitsParameterInfos;
-import org.gridsuite.voltageinit.server.entities.settings.VoltageInitSettingEntity;
-import org.gridsuite.voltageinit.server.repository.settings.VoltageInitSettingRepository;
+import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
+import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
+import org.gridsuite.voltageinit.server.dto.parameters.VoltageLimitInfos;
+import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
+import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,11 +41,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-public class VoltageInitSettingsTest {
+public class VoltageInitParametersTest {
 
-    private static final String URI_SETTINGS_BASE = "/v1/settings";
+    private static final String URI_PARAMETERS_BASE = "/v1/parameters";
 
-    private static final String URI_SETTINGS_GET_PUT = URI_SETTINGS_BASE + "/";
+    private static final String URI_PARAMETERS_GET_PUT = URI_PARAMETERS_BASE + "/";
 
     @Autowired
     protected MockMvc mockMvc;
@@ -54,108 +54,108 @@ public class VoltageInitSettingsTest {
     protected ObjectMapper mapper;
 
     @Autowired
-    private VoltageInitSettingRepository settingsRepository;
+    private VoltageInitParametersRepository parametersRepository;
 
     @Before
     public void setup() {
-        settingsRepository.deleteAll();
+        parametersRepository.deleteAll();
     }
 
     @After
     public void tearOff() {
-        settingsRepository.deleteAll();
+        parametersRepository.deleteAll();
     }
 
     @Test
     public void testCreate() throws Exception {
 
-        VoltageInitSettingInfos settingToCreate = buildSetting();
-        String settingToCreateJson = mapper.writeValueAsString(settingToCreate);
+        VoltageInitParametersInfos parametersToCreate = buildParameters();
+        String parametersToCreateJson = mapper.writeValueAsString(parametersToCreate);
 
-        mockMvc.perform(post(URI_SETTINGS_BASE).content(settingToCreateJson).contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(post(URI_PARAMETERS_BASE).content(parametersToCreateJson).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andReturn();
 
-        VoltageInitSettingInfos createdSetting = settingsRepository.findAll().get(0).toVoltageInitSettingInfos();
+        VoltageInitParametersInfos createdParameters = parametersRepository.findAll().get(0).toVoltageInitParametersInfos();
 
-        assertThat(createdSetting).recursivelyEquals(settingToCreate);
+        assertThat(createdParameters).recursivelyEquals(parametersToCreate);
     }
 
     @Test
     public void testRead() throws Exception {
 
-        VoltageInitSettingInfos settingToRead = buildSetting();
+        VoltageInitParametersInfos parametersToRead = buildParameters();
 
-        UUID settingUuid = saveAndRetunId(settingToRead);
+        UUID parametersUuid = saveAndRetunId(parametersToRead);
 
-        MvcResult mvcResult = mockMvc.perform(get(URI_SETTINGS_GET_PUT + settingUuid))
+        MvcResult mvcResult = mockMvc.perform(get(URI_PARAMETERS_GET_PUT + parametersUuid))
                 .andExpect(status().isOk()).andReturn();
         String resultAsString = mvcResult.getResponse().getContentAsString();
-        VoltageInitSettingInfos receivedSetting = mapper.readValue(resultAsString, new TypeReference<>() {
+        VoltageInitParametersInfos receivedParameters = mapper.readValue(resultAsString, new TypeReference<>() {
         });
 
-        assertThat(receivedSetting).recursivelyEquals(settingToRead);
+        assertThat(receivedParameters).recursivelyEquals(parametersToRead);
     }
 
     @Test
     public void testUpdate() throws Exception {
 
-        VoltageInitSettingInfos settingToUpdate = buildSetting();
+        VoltageInitParametersInfos parametersToUpdate = buildParameters();
 
-        UUID settingUuid = saveAndRetunId(settingToUpdate);
+        UUID parametersUuid = saveAndRetunId(parametersToUpdate);
 
-        settingToUpdate = buildSettingUpdate();
+        parametersToUpdate = buildParametersUpdate();
 
-        String settingToUpdateJson = mapper.writeValueAsString(settingToUpdate);
+        String parametersToUpdateJson = mapper.writeValueAsString(parametersToUpdate);
 
-        mockMvc.perform(put(URI_SETTINGS_GET_PUT + settingUuid).content(settingToUpdateJson).contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(put(URI_PARAMETERS_GET_PUT + parametersUuid).content(parametersToUpdateJson).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
-        VoltageInitSettingInfos updatedSetting = settingsRepository.findById(settingUuid).get().toVoltageInitSettingInfos();
+        VoltageInitParametersInfos updatedParameters = parametersRepository.findById(parametersUuid).get().toVoltageInitParametersInfos();
 
-        assertThat(updatedSetting).recursivelyEquals(settingToUpdate);
+        assertThat(updatedParameters).recursivelyEquals(parametersToUpdate);
     }
 
     @Test
     public void testDelete() throws Exception {
 
-        VoltageInitSettingInfos settingToDelete = buildSetting();
+        VoltageInitParametersInfos parametersToDelete = buildParameters();
 
-        UUID settingUuid = saveAndRetunId(settingToDelete);
+        UUID parametersUuid = saveAndRetunId(parametersToDelete);
 
-        mockMvc.perform(delete(URI_SETTINGS_GET_PUT + settingUuid)).andExpect(status().isOk()).andReturn();
+        mockMvc.perform(delete(URI_PARAMETERS_GET_PUT + parametersUuid)).andExpect(status().isOk()).andReturn();
 
-        List<VoltageInitSettingEntity> storedSettings = settingsRepository.findAll();
+        List<VoltageInitParametersEntity> storedParameters = parametersRepository.findAll();
 
-        assertTrue(storedSettings.isEmpty());
+        assertTrue(storedParameters.isEmpty());
     }
 
     @Test
     public void testGetAll() throws Exception {
-        VoltageInitSettingInfos setting1 = buildSetting();
+        VoltageInitParametersInfos parameters1 = buildParameters();
 
-        VoltageInitSettingInfos setting2 = buildSettingUpdate();
+        VoltageInitParametersInfos parameters2 = buildParametersUpdate();
 
-        saveAndRetunId(setting1);
+        saveAndRetunId(parameters1);
 
-        saveAndRetunId(setting2);
+        saveAndRetunId(parameters2);
 
-        MvcResult mvcResult = mockMvc.perform(get(URI_SETTINGS_BASE))
+        MvcResult mvcResult = mockMvc.perform(get(URI_PARAMETERS_BASE))
                 .andExpect(status().isOk()).andReturn();
         String resultAsString = mvcResult.getResponse().getContentAsString();
-        List<VoltageInitSettingInfos> receivedSettings = mapper.readValue(resultAsString, new TypeReference<>() {
+        List<VoltageInitParametersInfos> receivedParameters = mapper.readValue(resultAsString, new TypeReference<>() {
         });
 
-        assertThat(receivedSettings).hasSize(2);
+        assertThat(receivedParameters).hasSize(2);
     }
 
-    /** Save a setting into the repository and return its UUID. */
-    protected UUID saveAndRetunId(VoltageInitSettingInfos settingInfos) {
-        settingsRepository.save(settingInfos.toEntity());
-        return settingsRepository.findAll().get(0).getId();
+    /** Save parameters into the repository and return its UUID. */
+    protected UUID saveAndRetunId(VoltageInitParametersInfos parametersInfos) {
+        parametersRepository.save(parametersInfos.toEntity());
+        return parametersRepository.findAll().get(0).getId();
     }
 
-    protected VoltageInitSettingInfos buildSetting() {
-        return VoltageInitSettingInfos.builder()
+    protected VoltageInitParametersInfos buildParameters() {
+        return VoltageInitParametersInfos.builder()
             .constantQGenerators(List.of(FilterEquipments.builder()
                     .filterId(UUID.randomUUID())
                     .filterName("qgenFilter1")
@@ -173,9 +173,9 @@ public class VoltageInitSettingsTest {
             .build();
     }
 
-    protected VoltageInitSettingInfos buildSettingUpdate() {
-        return VoltageInitSettingInfos.builder()
-            .voltageLimits(List.of(VoltageLimitsParameterInfos.builder()
+    protected VoltageInitParametersInfos buildParametersUpdate() {
+        return VoltageInitParametersInfos.builder()
+            .voltageLimits(List.of(VoltageLimitInfos.builder()
                 .priority(0)
                 .lowVoltageLimit(2.0)
                 .highVoltageLimit(20.0)

@@ -31,14 +31,14 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
-import org.gridsuite.voltageinit.server.dto.settings.FilterEquipments;
-import org.gridsuite.voltageinit.server.dto.settings.VoltageInitSettingInfos;
-import org.gridsuite.voltageinit.server.dto.settings.VoltageLimitsParameterInfos;
-import org.gridsuite.voltageinit.server.entities.settings.VoltageInitSettingEntity;
-import org.gridsuite.voltageinit.server.repository.settings.VoltageInitSettingRepository;
+import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
+import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
+import org.gridsuite.voltageinit.server.dto.parameters.VoltageLimitInfos;
+import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
+import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.gridsuite.voltageinit.server.service.NetworkModificationService;
 import org.gridsuite.voltageinit.server.service.UuidGeneratorService;
-import org.gridsuite.voltageinit.server.service.settings.FilterService;
+import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.gridsuite.voltageinit.server.util.annotations.PostCompletionAdapter;
 import org.junit.After;
 import org.junit.Before;
@@ -116,7 +116,7 @@ public class VoltageInitControllerTest {
     private NetworkModificationService networkModificationService;
 
     @Autowired
-    private VoltageInitSettingRepository settingsRepository;
+    private VoltageInitParametersRepository parametersRepository;
 
     @Autowired
     private FilterService filterService;
@@ -160,9 +160,9 @@ public class VoltageInitControllerTest {
         return openReacResult;
     }
 
-    private VoltageInitSettingEntity buildVoltageInitSettingEntity() {
-        return VoltageInitSettingInfos.builder()
-            .voltageLimits(List.of(VoltageLimitsParameterInfos.builder()
+    private VoltageInitParametersEntity buildVoltageInitParametersEntity() {
+        return VoltageInitParametersInfos.builder()
+            .voltageLimits(List.of(VoltageLimitInfos.builder()
                 .priority(0)
                 .lowVoltageLimit(2.0)
                 .highVoltageLimit(20.0)
@@ -315,10 +315,10 @@ public class VoltageInitControllerTest {
                     .andExpect(status().isNotFound());
         }
 
-        settingsRepository.save(buildVoltageInitSettingEntity());
-        UUID settingUuid = settingsRepository.findAll().get(0).getId();
+        parametersRepository.save(buildVoltageInitParametersEntity());
+        UUID parametersUuid = parametersRepository.findAll().get(0).getId();
         MvcResult result = mockMvc.perform(post(
-                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID + "&settingUuid=" + settingUuid, NETWORK_UUID)
+                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID + "&parametersUuid=" + parametersUuid, NETWORK_UUID)
                         .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))

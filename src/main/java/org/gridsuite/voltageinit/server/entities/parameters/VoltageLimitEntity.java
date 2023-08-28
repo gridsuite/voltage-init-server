@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.voltageinit.server.entities.settings;
+package org.gridsuite.voltageinit.server.entities.parameters;
 
 import lombok.*;
 
@@ -21,8 +21,8 @@ import java.util.UUID;
 @Setter
 @Entity
 @Builder
-@Table(name = "volatge_limits_parameter")
-public class VoltageLimitsParameterEntity {
+@Table(name = "voltageLimit")
+public class VoltageLimitEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -40,8 +40,9 @@ public class VoltageLimitsParameterEntity {
 
     @ElementCollection
     @CollectionTable(
-            name = "VoltageLimitsParameterEntityFilters",
-            joinColumns = @JoinColumn(name = "voltageLimitId", foreignKey = @ForeignKey(name = "VoltageLimitsParameterEntity_filters_fk"))
+            name = "VoltageLimitEntityFilters",
+            joinColumns = @JoinColumn(name = "voltageLimitId", foreignKey = @ForeignKey(name = "VoltageLimitsEntity_filters_fk")),
+            indexes = {@Index(name = "VoltageLimitEntity_filters_index", columnList = "voltageLimitId")}
     )
     private List<FilterEquipmentsEmbeddable> filters;
 }

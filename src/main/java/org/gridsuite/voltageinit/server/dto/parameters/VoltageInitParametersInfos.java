@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.voltageinit.server.dto.settings;
+package org.gridsuite.voltageinit.server.dto.parameters;
 
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -13,7 +13,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import org.gridsuite.voltageinit.server.entities.settings.VoltageInitSettingEntity;
+import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -24,18 +24,18 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @NoArgsConstructor
 @Getter
 @Setter
-@Schema(description = "Voltage init setting")
-public class VoltageInitSettingInfos {
-    @Schema(description = "Setting id")
+@Schema(description = "Voltage init parameters")
+public class VoltageInitParametersInfos {
+    @Schema(description = "parameters id")
     private UUID uuid;
 
-    @Schema(description = "Setting date")
+    @Schema(description = "parameters date")
     private ZonedDateTime date;
 
-    @Schema(description = "Setting name")
+    @Schema(description = "parameters name")
     private String name;
 
-    List<VoltageLimitsParameterInfos> voltageLimits;
+    List<VoltageLimitInfos> voltageLimits;
 
     List<FilterEquipments> constantQGenerators;
 
@@ -43,7 +43,7 @@ public class VoltageInitSettingInfos {
 
     List<FilterEquipments> variableShuntCompensators;
 
-    public VoltageInitSettingEntity toEntity() {
-        return new VoltageInitSettingEntity(this);
+    public VoltageInitParametersEntity toEntity() {
+        return new VoltageInitParametersEntity(this);
     }
 }
