@@ -21,7 +21,7 @@ import java.util.UUID;
 @Setter
 @Entity
 @Builder
-@Table(name = "voltageLimit")
+@Table(name = "voltageLimit", indexes = {@Index(name = "VoltageInitParametersEntity_voltageLimits_index", columnList = "voltageInitParametersId")})
 public class VoltageLimitEntity {
 
     @Id

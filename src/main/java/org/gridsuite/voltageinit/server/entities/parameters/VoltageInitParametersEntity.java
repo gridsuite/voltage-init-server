@@ -45,7 +45,7 @@ public class VoltageInitParametersEntity {
     private String name;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "voltageInitParametersId")
+    @JoinColumn(name = "voltageInitParametersId", foreignKey = @ForeignKey(name = "voltageInitParametersEntity_voltageLimits_fk"))
     private List<VoltageLimitEntity> voltageLimits;
 
     @ElementCollection
