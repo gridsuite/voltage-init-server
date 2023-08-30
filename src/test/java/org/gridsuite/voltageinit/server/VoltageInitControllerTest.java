@@ -31,8 +31,14 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
+import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
+import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
+import org.gridsuite.voltageinit.server.dto.parameters.VoltageLimitInfos;
+import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
+import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.gridsuite.voltageinit.server.service.NetworkModificationService;
 import org.gridsuite.voltageinit.server.service.UuidGeneratorService;
+import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.gridsuite.voltageinit.server.util.annotations.PostCompletionAdapter;
 import org.junit.After;
 import org.junit.Before;
@@ -56,6 +62,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -90,7 +97,7 @@ public class VoltageInitControllerTest {
     private static final UUID OTHER_NETWORK_FOR_MERGING_VIEW_UUID = UUID.fromString("22222222-7977-4592-ba19-88027e4254e4");
     private static final Map<String, String> INDICATORS = Map.of("defaultPmax", "1000.000000", "defaultQmax", "300.000000", "minimalQPrange", "1.000000");
     private static final UUID MODIFICATIONS_GROUP_UUID = UUID.fromString("33333333-aaaa-bbbb-cccc-dddddddddddd");
-
+    private static final String FILTER_EQUIPMENT_JSON = "[{\"filterId\":\"cf399ef3-7f14-4884-8c82-1c90300da329\",\"identifiableAttributes\":[{\"id\":\"VL1\",\"type\":\"VOLTAGE_LEVEL\"}],\"notFoundEquipments\":[]}]";
     private static final String VARIANT_1_ID = "variant_1";
     private static final String VARIANT_2_ID = "variant_2";
     private static final String VARIANT_3_ID = "variant_3";
@@ -107,6 +114,12 @@ public class VoltageInitControllerTest {
 
     @Autowired
     private NetworkModificationService networkModificationService;
+
+    @Autowired
+    private VoltageInitParametersRepository parametersRepository;
+
+    @Autowired
+    private FilterService filterService;
 
     @MockBean
     private NetworkStoreService networkStoreService;
@@ -147,6 +160,34 @@ public class VoltageInitControllerTest {
         return openReacResult;
     }
 
+    private VoltageInitParametersEntity buildVoltageInitParametersEntity() {
+        return VoltageInitParametersInfos.builder()
+            .voltageLimits(List.of(VoltageLimitInfos.builder()
+                .priority(0)
+                .lowVoltageLimit(2.0)
+                .highVoltageLimit(20.0)
+                .filters(List.of(FilterEquipments.builder()
+                    .filterId(UUID.randomUUID())
+                    .filterName("filterName")
+                    .build()))
+                .build()))
+            .constantQGenerators(List.of(FilterEquipments.builder()
+                    .filterId(UUID.randomUUID())
+                    .filterName("qgenFilter1")
+                    .build(), FilterEquipments.builder()
+                    .filterId(UUID.randomUUID())
+                    .filterName("qgenFilter2")
+                    .build()))
+            .variableTwoWindingsTransformers(List.of(FilterEquipments.builder()
+                    .filterId(UUID.randomUUID())
+                    .filterName("vtwFilter1")
+                    .build(), FilterEquipments.builder()
+                    .filterId(UUID.randomUUID())
+                    .filterName("vtwFilter2")
+                    .build()))
+            .build().toEntity();
+    }
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -157,6 +198,7 @@ public class VoltageInitControllerTest {
         HttpUrl baseHttpUrl = server.url("");
         String baseUrl = baseHttpUrl.toString().substring(0, baseHttpUrl.toString().length() - 1);
         networkModificationService.setNetworkModificationServerBaseUri(baseUrl);
+        filterService.setFilterServerBaseUri(baseUrl);
 
         // network store service mocking
         network = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
@@ -197,6 +239,9 @@ public class VoltageInitControllerTest {
                 } else if (path.matches("/v1/groups/modification") && request.getMethod().equals("POST")) {
                     return new MockResponse().setResponseCode(200).setBody("\"" + MODIFICATIONS_GROUP_UUID + "\"")
                             .addHeader("Content-Type", "application/json; charset=utf-8");
+                } else if (path.matches("/v1/filters/export\\?networkUuid=" + NETWORK_UUID + "&variantId=" + VARIANT_2_ID + "&ids=.*")) {
+                    return new MockResponse().setResponseCode(200).setBody(FILTER_EQUIPMENT_JSON)
+                            .addHeader("Content-Type", "application/json; charset=utf-8");
                 }
                 return new MockResponse().setResponseCode(418);
             }
@@ -231,8 +276,8 @@ public class VoltageInitControllerTest {
                     .thenReturn(completableFutureResultsTask);
 
             MvcResult result = mockMvc.perform(post(
-                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID).content(mapper.writeValueAsString(openReacParameters))
-                            .header(HEADER_USER_ID, "userId").contentType(MediaType.APPLICATION_JSON))
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                            .header(HEADER_USER_ID, "userId"))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
@@ -269,6 +314,17 @@ public class VoltageInitControllerTest {
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                     .andExpect(status().isNotFound());
         }
+
+        parametersRepository.save(buildVoltageInitParametersEntity());
+        UUID parametersUuid = parametersRepository.findAll().get(0).getId();
+        MvcResult result = mockMvc.perform(post(
+                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID + "&parametersUuid=" + parametersUuid, NETWORK_UUID)
+                        .header(HEADER_USER_ID, "userId"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+        assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
+
     }
 
     @Test
