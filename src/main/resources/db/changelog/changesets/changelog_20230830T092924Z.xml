@@ -1,0 +1,99 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.1.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+    <changeSet author="labidiayo (generated)" id="1693387776344-1">
+        <createTable tableName="voltage_init_parameters">
+            <column name="id" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="voltage_init_parametersPK"/>
+            </column>
+            <column name="date" type="TIMESTAMP"/>
+            <column name="name" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="labidiayo (generated)" id="1693387776344-2">
+        <createTable tableName="voltage_init_parameters_entity_constantqgenerators">
+            <column name="voltage_init_parameters_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="filter_id" type="UUID"/>
+            <column name="filter_name" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="labidiayo (generated)" id="1693387776344-3">
+        <createTable tableName="voltage_init_parameters_entity_variable_shunt_compensators">
+            <column name="voltage_init_parameters_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="filter_id" type="UUID"/>
+            <column name="filter_name" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="labidiayo (generated)" id="1693387776344-4">
+        <createTable tableName="voltage_init_parameters_entity_variable_two_wt">
+            <column name="voltage_init_parameters_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="filter_id" type="UUID"/>
+            <column name="filter_name" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="labidiayo (generated)" id="1693387776344-5">
+        <createTable tableName="voltage_limit">
+            <column name="id" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="voltage_limitPK"/>
+            </column>
+            <column name="high_voltage_limit" type="FLOAT8"/>
+            <column name="low_voltage_limit" type="FLOAT8"/>
+            <column name="priority" type="INT"/>
+            <column name="voltage_init_parameters_id" type="UUID"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="labidiayo (generated)" id="1693387776344-6">
+        <createTable tableName="voltage_limit_entity_filters">
+            <column name="voltage_limit_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="filter_id" type="UUID"/>
+            <column name="filter_name" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="labidiayo (generated)" id="1693387776344-7">
+        <createIndex indexName="VoltageInitParametersEntity_constantQGenerators_index" tableName="voltage_init_parameters_entity_constantqgenerators">
+            <column name="voltage_init_parameters_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="labidiayo (generated)" id="1693387776344-8">
+        <createIndex indexName="VoltageInitParametersEntity_variableShuntCompensators_index" tableName="voltage_init_parameters_entity_variable_shunt_compensators">
+            <column name="voltage_init_parameters_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="labidiayo (generated)" id="1693387776344-9">
+        <createIndex indexName="VoltageInitParametersEntity_variableTwoWTransformers_index" tableName="voltage_init_parameters_entity_variable_two_wt">
+            <column name="voltage_init_parameters_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="labidiayo (generated)" id="1693387776344-10">
+        <createIndex indexName="VoltageInitParametersEntity_voltageLimits_index" tableName="voltage_limit">
+            <column name="voltage_init_parameters_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="labidiayo (generated)" id="1693387776344-11">
+        <createIndex indexName="VoltageLimitEntity_filters_index" tableName="voltage_limit_entity_filters">
+            <column name="voltage_limit_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="labidiayo (generated)" id="1693387776344-12">
+        <addForeignKeyConstraint baseColumnNames="voltage_limit_id" baseTableName="voltage_limit_entity_filters" constraintName="VoltageLimitsEntity_filters_fk" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="voltage_limit" validate="true"/>
+    </changeSet>
+    <changeSet author="labidiayo (generated)" id="1693387776344-13">
+        <addForeignKeyConstraint baseColumnNames="voltage_init_parameters_id" baseTableName="voltage_init_parameters_entity_constantqgenerators" constraintName="voltageInitParametersEntity_constantQGenerators_fk" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="voltage_init_parameters" validate="true"/>
+    </changeSet>
+    <changeSet author="labidiayo (generated)" id="1693387776344-14">
+        <addForeignKeyConstraint baseColumnNames="voltage_init_parameters_id" baseTableName="voltage_init_parameters_entity_variable_shunt_compensators" constraintName="voltageInitParametersEntity_variableShuntCompensators_fk" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="voltage_init_parameters" validate="true"/>
+    </changeSet>
+    <changeSet author="labidiayo (generated)" id="1693387776344-15">
+        <addForeignKeyConstraint baseColumnNames="voltage_init_parameters_id" baseTableName="voltage_init_parameters_entity_variable_two_wt" constraintName="voltageInitParametersEntity_variableTwoWt_fk" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="voltage_init_parameters" validate="true"/>
+    </changeSet>
+    <changeSet author="labidiayo (generated)" id="1693387776344-16">
+        <addForeignKeyConstraint baseColumnNames="voltage_init_parameters_id" baseTableName="voltage_limit" constraintName="voltageInitParametersEntity_voltageLimits_fk" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="voltage_init_parameters" validate="true"/>
+    </changeSet>
+</databaseChangeLog>
