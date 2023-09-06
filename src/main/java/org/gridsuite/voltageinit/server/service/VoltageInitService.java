@@ -24,15 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -49,13 +41,13 @@ public class VoltageInitService {
 
     private final FilterService filterService;
 
-    private UuidGeneratorService uuidGeneratorService;
+    private final UuidGeneratorService uuidGeneratorService;
 
-    private VoltageInitResultRepository resultRepository;
+    private final VoltageInitResultRepository resultRepository;
 
-    private VoltageInitParametersRepository voltageInitParametersRepository;
+    private final VoltageInitParametersRepository voltageInitParametersRepository;
 
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     public VoltageInitService(NotificationService notificationService,
                               NetworkModificationService networkModificationService,
@@ -98,7 +90,7 @@ public class VoltageInitService {
         voltageInitParametersEntity.ifPresent(voltageInitParameters -> {
             if (voltageInitParameters.getVoltageLimits() != null) {
                 voltageInitParameters.getVoltageLimits().forEach(voltageLimit -> {
-                    var filterEquipments = filterService.exportFilters(voltageLimit.getFilters().stream().map(filter -> filter.getFilterId()).collect(Collectors.toList()), networkUuid, variantId);
+                    var filterEquipments = filterService.exportFilters(voltageLimit.getFilters().stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, variantId);
                     filterEquipments.forEach(filterEquipment ->
                             filterEquipment.getIdentifiableAttributes().forEach(idenfiableAttribute ->
                                     specificVoltageLimits.put(idenfiableAttribute.getId(), new VoltageLimitOverride(voltageLimit.getLowVoltageLimit(), voltageLimit.getHighVoltageLimit()))
@@ -122,27 +114,31 @@ public class VoltageInitService {
         if (filters == null || filters.isEmpty()) {
             return List.of();
         }
-        List<FilterEquipments> equipments = filterService.exportFilters(filters.stream().map(filter -> filter.getFilterId()).collect(Collectors.toList()), networkUuid, variantId);
+        List<FilterEquipments> equipments = filterService.exportFilters(filters.stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, variantId);
         Set<String> ids = new HashSet<>();
         equipments.forEach(filterEquipment ->
                 filterEquipment.getIdentifiableAttributes().forEach(identifiableAttribute ->
                         ids.add(identifiableAttribute.getId())
                 )
         );
-        return ids.stream().collect(Collectors.toList());
+        return new ArrayList<>(ids);
     }
 
     @Transactional(readOnly = true)
     public VoltageInitResult getResult(UUID resultUuid) {
         Optional<VoltageInitResultEntity> result = resultRepository.find(resultUuid);
-        return result.map(r -> fromEntity(r)).orElse(null);
+        return result.map(VoltageInitService::fromEntity).orElse(null);
     }
 
     private static VoltageInitResult fromEntity(VoltageInitResultEntity resultEntity) {
+        LinkedHashMap<String, String> sortedIndicators = resultEntity.getIndicators().entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (collisionValue1, collisionValue2) -> collisionValue1, LinkedHashMap::new));
         List<ReactiveSlack> reactiveSlacks = resultEntity.getReactiveSlacks().stream()
                 .map(slack -> new ReactiveSlack(slack.getBusId(), slack.getSlack()))
-                .collect(Collectors.toList());
-        return new VoltageInitResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), resultEntity.getIndicators(), reactiveSlacks);
+                .toList();
+        return new VoltageInitResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), sortedIndicators, reactiveSlacks);
     }
 
     public void deleteResult(UUID resultUuid) {
