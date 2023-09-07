@@ -20,3 +20,5 @@ gridsuite:
       base-uri: http://localhost:5028
     network-modification-server:
       base-uri: http://localhost:5007
+    filter-server:
+      base-uri: http://localhost:5027
