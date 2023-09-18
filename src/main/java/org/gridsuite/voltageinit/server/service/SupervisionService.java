@@ -6,7 +6,6 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
-import org.gridsuite.voltageinit.server.repository.GlobalStatusRepository;
 import org.gridsuite.voltageinit.server.repository.ResultRepository;
 import org.springframework.stereotype.Service;
 
