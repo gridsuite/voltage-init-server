@@ -90,10 +90,11 @@ public class VoltageInitResultRepository {
     }
 
     @Transactional
-    public void insert(UUID resultUuid, OpenReacResult result, UUID modificationsGroupUuid) {
+    public void insert(UUID resultUuid, OpenReacResult result, UUID modificationsGroupUuid, String status) {
         Objects.requireNonNull(resultUuid);
         if (result != null) {
             resultRepository.save(toVoltageInitResultEntity(resultUuid, result, modificationsGroupUuid));
+            globalStatusRepository.save(toStatusEntity(resultUuid, status));
         }
     }
 
