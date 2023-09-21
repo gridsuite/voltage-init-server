@@ -94,8 +94,8 @@ public class VoltageInitResultRepository {
         Objects.requireNonNull(resultUuid);
         if (result != null) {
             resultRepository.save(toVoltageInitResultEntity(resultUuid, result, modificationsGroupUuid));
-            globalStatusRepository.save(toStatusEntity(resultUuid, status));
         }
+        globalStatusRepository.save(toStatusEntity(resultUuid, status));
     }
 
     @Transactional
