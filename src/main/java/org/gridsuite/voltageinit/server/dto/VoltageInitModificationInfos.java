@@ -33,6 +33,8 @@ public class VoltageInitModificationInfos {
 
     private List<VscConverterStationModificationInfos> vscConverterStations = new ArrayList<>();
 
+    private List<ShuntCompensatorModificationInfos> shuntCompensators = new ArrayList<>();
+
     public void addGeneratorModification(GeneratorModificationInfos generatorModificationInfos) {
         generators.add(generatorModificationInfos);
     }
@@ -47,5 +49,9 @@ public class VoltageInitModificationInfos {
 
     public void addVscConverterStationModification(VscConverterStationModificationInfos vscConverterStationModificationInfos) {
         vscConverterStations.add(vscConverterStationModificationInfos);
+    }
+
+    public void addShuntCompensatorModification(ShuntCompensatorModificationInfos shuntCompensatorModificationInfos) {
+        shuntCompensators.add(shuntCompensatorModificationInfos);
     }
 }

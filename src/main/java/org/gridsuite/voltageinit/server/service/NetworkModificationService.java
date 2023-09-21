@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import org.gridsuite.voltageinit.server.dto.GeneratorModificationInfos;
+import org.gridsuite.voltageinit.server.dto.ShuntCompensatorModificationInfos;
 import org.gridsuite.voltageinit.server.dto.StaticVarCompensatorModificationInfos;
 import org.gridsuite.voltageinit.server.dto.TransformerModificationInfos;
 import org.gridsuite.voltageinit.server.dto.VoltageInitModificationInfos;
@@ -121,6 +122,15 @@ public class NetworkModificationService {
                         .reactivePowerSetpoint(vscConverterStationModification.getReactivePowerSetpoint());
                     voltageInitModificationInfos.addVscConverterStationModification(builder.build());
                 }
+            });
+
+            // shunt compensator modifications
+            result.getShuntsModifications().forEach(shuntCompensatorModification -> {
+                ShuntCompensatorModificationInfos.ShuntCompensatorModificationInfosBuilder builder = ShuntCompensatorModificationInfos.builder()
+                    .shuntCompensatorId(shuntCompensatorModification.getShuntCompensatorId())
+                    .sectionCount(shuntCompensatorModification.getSectionCount())
+                    .connect(shuntCompensatorModification.getConnect());
+                voltageInitModificationInfos.addShuntCompensatorModification(builder.build());
             });
 
             var uriComponentsBuilder = UriComponentsBuilder
