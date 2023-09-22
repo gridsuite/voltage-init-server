@@ -342,7 +342,6 @@ public class VoltageInitControllerTest {
                         "/" + VERSION + "/results/{resultUuid}/status", RESULT_UUID))
                 .andExpect(status().isOk())
                 .andReturn();
-
         // assert result is NOT_OK
         assertEquals(NOT_OK_RESULT, result.getResponse().getContentAsString());
 
@@ -365,8 +364,10 @@ public class VoltageInitControllerTest {
                     .andReturn();
 
             // stop voltage init analysis
+            assertNotNull(output.receive(TIMEOUT, "voltageinit.run"));
             mockMvc.perform(put("/" + VERSION + "/results/{resultUuid}/stop" + "?receiver=me", RESULT_UUID))
                     .andExpect(status().isOk());
+            assertNotNull(output.receive(TIMEOUT, "voltageinit.cancel"));
 
             Message<byte[]> message = output.receive(TIMEOUT, "voltageinit.stopped");
             assertNotNull(message);
