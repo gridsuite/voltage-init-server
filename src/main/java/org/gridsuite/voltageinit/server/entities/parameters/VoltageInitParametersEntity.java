@@ -8,8 +8,8 @@ package org.gridsuite.voltageinit.server.entities.parameters;
 
 import lombok.*;
 
-import javax.persistence.*;
-import javax.transaction.Transactional;
+import jakarta.persistence.*;
+import jakarta.transaction.Transactional;
 
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;

@@ -43,6 +43,6 @@ public class VoltageInitRunContext {
         this.reportUuid = reportUuid;
         this.reporterId = reporterId;
         this.userId = userId;
-        this.parameters = parameters;
+        this.parameters = Objects.requireNonNullElseGet(parameters, OpenReacParameters::new);
     }
 }
