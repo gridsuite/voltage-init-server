@@ -7,6 +7,7 @@
 package org.gridsuite.voltageinit.server.service.parameters;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
@@ -29,7 +30,18 @@ public class VoltageInitParametersService {
     }
 
     public UUID createParameters(VoltageInitParametersInfos parametersInfos) {
+        parametersInfos.setUuid(UUID.randomUUID());
         return voltageInitParametersRepository.save(parametersInfos.toEntity()).toVoltageInitParametersInfos().getUuid();
+    }
+
+    public Optional<UUID> createParameters(UUID sourceParametersId) {
+        Optional<VoltageInitParametersInfos> sourceVoltageInitParametersInfos = voltageInitParametersRepository.findById(sourceParametersId).map(VoltageInitParametersEntity::toVoltageInitParametersInfos);
+        if (sourceVoltageInitParametersInfos.isPresent()) {
+            VoltageInitParametersEntity entity = new VoltageInitParametersEntity(sourceVoltageInitParametersInfos.get());
+            voltageInitParametersRepository.save(entity);
+            return Optional.of(entity.getId());
+        }
+        return Optional.empty();
     }
 
     public VoltageInitParametersInfos getParameters(UUID parametersUuid) {
