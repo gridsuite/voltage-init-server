@@ -6,7 +6,6 @@
  */
 package org.gridsuite.voltageinit.server;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.gridsuite.voltageinit.utils.assertions.Assertions.*;
 import java.util.List;
