@@ -148,6 +148,27 @@ public class VoltageInitParametersTest {
         assertThat(receivedParameters).hasSize(2);
     }
 
+    @Test
+    public void testDuplicate() throws Exception {
+
+        VoltageInitParametersInfos parametersToCreate = buildParameters();
+        String parametersToCreateJson = mapper.writeValueAsString(parametersToCreate);
+        mockMvc.perform(post(URI_PARAMETERS_BASE).content(parametersToCreateJson).contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk()).andReturn();
+        VoltageInitParametersInfos createdParameters = parametersRepository.findAll().get(0).toVoltageInitParametersInfos();
+
+        mockMvc.perform(post(URI_PARAMETERS_BASE)
+                .param("duplicateFrom", UUID.randomUUID().toString()))
+            .andExpect(status().isNotFound());
+
+        mockMvc.perform(post(URI_PARAMETERS_BASE)
+                .param("duplicateFrom", createdParameters.getUuid().toString()))
+            .andExpect(status().isOk());
+
+        VoltageInitParametersInfos duplicatedParameters = parametersRepository.findAll().get(1).toVoltageInitParametersInfos();
+        assertThat(duplicatedParameters).recursivelyEquals(createdParameters);
+    }
+
     /** Save parameters into the repository and return its UUID. */
     protected UUID saveAndRetunId(VoltageInitParametersInfos parametersInfos) {
         parametersRepository.save(parametersInfos.toEntity());
