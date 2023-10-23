@@ -51,7 +51,7 @@
     <properties>
         <gridsuite-dependencies.version>26</gridsuite-dependencies.version>
         <commons-lang3.version>3.9</commons-lang3.version>
-        <powsybl-open-reac.version>0.2.0</powsybl-open-reac.version>
+        <powsybl-open-reac.version>0.3.0</powsybl-open-reac.version>
         <mockito-inline.version>3.11.1</mockito-inline.version>
         <assertj.version>3.24.2</assertj.version>
         <liquibase-hibernate-package>org.gridsuite.voltageinit.server</liquibase-hibernate-package>
@@ -139,6 +139,11 @@
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-open-reac</artifactId>
             <version>${powsybl-open-reac.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-ampl-executor</artifactId>
+            <version>6.0.1</version>
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
