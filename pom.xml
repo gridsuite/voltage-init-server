@@ -117,6 +117,17 @@
                 <artifactId>commons-lang3</artifactId>
                 <version>${commons-lang3.version}</version>
             </dependency>
+            <!-- TODO to delete when powsybl is updated to 6.0.1-->
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-ampl-executor</artifactId>
+                <version>6.0.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-ampl-converter</artifactId>
+                <version>6.0.1</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -139,11 +150,6 @@
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-open-reac</artifactId>
             <version>${powsybl-open-reac.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-ampl-executor</artifactId>
-            <version>6.0.1</version>
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
