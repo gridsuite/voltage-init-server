@@ -106,7 +106,7 @@ public class NetworkModificationService {
             result.getSvcModifications().forEach(staticVarCompensatorModification -> {
                 if (staticVarCompensatorModification.getVoltageSetpoint() != null || staticVarCompensatorModification.getReactivePowerSetpoint() != null) {
                     StaticVarCompensatorModificationInfos.StaticVarCompensatorModificationInfosBuilder builder = StaticVarCompensatorModificationInfos.builder()
-                        .staticVarCompensatorId(staticVarCompensatorModification.getSvcId())
+                        .staticVarCompensatorId(staticVarCompensatorModification.getStaticVarCompensatorId())
                         .voltageSetpoint(staticVarCompensatorModification.getVoltageSetpoint())
                         .reactivePowerSetpoint(staticVarCompensatorModification.getReactivePowerSetpoint());
                     voltageInitModificationInfos.addStaticVarCompensatorModification(builder.build());
@@ -117,7 +117,7 @@ public class NetworkModificationService {
             result.getVscModifications().forEach(vscConverterStationModification -> {
                 if (vscConverterStationModification.getVoltageSetpoint() != null || vscConverterStationModification.getReactivePowerSetpoint() != null) {
                     VscConverterStationModificationInfos.VscConverterStationModificationInfosBuilder builder = VscConverterStationModificationInfos.builder()
-                        .vscConverterStationId(vscConverterStationModification.getVscId())
+                        .vscConverterStationId(vscConverterStationModification.getVscConverterStationId())
                         .voltageSetpoint(vscConverterStationModification.getVoltageSetpoint())
                         .reactivePowerSetpoint(vscConverterStationModification.getReactivePowerSetpoint());
                     voltageInitModificationInfos.addVscConverterStationModification(builder.build());

@@ -19,7 +19,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,19 +44,13 @@ public class VoltageInitController {
             description = "The voltage init analysis has been performed")})
     public ResponseEntity<UUID> runAndSave(@Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
                                            @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
-                                           @Parameter(description = "Other networks UUID (to merge with main one))") @RequestParam(name = "networkUuid", required = false) List<UUID> otherNetworkUuids,
                                            @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver,
                                            @Parameter(description = "reportUuid") @RequestParam(name = "reportUuid", required = false) UUID reportUuid,
                                            @Parameter(description = "reporterId") @RequestParam(name = "reporterId", required = false) String reporterId,
                                            @Parameter(description = "parametersUuid") @RequestParam(name = "parametersUuid", required = false) UUID parametersUuid,
                                            @RequestHeader(HEADER_USER_ID) String userId) {
-        List<UUID> nonNullOtherNetworkUuids = getNonNullOtherNetworkUuids(otherNetworkUuids);
-        UUID resultUuid = voltageInitService.runAndSaveResult(networkUuid, variantId, nonNullOtherNetworkUuids, receiver, reportUuid, reporterId, userId, parametersUuid);
+        UUID resultUuid = voltageInitService.runAndSaveResult(networkUuid, variantId, receiver, reportUuid, reporterId, userId, parametersUuid);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultUuid);
-    }
-
-    private static List<UUID> getNonNullOtherNetworkUuids(List<UUID> otherNetworkUuids) {
-        return otherNetworkUuids != null ? otherNetworkUuids : Collections.emptyList();
     }
 
     @GetMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE)

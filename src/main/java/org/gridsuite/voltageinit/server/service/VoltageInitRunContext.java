@@ -9,7 +9,6 @@ package org.gridsuite.voltageinit.server.service;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import lombok.Getter;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -23,8 +22,6 @@ public class VoltageInitRunContext {
 
     private final String variantId;
 
-    private final List<UUID> otherNetworkUuids;
-
     private final String receiver;
 
     private final UUID reportUuid;
@@ -35,10 +32,9 @@ public class VoltageInitRunContext {
 
     private final OpenReacParameters parameters;
 
-    public VoltageInitRunContext(UUID networkUuid, String variantId, List<UUID> otherNetworkUuids, String receiver, UUID reportUuid, String reporterId, String userId, OpenReacParameters parameters) {
+    public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String userId, OpenReacParameters parameters) {
         this.networkUuid = Objects.requireNonNull(networkUuid);
         this.variantId = variantId;
-        this.otherNetworkUuids = Objects.requireNonNull(otherNetworkUuids);
         this.receiver = receiver;
         this.reportUuid = reportUuid;
         this.reporterId = reporterId;
