@@ -9,6 +9,7 @@ package org.gridsuite.voltageinit.server.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
+import com.powsybl.openreac.parameters.input.VoltageLimitOverride.VoltageLimitType;
 
 import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
@@ -83,7 +84,7 @@ public class VoltageInitService {
 
     private OpenReacParameters buildOpenReacParameters(Optional<VoltageInitParametersEntity> voltageInitParametersEntity, UUID networkUuid, String variantId) {
         OpenReacParameters parameters = new OpenReacParameters();
-        Map<String, VoltageLimitOverride> specificVoltageLimits = new HashMap<>();
+        List<VoltageLimitOverride> specificVoltageLimits = new ArrayList<>();
         List<String> constantQGenerators = new ArrayList<>();
         List<String> variableTwoWindingsTransformers = new ArrayList<>();
         List<String> variableShuntCompensators = new ArrayList<>();
@@ -92,8 +93,10 @@ public class VoltageInitService {
                 voltageInitParameters.getVoltageLimits().forEach(voltageLimit -> {
                     var filterEquipments = filterService.exportFilters(voltageLimit.getFilters().stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, variantId);
                     filterEquipments.forEach(filterEquipment ->
-                            filterEquipment.getIdentifiableAttributes().forEach(idenfiableAttribute ->
-                                    specificVoltageLimits.put(idenfiableAttribute.getId(), new VoltageLimitOverride(voltageLimit.getLowVoltageLimit(), voltageLimit.getHighVoltageLimit()))
+                            filterEquipment.getIdentifiableAttributes().forEach(idenfiableAttribute -> {
+                                    specificVoltageLimits.add(new VoltageLimitOverride(idenfiableAttribute.getId(), VoltageLimitType.LOW_VOLTAGE_LIMIT, true, voltageLimit.getLowVoltageLimit()));
+                                    specificVoltageLimits.add(new VoltageLimitOverride(idenfiableAttribute.getId(), VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, voltageLimit.getHighVoltageLimit()));
+                                }
                             )
                     );
                 });

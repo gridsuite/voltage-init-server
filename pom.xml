@@ -51,7 +51,7 @@
     <properties>
         <gridsuite-dependencies.version>27</gridsuite-dependencies.version>
         <commons-lang3.version>3.9</commons-lang3.version>
-        <powsybl-open-reac.version>0.2.0</powsybl-open-reac.version>
+        <powsybl-open-reac.version>0.3.0</powsybl-open-reac.version>
         <mockito-inline.version>3.11.1</mockito-inline.version>
         <assertj.version>3.24.2</assertj.version>
         <liquibase-hibernate-package>org.gridsuite.voltageinit.server</liquibase-hibernate-package>
@@ -116,6 +116,17 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>${commons-lang3.version}</version>
+            </dependency>
+            <!-- TODO to delete when powsybl is updated to 6.0.1-->
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-ampl-executor</artifactId>
+                <version>6.0.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-ampl-converter</artifactId>
+                <version>6.0.1</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
