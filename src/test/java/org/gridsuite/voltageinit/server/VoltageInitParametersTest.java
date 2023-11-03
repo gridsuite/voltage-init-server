@@ -302,17 +302,17 @@ public class VoltageInitParametersTest {
         OpenReacParameters openReacParameters = voltageInitService.buildOpenReacParameters(voltageInitParameters, NETWORK_UUID, VARIANT_ID_1);
 
         //No override should be relative since there are no voltage limit modification
-        assertThat(openReacParameters.getSpecificVoltageLimits().stream().allMatch(voltageLimitOverride -> !voltageLimitOverride.isRelative()));
+        assertThat(openReacParameters.getSpecificVoltageLimits().stream().allMatch(voltageLimitOverride -> !voltageLimitOverride.isRelative())).isTrue();
 
         assertEquals(4, openReacParameters.getSpecificVoltageLimits().size());
         //VLHV1, VLHV2 and VLLOAD should be applied default voltage limits since those are missing one or both limits
-        assertThat(openReacParameters.getSpecificVoltageLimits().stream().anyMatch(voltageLimitOverride -> "VLHV1".equals(voltageLimitOverride.getVoltageLevelId())));
+        assertThat(openReacParameters.getSpecificVoltageLimits().stream().anyMatch(voltageLimitOverride -> "VLHV1".equals(voltageLimitOverride.getVoltageLevelId()))).isTrue();
         assertEquals(1, openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLHV1".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).count());
 
-        assertThat(openReacParameters.getSpecificVoltageLimits().stream().anyMatch(voltageLimitOverride -> "VLHV2".equals(voltageLimitOverride.getVoltageLevelId())));
+        assertThat(openReacParameters.getSpecificVoltageLimits().stream().anyMatch(voltageLimitOverride -> "VLHV2".equals(voltageLimitOverride.getVoltageLevelId()))).isTrue();
         assertEquals(1, openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLHV2".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).count());
 
-        assertThat(openReacParameters.getSpecificVoltageLimits().stream().anyMatch(voltageLimitOverride -> "VLLOAD".equals(voltageLimitOverride.getVoltageLevelId())));
+        assertThat(openReacParameters.getSpecificVoltageLimits().stream().anyMatch(voltageLimitOverride -> "VLLOAD".equals(voltageLimitOverride.getVoltageLevelId()))).isTrue();
         assertEquals(1, openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLLOAD".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).count());
         assertEquals(1, openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLLOAD".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).count());
 
