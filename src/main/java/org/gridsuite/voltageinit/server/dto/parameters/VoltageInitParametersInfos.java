@@ -35,7 +35,9 @@ public class VoltageInitParametersInfos {
     @Schema(description = "parameters name")
     private String name;
 
-    List<VoltageLimitInfos> voltageLimits;
+    List<VoltageLimitInfos> voltageLimitsModification;
+
+    List<VoltageLimitInfos> voltageLimitsDefault;
 
     List<FilterEquipments> constantQGenerators;
 

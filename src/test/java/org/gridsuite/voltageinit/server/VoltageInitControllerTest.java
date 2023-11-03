@@ -164,7 +164,7 @@ public class VoltageInitControllerTest {
 
     private VoltageInitParametersEntity buildVoltageInitParametersEntity() {
         return VoltageInitParametersInfos.builder()
-            .voltageLimits(List.of(VoltageLimitInfos.builder()
+            .voltageLimitsModification(List.of(VoltageLimitInfos.builder()
                 .priority(0)
                 .lowVoltageLimit(2.0)
                 .highVoltageLimit(20.0)
