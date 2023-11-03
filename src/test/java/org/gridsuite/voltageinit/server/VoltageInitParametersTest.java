@@ -10,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.gridsuite.voltageinit.utils.assertions.Assertions.*;
 
-import java.lang.reflect.Method;
 import java.util.*;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -289,7 +288,7 @@ public class VoltageInitParametersTest {
         VoltageLimitEntity voltageLimit2 = new VoltageLimitEntity(UUID.randomUUID(), 44., 88., 1, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_2, FILTER_2)));
 
         Optional<VoltageInitParametersEntity> voltageInitParameters = Optional.of(new VoltageInitParametersEntity(UUID.randomUUID(), null, "", List.of(voltageLimit, voltageLimit2), null, null, null));
-        OpenReacParameters openReacParameters = voltageInitService.buildOpenReacParameters(voltageInitParameters , NETWORK_UUID, VARIANT_ID_1);
+        OpenReacParameters openReacParameters = voltageInitService.buildOpenReacParameters(voltageInitParameters, NETWORK_UUID, VARIANT_ID_1);
 
         //No override should be relative since there are no voltage limit modification
         assertThat(openReacParameters.getSpecificVoltageLimits().stream().allMatch(voltageLimitOverride -> !voltageLimitOverride.isRelative()));
@@ -313,11 +312,10 @@ public class VoltageInitParametersTest {
         //We now add limit modifications
         VoltageLimitEntity voltageLimit3 = new VoltageLimitEntity(UUID.randomUUID(), -1., -2., 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
         voltageInitParameters = Optional.of(new VoltageInitParametersEntity(UUID.randomUUID(), null, "", List.of(voltageLimit, voltageLimit2, voltageLimit3), null, null, null));
-        openReacParameters = voltageInitService.buildOpenReacParameters(voltageInitParameters , NETWORK_UUID, VARIANT_ID_1);
+        openReacParameters = voltageInitService.buildOpenReacParameters(voltageInitParameters, NETWORK_UUID, VARIANT_ID_1);
 
         //Previous limits that weren't impacted because they were set are now impacted
         assertEquals(8, openReacParameters.getSpecificVoltageLimits().size());
-
 
         /*
         network.getVoltageLevel("VLGEN").setLowVoltageLimit(10.);
