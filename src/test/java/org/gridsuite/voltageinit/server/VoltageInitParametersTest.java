@@ -240,6 +240,8 @@ public class VoltageInitParametersTest {
 
     protected VoltageInitParametersInfos buildParameters() {
         return VoltageInitParametersInfos.builder()
+            .voltageLimitsDefault(List.of())
+            .voltageLimitsModification(List.of())
             .constantQGenerators(List.of(FilterEquipments.builder()
                     .filterId(UUID.randomUUID())
                     .filterName("qgenFilter1")
@@ -268,6 +270,15 @@ public class VoltageInitParametersTest {
                     .filterName("filterName")
                     .build()))
                 .build()))
+            .voltageLimitsDefault(List.of(VoltageLimitInfos.builder()
+                .priority(0)
+                .lowVoltageLimit(2.0)
+                .highVoltageLimit(20.0)
+                .filters(List.of(FilterEquipments.builder()
+                    .filterId(UUID.randomUUID())
+                    .filterName("filterName")
+                    .build()))
+                .build()))
             .variableShuntCompensators(List.of(FilterEquipments.builder()
                 .filterId(UUID.randomUUID())
                 .filterName("vscFilter1")
@@ -283,7 +294,7 @@ public class VoltageInitParametersTest {
     }
 
     @Test
-    public void testBuildSpecificVoltageLimits() throws NoSuchMethodException {
+    public void testBuildSpecificVoltageLimits() {
         VoltageLimitEntity voltageLimit = new VoltageLimitEntity(UUID.randomUUID(), 5., 10., 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
         VoltageLimitEntity voltageLimit2 = new VoltageLimitEntity(UUID.randomUUID(), 44., 88., 1, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_2, FILTER_2)));
 
@@ -316,13 +327,6 @@ public class VoltageInitParametersTest {
 
         //Previous limits that weren't impacted because they were set are now impacted
         assertEquals(8, openReacParameters.getSpecificVoltageLimits().size());
-
-        /*
-        network.getVoltageLevel("VLGEN").setLowVoltageLimit(10.);
-        network.getVoltageLevel("VLGEN").setHighVoltageLimit(20.);
-        network.getVoltageLevel("VLHV1").setHighVoltageLimit(20.);
-        network.getVoltageLevel("VLHV2").setLowVoltageLimit(10.);
-         */
     }
 }
 

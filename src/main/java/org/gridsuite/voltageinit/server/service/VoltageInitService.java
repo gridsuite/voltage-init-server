@@ -138,7 +138,6 @@ public class VoltageInitService {
     }
 
     public OpenReacParameters buildOpenReacParameters(Optional<VoltageInitParametersEntity> voltageInitParametersEntity, UUID networkUuid, String variantId) {
-        Network network = getNetwork(networkUuid, PreloadingStrategy.COLLECTION, variantId);
         OpenReacParameters parameters = new OpenReacParameters();
         List<VoltageLimitOverride> specificVoltageLimits = new ArrayList<>();
         List<String> constantQGenerators = new ArrayList<>();
@@ -147,6 +146,8 @@ public class VoltageInitService {
 
         voltageInitParametersEntity.ifPresent(voltageInitParameters -> {
             if (voltageInitParameters.getVoltageLimits() != null) {
+                Network network = getNetwork(networkUuid, PreloadingStrategy.COLLECTION, variantId);
+
                 Map<String, VoltageLimitEntity> voltageLevelDefaultLimits = resolveVoltageLevelLimits(voltageInitParameters.getVoltageLimits().stream().filter(voltageLimit -> VoltageLimitParameterType.DEFAULT.equals(voltageLimit.getVoltageLimitParameterType())).toList(), networkUuid, network.getVariantManager().getWorkingVariantId());
                 Map<String, VoltageLimitEntity> voltageLevelModificationLimits = resolveVoltageLevelLimits(voltageInitParameters.getVoltageLimits().stream().filter(voltageLimit -> VoltageLimitParameterType.MODIFICATION.equals(voltageLimit.getVoltageLimitParameterType())).toList(), networkUuid, network.getVariantManager().getWorkingVariantId());
                 List<VoltageLevel> voltageLevels = network.getVoltageLevelStream()
