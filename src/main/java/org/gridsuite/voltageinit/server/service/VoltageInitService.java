@@ -52,7 +52,6 @@ public class VoltageInitService {
     @Autowired
     NetworkModificationService networkModificationService;
 
-    @Autowired
     private NetworkStoreService networkStoreService;
 
     private final FilterService filterService;
@@ -69,6 +68,7 @@ public class VoltageInitService {
                               NetworkModificationService networkModificationService,
                               FilterService filterService,
                               UuidGeneratorService uuidGeneratorService,
+                              NetworkStoreService networkStoreService,
                               VoltageInitResultRepository resultRepository,
                               VoltageInitParametersRepository voltageInitParametersRepository,
                               ObjectMapper objectMapper) {
@@ -76,6 +76,7 @@ public class VoltageInitService {
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
         this.filterService = filterService;
         this.uuidGeneratorService = Objects.requireNonNull(uuidGeneratorService);
+        this.networkStoreService = Objects.requireNonNull(networkStoreService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
         this.voltageInitParametersRepository = Objects.requireNonNull(voltageInitParametersRepository);
         this.objectMapper = Objects.requireNonNull(objectMapper);
@@ -115,9 +116,7 @@ public class VoltageInitService {
             var filterEquipments = filterService.exportFilters(voltageLimit.getFilters().stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, networkVariant);
             filterEquipments.forEach(filterEquipment -> {
                     List<String> voltageLevelsIds = filterEquipment.getIdentifiableAttributes().stream().map(IdentifiableAttributes::getId).toList();
-                    voltageLevelsIds.forEach(voltageLevelsId -> {
-                        voltageLevelLimits.put(voltageLevelsId, voltageLimit);
-                    });
+                    voltageLevelsIds.forEach(voltageLevelsId -> voltageLevelLimits.put(voltageLevelsId, voltageLimit));
                 }
             );
         });
