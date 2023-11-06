@@ -325,7 +325,7 @@ public class VoltageInitParametersTest {
         voltageInitParameters = Optional.of(new VoltageInitParametersEntity(UUID.randomUUID(), null, "", List.of(voltageLimit, voltageLimit2, voltageLimit3), null, null, null));
         openReacParameters = voltageInitService.buildOpenReacParameters(voltageInitParameters, NETWORK_UUID, VARIANT_ID_1);
 
-        //Previous limits that weren't impacted because they were set are now impacted
+        //Limits that were set are now impacted
         assertEquals(8, openReacParameters.getSpecificVoltageLimits().size());
     }
 }
