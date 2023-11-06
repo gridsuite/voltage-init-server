@@ -300,33 +300,36 @@ public class VoltageInitParametersTest {
 
         Optional<VoltageInitParametersEntity> voltageInitParameters = Optional.of(new VoltageInitParametersEntity(UUID.randomUUID(), null, "", List.of(voltageLimit, voltageLimit2), null, null, null));
         OpenReacParameters openReacParameters = voltageInitService.buildOpenReacParameters(voltageInitParameters, NETWORK_UUID, VARIANT_ID_1);
-
+        assertEquals(4, openReacParameters.getSpecificVoltageLimits().size());
         //No override should be relative since there are no voltage limit modification
         assertThat(openReacParameters.getSpecificVoltageLimits().stream().allMatch(voltageLimitOverride -> !voltageLimitOverride.isRelative())).isTrue();
-
-        assertEquals(4, openReacParameters.getSpecificVoltageLimits().size());
         //VLHV1, VLHV2 and VLLOAD should be applied default voltage limits since those are missing one or both limits
         assertThat(openReacParameters.getSpecificVoltageLimits().stream().anyMatch(voltageLimitOverride -> "VLHV1".equals(voltageLimitOverride.getVoltageLevelId()))).isTrue();
         assertEquals(1, openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLHV1".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).count());
-
         assertThat(openReacParameters.getSpecificVoltageLimits().stream().anyMatch(voltageLimitOverride -> "VLHV2".equals(voltageLimitOverride.getVoltageLevelId()))).isTrue();
         assertEquals(1, openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLHV2".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).count());
-
         assertThat(openReacParameters.getSpecificVoltageLimits().stream().anyMatch(voltageLimitOverride -> "VLLOAD".equals(voltageLimitOverride.getVoltageLevelId()))).isTrue();
         assertEquals(1, openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLLOAD".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).count());
         assertEquals(1, openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLLOAD".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).count());
-
-        //The voltage limits attributed to VLLOAD should respectively be 44. and 88. since the priority related to VLLOAD's filter, FILTER_2, is higher than FILTER_1
+        //The voltage limits attributed to VLLOAD should respectively be 44. and 88. since the priority of FILTER_2, related to VLLOAD, is higher than FILTER_1
         assertEquals(44., openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLLOAD".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).findAny().get().getLimit());
         assertEquals(88., openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLLOAD".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).findAny().get().getLimit());
 
-        //We now add limit modifications
+        //We now add limit modifications in additions to defaults settings
         VoltageLimitEntity voltageLimit3 = new VoltageLimitEntity(UUID.randomUUID(), -1., -2., 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
         voltageInitParameters = Optional.of(new VoltageInitParametersEntity(UUID.randomUUID(), null, "", List.of(voltageLimit, voltageLimit2, voltageLimit3), null, null, null));
         openReacParameters = voltageInitService.buildOpenReacParameters(voltageInitParameters, NETWORK_UUID, VARIANT_ID_1);
-
-        //Limits that were set are now impacted
+        //There should nox be relative overrides since voltage limit modification are applied
+        assertThat(openReacParameters.getSpecificVoltageLimits().stream().allMatch(voltageLimitOverride -> !voltageLimitOverride.isRelative())).isFalse();
+        //Limits that weren't impacted by default settings are now impacted by modification settings
         assertEquals(8, openReacParameters.getSpecificVoltageLimits().size());
+        //VLGEN has both it limits set so it should now be impacted by modifications override
+        assertEquals(-1., openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLGEN".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).findAny().get().getLimit());
+        assertEquals(-2., openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLGEN".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).findAny().get().getLimit());
+        //Because of the modification setting the voltage limits attributed to VLLOAD should now respectively be 43. and 86.
+        assertEquals(43., openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLLOAD".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).findAny().get().getLimit());
+        assertEquals(86., openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLLOAD".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).findAny().get().getLimit());
+
     }
 }
 
