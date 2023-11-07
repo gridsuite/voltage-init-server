@@ -114,12 +114,12 @@ public class VoltageInitService {
         Map<String, VoltageLimitEntity> voltageLevelLimits = new HashMap<>();
         //each voltage level is associated to a voltage limit setting
         //if a voltage level is resolved by multiple filters the highest priority setting will be kept
-        voltageLimits.stream().forEach(voltageLimit -> {
+        voltageLimits.stream().forEach(voltageLimit ->
             filterService.exportFilters(voltageLimit.getFilters().stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, networkVariant)
                 .forEach(filterEquipment -> filterEquipment.getIdentifiableAttributes().stream().map(IdentifiableAttributes::getId)
                     .forEach(voltageLevelsId -> voltageLevelLimits.put(voltageLevelsId, voltageLimit))
-                );
-        });
+                )
+        );
         return voltageLevelLimits;
     }
 
