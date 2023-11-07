@@ -118,7 +118,7 @@ public class VoltageInitService {
             filterService.exportFilters(voltageLimit.getFilters().stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, networkVariant)
                 .forEach(filterEquipment -> filterEquipment.getIdentifiableAttributes().stream().map(IdentifiableAttributes::getId)
                     .forEach(voltageLevelsId -> voltageLevelLimits.put(voltageLevelsId, voltageLimit))
-            );
+                );
         });
         return voltageLevelLimits;
     }
