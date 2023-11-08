@@ -14,11 +14,14 @@ import jakarta.transaction.Transactional;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageLimitInfos;
+import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -82,15 +85,18 @@ public class VoltageInitParametersEntity {
     }
 
     public void assignAttributes(@NonNull VoltageInitParametersInfos voltageInitParametersInfos) {
-        List<VoltageLimitEntity> voltageLimitsEntities = null;
-        if (voltageInitParametersInfos.getVoltageLimits() != null) {
-            voltageLimitsEntities = voltageInitParametersInfos.getVoltageLimits().stream().map(VoltageLimitInfos::toEntity).toList();
+        List<VoltageLimitEntity> voltageLimitsEntities = new ArrayList<>();
+        if (voltageInitParametersInfos.getVoltageLimitsModification() != null) {
+            voltageLimitsEntities.addAll(voltageInitParametersInfos.getVoltageLimitsModification().stream().map(voltageLimitInfos -> voltageLimitInfos.toEntity(VoltageLimitParameterType.MODIFICATION)).toList());
+        }
+        if (voltageInitParametersInfos.getVoltageLimitsDefault() != null) {
+            voltageLimitsEntities.addAll(voltageInitParametersInfos.getVoltageLimitsDefault().stream().map(voltageLimitInfos -> voltageLimitInfos.toEntity(VoltageLimitParameterType.DEFAULT)).toList());
         }
         if (voltageLimits == null) {
             voltageLimits = voltageLimitsEntities;
         } else {
             voltageLimits.clear();
-            if (voltageLimitsEntities != null) {
+            if (!voltageLimitsEntities.isEmpty()) {
                 voltageLimits.addAll(voltageLimitsEntities);
             }
         }
@@ -100,10 +106,11 @@ public class VoltageInitParametersEntity {
         name = voltageInitParametersInfos.getName();
     }
 
-    private List<VoltageLimitInfos> toVoltageLimits(List<VoltageLimitEntity> voltageLimits) {
+    private List<VoltageLimitInfos> toVoltageLimits(List<VoltageLimitEntity> voltageLimits, VoltageLimitParameterType voltageLimitParameterType) {
         List<VoltageLimitInfos> voltageInitVoltageLimits = null;
         if (voltageLimits != null) {
             voltageInitVoltageLimits = voltageLimits.stream()
+                    .filter(voltageLimit -> Objects.equals(voltageLimit.getVoltageLimitParameterType(), voltageLimitParameterType))
                     .map(voltageLimit -> {
                         List<FilterEquipments> filters = FilterEquipmentsEmbeddable
                                 .fromEmbeddableFilterEquipments(voltageLimit.getFilters());
@@ -121,7 +128,8 @@ public class VoltageInitParametersEntity {
                 .uuid(this.getId())
                 .date(this.getDate())
                 .name(this.getName())
-                .voltageLimits(toVoltageLimits(this.getVoltageLimits()))
+                .voltageLimitsModification(toVoltageLimits(this.getVoltageLimits(), VoltageLimitParameterType.MODIFICATION))
+                .voltageLimitsDefault(toVoltageLimits(this.getVoltageLimits(), VoltageLimitParameterType.DEFAULT))
                 .constantQGenerators(FilterEquipmentsEmbeddable.fromEmbeddableFilterEquipments(this.getConstantQGenerators()))
                 .variableTwoWindingsTransformers(FilterEquipmentsEmbeddable.fromEmbeddableFilterEquipments(this.getVariableTwoWindingsTransformers()))
                 .variableShuntCompensators(FilterEquipmentsEmbeddable.fromEmbeddableFilterEquipments(this.getVariableShuntCompensators())).build();

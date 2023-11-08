@@ -164,7 +164,7 @@ public class VoltageInitControllerTest {
 
     private VoltageInitParametersEntity buildVoltageInitParametersEntity() {
         return VoltageInitParametersInfos.builder()
-            .voltageLimits(List.of(VoltageLimitInfos.builder()
+            .voltageLimitsModification(List.of(VoltageLimitInfos.builder()
                 .priority(0)
                 .lowVoltageLimit(2.0)
                 .highVoltageLimit(20.0)
@@ -172,8 +172,15 @@ public class VoltageInitControllerTest {
                     .filterId(UUID.randomUUID())
                     .filterName("filterName")
                     .build()))
-                .build()))
-            .constantQGenerators(List.of(FilterEquipments.builder()
+                .build())).voltageLimitsDefault(List.of(VoltageLimitInfos.builder()
+                .priority(0)
+                .lowVoltageLimit(2.0)
+                .highVoltageLimit(20.0)
+                .filters(List.of(FilterEquipments.builder()
+                    .filterId(UUID.randomUUID())
+                    .filterName("filterName")
+                    .build()))
+                .build())).constantQGenerators(List.of(FilterEquipments.builder()
                     .filterId(UUID.randomUUID())
                     .filterName("qgenFilter1")
                     .build(), FilterEquipments.builder()
@@ -209,6 +216,7 @@ public class VoltageInitControllerTest {
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_3_ID);
 
         given(networkStoreService.getNetwork(NETWORK_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willReturn(network);
+        given(networkStoreService.getNetwork(NETWORK_UUID, PreloadingStrategy.COLLECTION)).willReturn(network);
         given(networkStoreService.getNetwork(OTHER_NETWORK_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willThrow(new PowsyblException("Not found"));
 
         networkForMergingView = new NetworkFactoryImpl().createNetwork("mergingView", "test");

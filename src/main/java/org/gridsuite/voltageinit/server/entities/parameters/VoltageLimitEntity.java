@@ -9,6 +9,8 @@ package org.gridsuite.voltageinit.server.entities.parameters;
 import lombok.*;
 
 import jakarta.persistence.*;
+import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -30,13 +32,17 @@ public class VoltageLimitEntity {
     private UUID id;
 
     @Column(name = "lowVoltageLimit")
-    private double lowVoltageLimit;
+    private Double lowVoltageLimit;
 
     @Column(name = "highVoltageLimit")
-    private double highVoltageLimit;
+    private Double highVoltageLimit;
 
     @Column(name = "priority")
     private int priority;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "limitType")
+    private VoltageLimitParameterType voltageLimitParameterType;
 
     @ElementCollection
     @CollectionTable(

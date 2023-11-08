@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.gridsuite.voltageinit.server.entities.parameters.FilterEquipmentsEmbeddable;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
+import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
@@ -35,8 +36,8 @@ public class VoltageLimitInfos {
 
     List<FilterEquipments> filters;
 
-    public VoltageLimitEntity toEntity() {
-        return new VoltageLimitEntity(null, lowVoltageLimit, highVoltageLimit, priority,
+    public VoltageLimitEntity toEntity(VoltageLimitParameterType voltageLimitParameterType) {
+        return new VoltageLimitEntity(null, lowVoltageLimit, highVoltageLimit, priority, voltageLimitParameterType,
                 FilterEquipmentsEmbeddable.toEmbeddableFilterEquipments(filters));
     }
 }
