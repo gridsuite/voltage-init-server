@@ -29,6 +29,8 @@ import org.gridsuite.voltageinit.server.repository.VoltageInitResultRepository;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
@@ -38,6 +40,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -63,6 +67,8 @@ public class VoltageInitService {
     private final VoltageInitParametersRepository voltageInitParametersRepository;
 
     private final ObjectMapper objectMapper;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(VoltageInitService.class);
 
     public VoltageInitService(NotificationService notificationService,
                               NetworkModificationService networkModificationService,
@@ -144,6 +150,9 @@ public class VoltageInitService {
     }
 
     public OpenReacParameters buildOpenReacParameters(Optional<VoltageInitParametersEntity> voltageInitParametersEntity, UUID networkUuid, String variantId) {
+        AtomicReference<Long> startTime = new AtomicReference<>();
+        startTime.set(System.nanoTime());
+
         OpenReacParameters parameters = new OpenReacParameters();
         List<VoltageLimitOverride> specificVoltageLimits = new ArrayList<>();
         List<String> constantQGenerators = new ArrayList<>();
@@ -169,6 +178,8 @@ public class VoltageInitService {
                 .addVariableTwoWindingsTransformers(variableTwoWindingsTransformers)
                 .addVariableShuntCompensators(variableShuntCompensators);
 
+        long nanoTime = System.nanoTime();
+        LOGGER.info("Parameters built in {}s", TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startTime.getAndSet(nanoTime)));
         return parameters;
     }
 
