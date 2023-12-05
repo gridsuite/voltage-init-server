@@ -9,7 +9,6 @@ package org.gridsuite.voltageinit.server.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.computation.CompletableFutureTask;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
@@ -111,7 +110,7 @@ public class VoltageInitWorkerService {
             }
 
             OpenReacConfig config = OpenReacConfig.load();
-            CompletableFuture<OpenReacResult> future = CompletableFutureTask.runAsync(() -> OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), context.getParameters(), config, LocalComputationManager.getDefault()), this.threadPool);
+            CompletableFuture<OpenReacResult> future = OpenReacRunner.runAsync(network, network.getVariantManager().getWorkingVariantId(), context.getParameters(), config, LocalComputationManager.getDefault());
             if (resultUuid != null) {
                 futures.put(resultUuid, future);
             }
