@@ -9,6 +9,10 @@ package org.gridsuite.voltageinit.server.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.commons.reporter.Report;
+import com.powsybl.commons.reporter.Reporter;
+import com.powsybl.commons.reporter.ReporterModel;
+import com.powsybl.commons.reporter.TypedValue;
 import com.powsybl.computation.CompletableFutureTask;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.Network;
@@ -36,6 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static org.gridsuite.voltageinit.server.service.NotificationService.FAIL_MESSAGE;
 
@@ -50,9 +55,13 @@ public class VoltageInitWorkerService {
     private static final String ERROR = "error";
     private static final String ERROR_DURING_VOLTAGE_PROFILE_INITIALISATION = "Error during voltage profile initialization";
 
+    private static final String VOLTAGE_INIT_TYPE_REPORT = "VoltageInit";
+
     private NetworkStoreService networkStoreService;
 
     private NetworkModificationService networkModificationService;
+
+    private final ReportService reportService;
 
     private VoltageInitResultRepository resultRepository;
 
@@ -73,9 +82,12 @@ public class VoltageInitWorkerService {
 
     public VoltageInitWorkerService(NetworkStoreService networkStoreService,
                                     NetworkModificationService networkModificationService,
-                                    VoltageInitResultRepository resultRepository, ObjectMapper objectMapper) {
+                                    VoltageInitResultRepository resultRepository,
+                                    ObjectMapper objectMapper,
+                                    ReportService reportService) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
+        this.reportService = reportService;
         this.resultRepository = Objects.requireNonNull(resultRepository);
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
@@ -92,13 +104,39 @@ public class VoltageInitWorkerService {
         return network;
     }
 
+    private void addRestrictedVoltageLevelReports(VoltageInitRunContext context, Reporter reporter) {
+        if (!context.getVoltageLevelsIdsRestricted().isEmpty()) {
+            String joinedVoltageLevelsIds = context.getVoltageLevelsIdsRestricted().entrySet()
+                    .stream()
+                    .map(entry -> entry.getKey() + " : " + entry.getValue())
+                    .collect(Collectors.joining(", "));
+
+            reporter.report(Report.builder()
+                    .withKey("restrictedVoltageLevels")
+                    .withDefaultMessage(String.format("The modifications to the low limits for certain positions have been restricted to avoid negative voltage limits: %s", joinedVoltageLevelsIds))
+                    .withSeverity(TypedValue.WARN_SEVERITY)
+                    .build());
+        }
+    }
+
     private OpenReacResult run(VoltageInitRunContext context, UUID resultUuid) throws ExecutionException, InterruptedException {
         Objects.requireNonNull(context);
 
         LOGGER.info("Run voltage init...");
         Network network = getNetwork(context.getNetworkUuid(), context.getVariantId());
 
+        Reporter rootReporter = Reporter.NO_OP;
+        Reporter reporter = Reporter.NO_OP;
+        if (context.getReportUuid() != null) {
+            String rootReporterId = context.getReporterId() == null ? VOLTAGE_INIT_TYPE_REPORT : context.getReporterId() + "@" + context.getReportType();
+            rootReporter = new ReporterModel(rootReporterId, rootReporterId);
+            reporter = rootReporter.createSubReporter(context.getReportType(), VOLTAGE_INIT_TYPE_REPORT, VOLTAGE_INIT_TYPE_REPORT,  context.getReportUuid().toString());
+            // Delete any previous VoltageInit computation logs
+            reportService.deleteReport(context.getReportUuid(), context.getReportType());
+        }
         CompletableFuture<OpenReacResult> future = runVoltageInitAsync(context, network, resultUuid);
+        addRestrictedVoltageLevelReports(context, reporter);
+        reportService.sendReport(context.getReportUuid(), rootReporter);
 
         return future == null ? null : future.get();
     }
@@ -109,13 +147,11 @@ public class VoltageInitWorkerService {
             if (resultUuid != null && cancelComputationRequests.get(resultUuid) != null) {
                 return null;
             }
-
             OpenReacConfig config = OpenReacConfig.load();
             CompletableFuture<OpenReacResult> future = CompletableFutureTask.runAsync(() -> OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), context.getParameters(), config, LocalComputationManager.getDefault()), this.threadPool);
             if (resultUuid != null) {
                 futures.put(resultUuid, future);
             }
-
             return future;
         } finally {
             lockRunAndCancelVoltageInit.unlock();
