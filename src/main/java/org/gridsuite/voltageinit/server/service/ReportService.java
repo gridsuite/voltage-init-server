@@ -6,9 +6,8 @@
  */
 
 package org.gridsuite.voltageinit.server.service;
-import com.powsybl.commons.reporter.Report;
+
 import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.commons.reporter.TypedValue;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -42,10 +41,6 @@ public class ReportService {
 
     @Autowired
     public ReportService(@Value("${gridsuite.services.report-server.base-uri:http://report-server/}") String baseUri) {
-        this.baseUri = baseUri;
-    }
-
-    public void setReportServiceBaseUri(String baseUri) {
         this.baseUri = baseUri;
     }
 
