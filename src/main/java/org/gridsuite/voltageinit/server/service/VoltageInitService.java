@@ -16,6 +16,7 @@ import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride.VoltageLimitType;
 
+import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
 import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
@@ -227,6 +228,9 @@ public class VoltageInitService {
                 .addConstantQGenerators(constantQGenerators)
                 .addVariableTwoWindingsTransformers(variableTwoWindingsTransformers)
                 .addVariableShuntCompensators(variableShuntCompensators);
+
+        //The optimizer will attach reactive slack variables to all buses
+        parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
 
         long nanoTime = System.nanoTime();
         LOGGER.info("Parameters built in {}s", TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startTime.getAndSet(nanoTime)));
