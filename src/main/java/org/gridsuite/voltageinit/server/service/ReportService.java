@@ -48,7 +48,6 @@ public class ReportService {
         this.baseUri = baseUri;
     }
 
-
     public void sendReport(UUID reportUuid, Reporter reporter) {
         Objects.requireNonNull(reportUuid);
 
