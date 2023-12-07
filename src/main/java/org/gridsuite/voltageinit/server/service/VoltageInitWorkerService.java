@@ -105,9 +105,9 @@ public class VoltageInitWorkerService {
         return network;
     }
 
-    private void addRestrictedVoltageLevelReports(VoltageInitRunContext context, Reporter reporter) {
-        if (!context.getVoltageLevelsIdsRestricted().isEmpty()) {
-            String joinedVoltageLevelsIds = context.getVoltageLevelsIdsRestricted().entrySet()
+    public static void addRestrictedVoltageLevelReport(Map<String, Double> voltageLevelsIdsRestricted, Reporter reporter) {
+        if (!voltageLevelsIdsRestricted.isEmpty()) {
+            String joinedVoltageLevelsIds = voltageLevelsIdsRestricted.entrySet()
                     .stream()
                     .map(entry -> entry.getKey() + " : " + entry.getValue())
                     .collect(Collectors.joining(", "));
@@ -137,7 +137,7 @@ public class VoltageInitWorkerService {
         }
         CompletableFuture<OpenReacResult> future = runVoltageInitAsync(context, network, resultUuid);
         if (context.getReportUuid() != null) {
-            addRestrictedVoltageLevelReports(context, reporter);
+            addRestrictedVoltageLevelReport(context.getVoltageLevelsIdsRestricted(), reporter);
             reportService.sendReport(context.getReportUuid(), rootReporter);
         }
 

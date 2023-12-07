@@ -6,11 +6,12 @@
  */
 package org.gridsuite.voltageinit.server;
 
-import static org.gridsuite.voltageinit.utils.assertions.Assertions.*;
-
-import java.util.*;
-
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.commons.reporter.Report;
+import com.powsybl.commons.reporter.ReporterModel;
+import com.powsybl.commons.reporter.TypedValue;
 import com.powsybl.iidm.network.IdentifiableType;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
@@ -29,6 +30,7 @@ import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParameter
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.gridsuite.voltageinit.server.service.VoltageInitService;
+import org.gridsuite.voltageinit.server.service.VoltageInitWorkerService;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
 import org.junit.After;
@@ -39,19 +41,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.http.MediaType;
 
+import java.util.*;
+
+import static org.gridsuite.voltageinit.utils.assertions.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
@@ -347,6 +349,23 @@ public class VoltageInitParametersTest {
         assertFalse(openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLHV1".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).map(VoltageLimitOverride::isRelative).findFirst().get());
         // The low voltage limit must be impacted by the modification of the value
         assertEquals(0., openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLHV1".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).findAny().get().getLimit());
+    }
+
+    @Test
+    public void testAddRestrictedVoltageLevelReport() {
+        Map<String, Double> restrictedVoltageLevel = new HashMap<>();
+        restrictedVoltageLevel.put("vl", 10.0);
+        ReporterModel reporter = new ReporterModel("test", "test");
+        VoltageInitWorkerService.addRestrictedVoltageLevelReport(restrictedVoltageLevel, reporter);
+        assertEquals("restrictedVoltageLevels", reporter.getReports().stream().findFirst().get().getReportKey());
+        assertEquals("The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: vl : 10.0",
+                reporter.getReports().stream().findFirst().get().getDefaultMessage());
+        Optional<Map.Entry<String, TypedValue>> typedValues = reporter.getReports().stream()
+                .map(Report::getValues)
+                .findFirst()
+                .flatMap(values -> values.entrySet().stream().findFirst());
+        assertEquals("reportSeverity", typedValues.map(Map.Entry::getKey).get());
+        assertEquals("WARN", typedValues.map(value -> value.getValue().getValue()).get());
     }
 }
 
