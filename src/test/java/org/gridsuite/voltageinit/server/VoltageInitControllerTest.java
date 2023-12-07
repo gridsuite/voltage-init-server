@@ -364,7 +364,7 @@ public class VoltageInitControllerTest {
         String resultAsString;
 
         MvcResult result = mockMvc.perform(post(
-                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId={variantId}&reportType=VoltageInit&reportUuid=" + REPORT_UUID + "&reporterId=" + UUID.randomUUID(), OTHER_NETWORK_UUID, VARIANT_2_ID)
+                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId={variantId}&reportType=VoltageInit&reportUuid=" + REPORT_UUID + "&reporterId=" + UUID.randomUUID(), NETWORK_UUID, VARIANT_2_ID)
                         .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
                 .andReturn();
