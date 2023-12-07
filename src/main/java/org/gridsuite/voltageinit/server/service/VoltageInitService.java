@@ -76,7 +76,6 @@ public class VoltageInitService {
                               NetworkModificationService networkModificationService,
                               FilterService filterService,
                               UuidGeneratorService uuidGeneratorService,
-                              ReportService reportService,
                               NetworkStoreService networkStoreService,
                               VoltageInitResultRepository resultRepository,
                               VoltageInitParametersRepository voltageInitParametersRepository,

@@ -36,12 +36,12 @@ public class ReportService {
 
     private String baseUri;
 
-    @Autowired
     private RestTemplate restTemplate;
 
     @Autowired
-    public ReportService(@Value("${gridsuite.services.report-server.base-uri:http://report-server/}") String baseUri) {
+    public ReportService(@Value("${gridsuite.services.report-server.base-uri:http://report-server/}") String baseUri, RestTemplate restTemplate) {
         this.baseUri = baseUri;
+        this.restTemplate = restTemplate;
     }
 
     public void setReportServiceBaseUri(String baseUri) {
