@@ -29,6 +29,7 @@ import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 import org.gridsuite.voltageinit.server.repository.VoltageInitResultRepository;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
+import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,11 +58,9 @@ public class VoltageInitService {
     @Autowired
     NetworkModificationService networkModificationService;
 
-    private NetworkStoreService networkStoreService;
-
-    private final FilterService filterService;
-
     private final UuidGeneratorService uuidGeneratorService;
+
+    private final VoltageInitParametersService voltageInitParametersService;
 
     private final VoltageInitResultRepository resultRepository;
 
@@ -69,36 +68,20 @@ public class VoltageInitService {
 
     private final ObjectMapper objectMapper;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(VoltageInitService.class);
-
     public VoltageInitService(NotificationService notificationService,
                               NetworkModificationService networkModificationService,
-                              FilterService filterService,
                               UuidGeneratorService uuidGeneratorService,
-                              NetworkStoreService networkStoreService,
+                              VoltageInitParametersService voltageInitParametersService,
                               VoltageInitResultRepository resultRepository,
                               VoltageInitParametersRepository voltageInitParametersRepository,
                               ObjectMapper objectMapper) {
         this.notificationService = Objects.requireNonNull(notificationService);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
-        this.filterService = filterService;
+        this.voltageInitParametersService = Objects.requireNonNull(voltageInitParametersService);
         this.uuidGeneratorService = Objects.requireNonNull(uuidGeneratorService);
-        this.networkStoreService = Objects.requireNonNull(networkStoreService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
         this.voltageInitParametersRepository = Objects.requireNonNull(voltageInitParametersRepository);
         this.objectMapper = Objects.requireNonNull(objectMapper);
-    }
-
-    private Network getNetwork(UUID networkUuid, PreloadingStrategy strategy, String variantId) {
-        try {
-            Network network = networkStoreService.getNetwork(networkUuid, strategy);
-            if (variantId != null) {
-                network.getVariantManager().setWorkingVariant(variantId);
-            }
-            return network;
-        } catch (PowsyblException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
     }
 
     public UUID runAndSaveResult(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String userId, UUID parametersUuid) {
@@ -106,7 +89,7 @@ public class VoltageInitService {
         if (parametersUuid != null) {
             voltageInitParametersEntity = voltageInitParametersRepository.findById(parametersUuid);
         }
-        OpenReacParameters parameters = buildOpenReacParameters(voltageInitParametersEntity, networkUuid, variantId);
+        OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(voltageInitParametersEntity, networkUuid, variantId);
         VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, userId, parameters);
         Objects.requireNonNull(runContext);
         var resultUuid = uuidGeneratorService.generate();
@@ -115,90 +98,6 @@ public class VoltageInitService {
         setStatus(List.of(resultUuid), VoltageInitStatus.RUNNING.name());
         notificationService.sendRunMessage(new VoltageInitResultContext(resultUuid, runContext).toMessage(objectMapper));
         return resultUuid;
-    }
-
-    private Map<String, VoltageLimitEntity> resolveVoltageLevelLimits(List<VoltageLimitEntity> voltageLimits, UUID networkUuid, String networkVariant) {
-        Map<String, VoltageLimitEntity> voltageLevelLimits = new HashMap<>();
-        //each voltage level is associated to a voltage limit setting
-        //if a voltage level is resolved by multiple filters the highest priority setting will be kept
-        voltageLimits.stream().forEach(voltageLimit ->
-            filterService.exportFilters(voltageLimit.getFilters().stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, networkVariant)
-                .forEach(filterEquipment -> filterEquipment.getIdentifiableAttributes().stream().map(IdentifiableAttributes::getId)
-                    .forEach(voltageLevelsId -> voltageLevelLimits.put(voltageLevelsId, voltageLimit))
-                )
-        );
-        return voltageLevelLimits;
-    }
-
-    private void fillSpecificVoltageLimits(List<VoltageLimitOverride> specificVoltageLimits, Map<String, VoltageLimitEntity> voltageLevelModificationLimits, Map<String, VoltageLimitEntity> voltageLevelDefaultLimits, VoltageLevel voltageLevel) {
-        boolean isLowVoltageLimitModificationSet = voltageLevelModificationLimits.containsKey(voltageLevel.getId()) && voltageLevelModificationLimits.get(voltageLevel.getId()).getLowVoltageLimit() != null;
-        boolean isHighVoltageLimitModificationSet = voltageLevelModificationLimits.containsKey(voltageLevel.getId()) && voltageLevelModificationLimits.get(voltageLevel.getId()).getHighVoltageLimit() != null;
-        boolean isLowVoltageLimitDefaultSet = voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) && voltageLevelDefaultLimits.get(voltageLevel.getId()).getLowVoltageLimit() != null;
-        boolean isHighVoltageLimitDefaultSet = voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) && voltageLevelDefaultLimits.get(voltageLevel.getId()).getHighVoltageLimit() != null;
-
-        //for a given voltage level we set only the modification override if the voltage already has a preexisting limit set
-        //otherwise we use the default setting combined with the modification
-        if (!Double.isNaN(voltageLevel.getLowVoltageLimit()) && isLowVoltageLimitModificationSet) {
-            specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitType.LOW_VOLTAGE_LIMIT, true, voltageLevelModificationLimits.get(voltageLevel.getId()).getLowVoltageLimit()));
-        } else if (Double.isNaN(voltageLevel.getLowVoltageLimit()) && isLowVoltageLimitDefaultSet) {
-            specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitType.LOW_VOLTAGE_LIMIT, false, voltageLevelDefaultLimits.get(voltageLevel.getId()).getLowVoltageLimit() + (isLowVoltageLimitModificationSet ? voltageLevelModificationLimits.get(voltageLevel.getId()).getLowVoltageLimit() : 0.)));
-        }
-        if (!Double.isNaN(voltageLevel.getHighVoltageLimit()) && isHighVoltageLimitModificationSet) {
-            specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, voltageLevelModificationLimits.get(voltageLevel.getId()).getHighVoltageLimit()));
-        } else if (Double.isNaN(voltageLevel.getHighVoltageLimit()) && isHighVoltageLimitDefaultSet) {
-            specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, voltageLevelDefaultLimits.get(voltageLevel.getId()).getHighVoltageLimit() + (isHighVoltageLimitModificationSet ? voltageLevelModificationLimits.get(voltageLevel.getId()).getHighVoltageLimit() : 0.)));
-        }
-    }
-
-    public OpenReacParameters buildOpenReacParameters(Optional<VoltageInitParametersEntity> voltageInitParametersEntity, UUID networkUuid, String variantId) {
-        AtomicReference<Long> startTime = new AtomicReference<>();
-        startTime.set(System.nanoTime());
-
-        OpenReacParameters parameters = new OpenReacParameters();
-        List<VoltageLimitOverride> specificVoltageLimits = new ArrayList<>();
-        List<String> constantQGenerators = new ArrayList<>();
-        List<String> variableTwoWindingsTransformers = new ArrayList<>();
-        List<String> variableShuntCompensators = new ArrayList<>();
-
-        voltageInitParametersEntity.ifPresent(voltageInitParameters -> {
-            if (voltageInitParameters.getVoltageLimits() != null) {
-                Network network = getNetwork(networkUuid, PreloadingStrategy.COLLECTION, variantId);
-
-                Map<String, VoltageLimitEntity> voltageLevelDefaultLimits = resolveVoltageLevelLimits(voltageInitParameters.getVoltageLimits().stream().filter(voltageLimit -> VoltageLimitParameterType.DEFAULT.equals(voltageLimit.getVoltageLimitParameterType())).toList(), networkUuid, network.getVariantManager().getWorkingVariantId());
-                Map<String, VoltageLimitEntity> voltageLevelModificationLimits = resolveVoltageLevelLimits(voltageInitParameters.getVoltageLimits().stream().filter(voltageLimit -> VoltageLimitParameterType.MODIFICATION.equals(voltageLimit.getVoltageLimitParameterType())).toList(), networkUuid, network.getVariantManager().getWorkingVariantId());
-                network.getVoltageLevelStream()
-                    .filter(voltageLevel -> voltageLevelDefaultLimits.keySet().contains(voltageLevel.getId()) || voltageLevelModificationLimits.keySet().contains(voltageLevel.getId()))
-                    .forEach(voltageLevel -> fillSpecificVoltageLimits(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, voltageLevel));
-            }
-            constantQGenerators.addAll(toEquipmentIdsList(voltageInitParameters.getConstantQGenerators(), networkUuid, variantId));
-            variableTwoWindingsTransformers.addAll(toEquipmentIdsList(voltageInitParameters.getVariableTwoWindingsTransformers(), networkUuid, variantId));
-            variableShuntCompensators.addAll(toEquipmentIdsList(voltageInitParameters.getVariableShuntCompensators(), networkUuid, variantId));
-        });
-        parameters.addSpecificVoltageLimits(specificVoltageLimits)
-                .addConstantQGenerators(constantQGenerators)
-                .addVariableTwoWindingsTransformers(variableTwoWindingsTransformers)
-                .addVariableShuntCompensators(variableShuntCompensators);
-
-        //The optimizer will attach reactive slack variables to all buses
-        parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
-
-        long nanoTime = System.nanoTime();
-        LOGGER.info("Parameters built in {}s", TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startTime.getAndSet(nanoTime)));
-        return parameters;
-    }
-
-    private List<String> toEquipmentIdsList(List<FilterEquipmentsEmbeddable> filters, UUID networkUuid, String variantId) {
-        if (filters == null || filters.isEmpty()) {
-            return List.of();
-        }
-        List<FilterEquipments> equipments = filterService.exportFilters(filters.stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, variantId);
-        Set<String> ids = new HashSet<>();
-        equipments.forEach(filterEquipment ->
-                filterEquipment.getIdentifiableAttributes().forEach(identifiableAttribute ->
-                        ids.add(identifiableAttribute.getId())
-                )
-        );
-        return new ArrayList<>(ids);
     }
 
     @Transactional(readOnly = true)
