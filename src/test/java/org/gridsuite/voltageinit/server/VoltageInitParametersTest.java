@@ -32,6 +32,7 @@ import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.gridsuite.voltageinit.server.service.VoltageInitService;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
+import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
 import org.junit.After;
 import org.junit.Before;
@@ -78,6 +79,9 @@ public class VoltageInitParametersTest {
 
     @Autowired
     VoltageInitService voltageInitService;
+
+    @Autowired
+    VoltageInitParametersService voltageInitParametersService;
 
     @Autowired
     protected MockMvc mockMvc;
@@ -299,7 +303,7 @@ public class VoltageInitParametersTest {
         VoltageLimitEntity voltageLimit2 = new VoltageLimitEntity(UUID.randomUUID(), 44., 88., 1, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_2, FILTER_2)));
 
         Optional<VoltageInitParametersEntity> voltageInitParameters = Optional.of(new VoltageInitParametersEntity(UUID.randomUUID(), null, "", List.of(voltageLimit, voltageLimit2), null, null, null));
-        OpenReacParameters openReacParameters = voltageInitService.buildOpenReacParameters(voltageInitParameters, NETWORK_UUID, VARIANT_ID_1);
+        OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(voltageInitParameters, NETWORK_UUID, VARIANT_ID_1);
         assertEquals(4, openReacParameters.getSpecificVoltageLimits().size());
         //No override should be relative since there are no voltage limit modification
         assertThat(openReacParameters.getSpecificVoltageLimits().stream().allMatch(voltageLimitOverride -> !voltageLimitOverride.isRelative())).isTrue();
@@ -318,7 +322,7 @@ public class VoltageInitParametersTest {
         //We now add limit modifications in additions to defaults settings
         VoltageLimitEntity voltageLimit3 = new VoltageLimitEntity(UUID.randomUUID(), -1., -2., 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
         voltageInitParameters = Optional.of(new VoltageInitParametersEntity(UUID.randomUUID(), null, "", List.of(voltageLimit, voltageLimit2, voltageLimit3), null, null, null));
-        openReacParameters = voltageInitService.buildOpenReacParameters(voltageInitParameters, NETWORK_UUID, VARIANT_ID_1);
+        openReacParameters = voltageInitParametersService.buildOpenReacParameters(voltageInitParameters, NETWORK_UUID, VARIANT_ID_1);
         //There should nox be relative overrides since voltage limit modification are applied
         assertThat(openReacParameters.getSpecificVoltageLimits().stream().allMatch(voltageLimitOverride -> !voltageLimitOverride.isRelative())).isFalse();
         //Limits that weren't impacted by default settings are now impacted by modification settings
