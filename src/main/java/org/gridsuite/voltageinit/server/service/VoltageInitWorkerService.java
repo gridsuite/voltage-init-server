@@ -14,7 +14,6 @@ import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
 import com.powsybl.commons.reporter.TypedValue;
 import com.powsybl.computation.CompletableFutureTask;
-import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -58,25 +57,27 @@ public class VoltageInitWorkerService {
 
     private static final String VOLTAGE_INIT_TYPE_REPORT = "VoltageInit";
 
-    private NetworkStoreService networkStoreService;
+    private final NetworkStoreService networkStoreService;
 
-    private NetworkModificationService networkModificationService;
+    private final NetworkModificationService networkModificationService;
 
     private final ReportService reportService;
 
-    private VoltageInitResultRepository resultRepository;
+    private final VoltageInitResultRepository resultRepository;
 
-    private Map<UUID, CompletableFuture<OpenReacResult>> futures = new ConcurrentHashMap<>();
+    private final VoltageInitExecutionService voltageInitExecutionService;
 
-    private Map<UUID, VoltageInitCancelContext> cancelComputationRequests = new ConcurrentHashMap<>();
+    private final Map<UUID, CompletableFuture<OpenReacResult>> futures = new ConcurrentHashMap<>();
 
-    private Set<UUID> runRequests = Sets.newConcurrentHashSet();
+    private final Map<UUID, VoltageInitCancelContext> cancelComputationRequests = new ConcurrentHashMap<>();
+
+    private final Set<UUID> runRequests = Sets.newConcurrentHashSet();
 
     private final Lock lockRunAndCancelVoltageInit = new ReentrantLock();
 
     private final Executor threadPool = ForkJoinPool.commonPool();
 
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     @Autowired
     NotificationService notificationService;
@@ -84,12 +85,14 @@ public class VoltageInitWorkerService {
     public VoltageInitWorkerService(NetworkStoreService networkStoreService,
                                     NetworkModificationService networkModificationService,
                                     VoltageInitResultRepository resultRepository,
-                                    ObjectMapper objectMapper,
-                                    ReportService reportService) {
+                                    ReportService reportService,
+                                    VoltageInitExecutionService voltageInitExecutionService,
+                                    ObjectMapper objectMapper) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
         this.reportService = reportService;
         this.resultRepository = Objects.requireNonNull(resultRepository);
+        this.voltageInitExecutionService = Objects.requireNonNull(voltageInitExecutionService);
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
@@ -151,7 +154,7 @@ public class VoltageInitWorkerService {
                 return null;
             }
             OpenReacConfig config = OpenReacConfig.load();
-            CompletableFuture<OpenReacResult> future = CompletableFutureTask.runAsync(() -> OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), context.getParameters(), config, LocalComputationManager.getDefault()), this.threadPool);
+            CompletableFuture<OpenReacResult> future = CompletableFutureTask.runAsync(() -> OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), context.getParameters(), config, voltageInitExecutionService.getComputationManager()), this.threadPool);
             if (resultUuid != null) {
                 futures.put(resultUuid, future);
             }
