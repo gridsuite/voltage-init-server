@@ -60,43 +60,26 @@ public class VoltageInitService {
 
     private final UuidGeneratorService uuidGeneratorService;
 
-    private final VoltageInitParametersService voltageInitParametersService;
-
     private final VoltageInitResultRepository resultRepository;
-
-    private final VoltageInitParametersRepository voltageInitParametersRepository;
-
-    private final ObjectMapper objectMapper;
 
     public VoltageInitService(NotificationService notificationService,
                               NetworkModificationService networkModificationService,
                               UuidGeneratorService uuidGeneratorService,
-                              VoltageInitParametersService voltageInitParametersService,
-                              VoltageInitResultRepository resultRepository,
-                              VoltageInitParametersRepository voltageInitParametersRepository,
-                              ObjectMapper objectMapper) {
+                              VoltageInitResultRepository resultRepository) {
         this.notificationService = Objects.requireNonNull(notificationService);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
-        this.voltageInitParametersService = Objects.requireNonNull(voltageInitParametersService);
         this.uuidGeneratorService = Objects.requireNonNull(uuidGeneratorService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
-        this.voltageInitParametersRepository = Objects.requireNonNull(voltageInitParametersRepository);
-        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     public UUID runAndSaveResult(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String userId, UUID parametersUuid) {
-        Optional<VoltageInitParametersEntity> voltageInitParametersEntity = Optional.empty();
-        if (parametersUuid != null) {
-            voltageInitParametersEntity = voltageInitParametersRepository.findById(parametersUuid);
-        }
-        OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(voltageInitParametersEntity, networkUuid, variantId);
-        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, userId, parameters);
+        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, userId, parametersUuid);
         Objects.requireNonNull(runContext);
         var resultUuid = uuidGeneratorService.generate();
 
         // update status to running status
         setStatus(List.of(resultUuid), VoltageInitStatus.RUNNING.name());
-        notificationService.sendRunMessage(new VoltageInitResultContext(resultUuid, runContext).toMessage(objectMapper));
+        notificationService.sendRunMessage(new VoltageInitResultContext(resultUuid, runContext).toMessage());
         return resultUuid;
     }
 

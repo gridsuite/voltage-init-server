@@ -25,6 +25,8 @@ import org.gridsuite.voltageinit.server.entities.parameters.FilterEquipmentsEmbe
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
+import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
+import org.gridsuite.voltageinit.server.service.VoltageInitService;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,24 +48,9 @@ public class VoltageInitParametersService {
 
     private final VoltageInitParametersRepository voltageInitParametersRepository;
 
-    private NetworkStoreService networkStoreService;
-
-    public VoltageInitParametersService(VoltageInitParametersRepository voltageInitParametersRepository, FilterService filterService, NetworkStoreService networkStoreService) {
+    public VoltageInitParametersService(VoltageInitParametersRepository voltageInitParametersRepository, FilterService filterService) {
         this.voltageInitParametersRepository = voltageInitParametersRepository;
         this.filterService = filterService;
-        this.networkStoreService = Objects.requireNonNull(networkStoreService);
-    }
-
-    private Network getNetwork(UUID networkUuid, PreloadingStrategy strategy, String variantId) {
-        try {
-            Network network = networkStoreService.getNetwork(networkUuid, strategy);
-            if (variantId != null) {
-                network.getVariantManager().setWorkingVariant(variantId);
-            }
-            return network;
-        } catch (PowsyblException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
     }
 
     public UUID createParameters(VoltageInitParametersInfos parametersInfos) {
@@ -130,9 +117,15 @@ public class VoltageInitParametersService {
         }
     }
 
-    public OpenReacParameters buildOpenReacParameters(Optional<VoltageInitParametersEntity> voltageInitParametersEntity, UUID networkUuid, String variantId) {
+    @Transactional(readOnly = true)
+    public OpenReacParameters buildOpenReacParameters(VoltageInitRunContext context, Network network) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
+
+        Optional<VoltageInitParametersEntity> voltageInitParametersEntity = Optional.empty();
+        if (context.getParametersUuid() != null) {
+            voltageInitParametersEntity = voltageInitParametersRepository.findById(context.getParametersUuid());
+        }
 
         OpenReacParameters parameters = new OpenReacParameters();
         List<VoltageLimitOverride> specificVoltageLimits = new ArrayList<>();
@@ -142,17 +135,15 @@ public class VoltageInitParametersService {
 
         voltageInitParametersEntity.ifPresent(voltageInitParameters -> {
             if (voltageInitParameters.getVoltageLimits() != null) {
-                Network network = getNetwork(networkUuid, PreloadingStrategy.COLLECTION, variantId);
-
-                Map<String, VoltageLimitEntity> voltageLevelDefaultLimits = resolveVoltageLevelLimits(voltageInitParameters.getVoltageLimits().stream().filter(voltageLimit -> VoltageLimitParameterType.DEFAULT.equals(voltageLimit.getVoltageLimitParameterType())).toList(), networkUuid, network.getVariantManager().getWorkingVariantId());
-                Map<String, VoltageLimitEntity> voltageLevelModificationLimits = resolveVoltageLevelLimits(voltageInitParameters.getVoltageLimits().stream().filter(voltageLimit -> VoltageLimitParameterType.MODIFICATION.equals(voltageLimit.getVoltageLimitParameterType())).toList(), networkUuid, network.getVariantManager().getWorkingVariantId());
+                Map<String, VoltageLimitEntity> voltageLevelDefaultLimits = resolveVoltageLevelLimits(voltageInitParameters.getVoltageLimits().stream().filter(voltageLimit -> VoltageLimitParameterType.DEFAULT.equals(voltageLimit.getVoltageLimitParameterType())).toList(), context.getNetworkUuid(), context.getVariantId());
+                Map<String, VoltageLimitEntity> voltageLevelModificationLimits = resolveVoltageLevelLimits(voltageInitParameters.getVoltageLimits().stream().filter(voltageLimit -> VoltageLimitParameterType.MODIFICATION.equals(voltageLimit.getVoltageLimitParameterType())).toList(), context.getNetworkUuid(), context.getVariantId());
                 network.getVoltageLevelStream()
-                    .filter(voltageLevel -> voltageLevelDefaultLimits.keySet().contains(voltageLevel.getId()) || voltageLevelModificationLimits.keySet().contains(voltageLevel.getId()))
+                    .filter(voltageLevel -> voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) || voltageLevelModificationLimits.containsKey(voltageLevel.getId()))
                     .forEach(voltageLevel -> fillSpecificVoltageLimits(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, voltageLevel));
             }
-            constantQGenerators.addAll(toEquipmentIdsList(voltageInitParameters.getConstantQGenerators(), networkUuid, variantId));
-            variableTwoWindingsTransformers.addAll(toEquipmentIdsList(voltageInitParameters.getVariableTwoWindingsTransformers(), networkUuid, variantId));
-            variableShuntCompensators.addAll(toEquipmentIdsList(voltageInitParameters.getVariableShuntCompensators(), networkUuid, variantId));
+            constantQGenerators.addAll(toEquipmentIdsList(voltageInitParameters.getConstantQGenerators(), context.getNetworkUuid(), context.getVariantId()));
+            variableTwoWindingsTransformers.addAll(toEquipmentIdsList(voltageInitParameters.getVariableTwoWindingsTransformers(), context.getNetworkUuid(), context.getVariantId()));
+            variableShuntCompensators.addAll(toEquipmentIdsList(voltageInitParameters.getVariableShuntCompensators(), context.getNetworkUuid(), context.getVariantId()));
         });
         parameters.addSpecificVoltageLimits(specificVoltageLimits)
             .addConstantQGenerators(constantQGenerators)

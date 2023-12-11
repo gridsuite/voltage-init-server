@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import lombok.Getter;
+import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
@@ -50,38 +51,28 @@ public class VoltageInitResultContext {
         return header;
     }
 
-    public static VoltageInitResultContext fromMessage(Message<String> message, ObjectMapper objectMapper) {
+    public static VoltageInitResultContext fromMessage(Message<String> message) {
         Objects.requireNonNull(message);
         MessageHeaders headers = message.getHeaders();
         UUID resultUuid = UUID.fromString(getNonNullHeader(headers, "resultUuid"));
         UUID networkUuid = UUID.fromString(getNonNullHeader(headers, "networkUuid"));
+        UUID parametersUuid = UUID.fromString(getNonNullHeader(headers, "parametersUuid"));
         String variantId = (String) headers.get(VARIANT_ID_HEADER);
         String receiver = (String) headers.get(HEADER_RECEIVER);
         String userId = (String) headers.get(HEADER_USER_ID);
 
-        OpenReacParameters parameters;
-        try {
-            parameters = objectMapper.readValue(message.getPayload(), OpenReacParameters.class);
-        } catch (JsonProcessingException e) {
-            throw new UncheckedIOException(e);
-        }
 
         UUID reportUuid = headers.containsKey(REPORT_UUID_HEADER) ? UUID.fromString((String) headers.get(REPORT_UUID_HEADER)) : null;
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
-        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, userId, parameters);
+        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, userId, parametersUuid);
         return new VoltageInitResultContext(resultUuid, runContext);
     }
 
-    public Message<String> toMessage(ObjectMapper objectMapper) {
-        String parametersJson;
-        try {
-            parametersJson = objectMapper.writeValueAsString(runContext.getParameters());
-        } catch (JsonProcessingException e) {
-            throw new UncheckedIOException(e);
-        }
-        return MessageBuilder.withPayload(parametersJson)
+    public Message<String> toMessage() {
+        return MessageBuilder.withPayload("")
                 .setHeader("resultUuid", resultUuid.toString())
                 .setHeader("networkUuid", runContext.getNetworkUuid().toString())
+                .setHeader("parametersUuid", runContext.getParametersUuid())
                 .setHeader(VARIANT_ID_HEADER, runContext.getVariantId())
                 .setHeader(HEADER_RECEIVER, runContext.getReceiver())
                 .setHeader(HEADER_USER_ID, runContext.getUserId())
