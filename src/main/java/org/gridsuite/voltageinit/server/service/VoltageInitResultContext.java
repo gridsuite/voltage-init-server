@@ -6,17 +6,12 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import lombok.Getter;
-import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
 
-import java.io.UncheckedIOException;
 import java.util.*;
 
 import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_RECEIVER;
@@ -60,7 +55,6 @@ public class VoltageInitResultContext {
         String variantId = (String) headers.get(VARIANT_ID_HEADER);
         String receiver = (String) headers.get(HEADER_RECEIVER);
         String userId = (String) headers.get(HEADER_USER_ID);
-
 
         UUID reportUuid = headers.containsKey(REPORT_UUID_HEADER) ? UUID.fromString((String) headers.get(REPORT_UUID_HEADER)) : null;
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;

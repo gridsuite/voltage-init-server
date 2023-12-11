@@ -10,11 +10,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
-import com.powsybl.network.store.client.NetworkStoreService;
-import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
@@ -26,14 +23,11 @@ import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParameter
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
-import org.gridsuite.voltageinit.server.service.VoltageInitService;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>

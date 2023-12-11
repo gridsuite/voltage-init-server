@@ -6,9 +6,7 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
-import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import lombok.Getter;
-import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 
 import java.util.Objects;
 import java.util.UUID;
