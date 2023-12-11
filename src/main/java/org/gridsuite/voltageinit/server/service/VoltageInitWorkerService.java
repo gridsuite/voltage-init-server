@@ -72,8 +72,6 @@ public class VoltageInitWorkerService {
 
     private final Executor threadPool = ForkJoinPool.commonPool();
 
-    private final ObjectMapper objectMapper;
-
     @Autowired
     NotificationService notificationService;
 
@@ -88,7 +86,6 @@ public class VoltageInitWorkerService {
         this.voltageInitParametersService = Objects.requireNonNull(voltageInitParametersService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
         this.voltageInitExecutionService = Objects.requireNonNull(voltageInitExecutionService);
-        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     private Network getNetwork(UUID networkUuid, String variantId) {
