@@ -51,7 +51,6 @@ import java.util.stream.Collectors;
 @ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
 public class VoltageInitService {
-
     @Autowired
     NotificationService notificationService;
 
@@ -153,11 +152,11 @@ public class VoltageInitService {
                                     VoltageLevel voltageLevel,
                                     HashMap<String, Double> voltageLevelsIdsRestricted) {
         double newLowVoltageLimit;
-        if (!Double.isNaN(voltageLevel.getLowVoltageLimit()) && isLowVoltageLimitModificationSet) {
+        double lowVoltageLimit = voltageLevel.getLowVoltageLimit();
+        if (!Double.isNaN(lowVoltageLimit) && isLowVoltageLimitModificationSet) {
             double lowVoltageLimitModification = voltageLevelModificationLimits.get(voltageLevel.getId()).getLowVoltageLimit();
-            double lowVoltageLimit = voltageLevel.getLowVoltageLimit();
 
-            if (voltageLevel.getLowVoltageLimit() + lowVoltageLimitModification < 0) {
+            if (lowVoltageLimit + lowVoltageLimitModification < 0) {
                 newLowVoltageLimit = lowVoltageLimit * -1;
                 voltageLevelsIdsRestricted.put(voltageLevel.getId(), newLowVoltageLimit);
             } else {
@@ -165,7 +164,7 @@ public class VoltageInitService {
             }
             specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitType.LOW_VOLTAGE_LIMIT, true, newLowVoltageLimit));
 
-        } else if (Double.isNaN(voltageLevel.getLowVoltageLimit()) && isLowVoltageLimitDefaultSet) {
+        } else if (Double.isNaN(lowVoltageLimit) && isLowVoltageLimitDefaultSet) {
             double voltageLimit = voltageLevelDefaultLimits.get(voltageLevel.getId()).getLowVoltageLimit() + (isLowVoltageLimitModificationSet ? voltageLevelModificationLimits.get(voltageLevel.getId()).getLowVoltageLimit() : 0.);
             if (voltageLimit < 0) {
                 newLowVoltageLimit = 0.0;

@@ -61,12 +61,12 @@ public class ReportService {
     public void deleteReport(UUID reportUuid, String reportType) {
         Objects.requireNonNull(reportUuid);
 
-        var path = UriComponentsBuilder.fromPath(DELIMITER + REPORT_API_VERSION + "/reports/{reportUuid}")
+        String path = UriComponentsBuilder.fromPath(DELIMITER + REPORT_API_VERSION + "/reports/{reportUuid}")
                 .queryParam(QUERY_PARAM_REPORT_TYPE_FILTER, reportType)
                 .queryParam(QUERY_PARAM_REPORT_THROW_ERROR, false)
                 .buildAndExpand(reportUuid)
                 .toUriString();
-        var headers = new HttpHeaders();
+        HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         restTemplate.exchange(baseUri + path, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
     }
