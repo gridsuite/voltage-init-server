@@ -29,6 +29,8 @@ public class VoltageInitResultContext {
 
     public static final String REPORTER_ID_HEADER = "reporterId";
 
+    public static final String PARAMETERS_UUID_HEADER = "parametersUuid";
+
     private final UUID resultUuid;
 
     private final VoltageInitRunContext runContext;
@@ -51,11 +53,11 @@ public class VoltageInitResultContext {
         MessageHeaders headers = message.getHeaders();
         UUID resultUuid = UUID.fromString(getNonNullHeader(headers, "resultUuid"));
         UUID networkUuid = UUID.fromString(getNonNullHeader(headers, "networkUuid"));
-        UUID parametersUuid = UUID.fromString(getNonNullHeader(headers, "parametersUuid"));
         String variantId = (String) headers.get(VARIANT_ID_HEADER);
         String receiver = (String) headers.get(HEADER_RECEIVER);
         String userId = (String) headers.get(HEADER_USER_ID);
 
+        UUID parametersUuid = headers.containsKey(PARAMETERS_UUID_HEADER) ? UUID.fromString((String) headers.get(PARAMETERS_UUID_HEADER)) : null;
         UUID reportUuid = headers.containsKey(REPORT_UUID_HEADER) ? UUID.fromString((String) headers.get(REPORT_UUID_HEADER)) : null;
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
         VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, userId, parametersUuid);
@@ -66,7 +68,7 @@ public class VoltageInitResultContext {
         return MessageBuilder.withPayload("")
                 .setHeader("resultUuid", resultUuid.toString())
                 .setHeader("networkUuid", runContext.getNetworkUuid().toString())
-                .setHeader("parametersUuid", runContext.getParametersUuid())
+                .setHeader(PARAMETERS_UUID_HEADER, runContext.getParametersUuid())
                 .setHeader(VARIANT_ID_HEADER, runContext.getVariantId())
                 .setHeader(HEADER_RECEIVER, runContext.getReceiver())
                 .setHeader(HEADER_USER_ID, runContext.getUserId())
