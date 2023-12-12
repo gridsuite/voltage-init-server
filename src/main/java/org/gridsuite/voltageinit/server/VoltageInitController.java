@@ -113,4 +113,12 @@ public class VoltageInitController {
         return modificationsGroupUuid != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(modificationsGroupUuid)
                 : ResponseEntity.notFound().build();
     }
+
+    @PutMapping(value = "/results/{resultUuid}/modifications-group-uuid", produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Reset the modifications group uuid associated to a result")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The modifications group uuid has been resetted")})
+    public ResponseEntity<Void> resetModificationsGroupUuidInResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
+        voltageInitService.resetModificationsGroupUuid(resultUuid);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -306,6 +306,7 @@ public class VoltageInitControllerTest {
             VoltageInitResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), VoltageInitResult.class);
             assertEquals(RESULT_UUID, resultDto.getResultUuid());
             assertEquals(INDICATORS, resultDto.getIndicators());
+            assertEquals(MODIFICATIONS_GROUP_UUID, resultDto.getModificationsGroupUuid());
 
             result = mockMvc.perform(get(
                     "/" + VERSION + "/results/{resultUuid}/modifications-group-uuid", RESULT_UUID))
@@ -314,6 +315,10 @@ public class VoltageInitControllerTest {
                 .andReturn();
             UUID modificationsGroupUuid = mapper.readValue(result.getResponse().getContentAsString(), UUID.class);
             assertEquals(MODIFICATIONS_GROUP_UUID, modificationsGroupUuid);
+
+            // reset the modifications group uuid
+            mockMvc.perform(put("/" + VERSION + "/results/{resultUuid}/modifications-group-uuid", RESULT_UUID)).andExpect(status().isOk());
+            mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}/modifications-group-uuid", RESULT_UUID)).andExpect(status().isNotFound());
 
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
