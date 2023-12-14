@@ -47,9 +47,10 @@ public class VoltageInitController {
                                            @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver,
                                            @Parameter(description = "reportUuid") @RequestParam(name = "reportUuid", required = false) UUID reportUuid,
                                            @Parameter(description = "reporterId") @RequestParam(name = "reporterId", required = false) String reporterId,
+                                           @Parameter(description = "The type name for the report") @RequestParam(name = "reportType", required = false, defaultValue = "VoltageInit") String reportType,
                                            @Parameter(description = "parametersUuid") @RequestParam(name = "parametersUuid", required = false) UUID parametersUuid,
                                            @RequestHeader(HEADER_USER_ID) String userId) {
-        UUID resultUuid = voltageInitService.runAndSaveResult(networkUuid, variantId, receiver, reportUuid, reporterId, userId, parametersUuid);
+        UUID resultUuid = voltageInitService.runAndSaveResult(networkUuid, variantId, receiver, reportUuid, reporterId, userId, reportType, parametersUuid);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultUuid);
     }
 
