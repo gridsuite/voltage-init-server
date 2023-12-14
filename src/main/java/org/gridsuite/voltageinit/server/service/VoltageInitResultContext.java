@@ -33,6 +33,9 @@ public class VoltageInitResultContext {
 
     public static final String REPORTER_ID_HEADER = "reporterId";
 
+    public static final String REPORT_TYPE_HEADER = "reportType";
+    public static final String VOLTAGE_LEVELS_IDS_RESTRICTED = "voltageLevelsIdsRestricted";
+
     private final UUID resultUuid;
 
     private final VoltageInitRunContext runContext;
@@ -58,6 +61,7 @@ public class VoltageInitResultContext {
         String variantId = (String) headers.get(VARIANT_ID_HEADER);
         String receiver = (String) headers.get(HEADER_RECEIVER);
         String userId = (String) headers.get(HEADER_USER_ID);
+        Map<String, Double> voltageLevelsIdsRestricted = (Map<String, Double>) headers.get(VOLTAGE_LEVELS_IDS_RESTRICTED);
 
         OpenReacParameters parameters;
         try {
@@ -68,7 +72,8 @@ public class VoltageInitResultContext {
 
         UUID reportUuid = headers.containsKey(REPORT_UUID_HEADER) ? UUID.fromString((String) headers.get(REPORT_UUID_HEADER)) : null;
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
-        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, userId, parameters);
+        String reportType = headers.containsKey(REPORT_TYPE_HEADER) ? (String) headers.get(REPORT_TYPE_HEADER) : null;
+        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parameters, voltageLevelsIdsRestricted);
         return new VoltageInitResultContext(resultUuid, runContext);
     }
 
@@ -87,6 +92,8 @@ public class VoltageInitResultContext {
                 .setHeader(HEADER_USER_ID, runContext.getUserId())
                 .setHeader(REPORT_UUID_HEADER, runContext.getReportUuid() != null ? runContext.getReportUuid().toString() : null)
                 .setHeader(REPORTER_ID_HEADER, runContext.getReporterId())
+                .setHeader(REPORT_TYPE_HEADER, runContext.getReportType())
+                .setHeader(VOLTAGE_LEVELS_IDS_RESTRICTED, runContext.getVoltageLevelsIdsRestricted())
                 .build();
     }
 }
