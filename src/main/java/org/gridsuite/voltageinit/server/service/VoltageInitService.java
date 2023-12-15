@@ -74,12 +74,12 @@ public class VoltageInitService {
 
         OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(voltageInitParametersEntity, networkUuid, variantId, voltageLevelsIdsRestricted);
         VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parameters, voltageLevelsIdsRestricted);
-
         Objects.requireNonNull(runContext);
         var resultUuid = uuidGeneratorService.generate();
 
         // update status to running status
         setStatus(List.of(resultUuid), VoltageInitStatus.RUNNING.name());
+
         notificationService.sendRunMessage(new VoltageInitResultContext(resultUuid, runContext).toMessage(objectMapper));
         return resultUuid;
     }
