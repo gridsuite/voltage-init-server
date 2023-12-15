@@ -78,12 +78,12 @@ public class VoltageInitParametersService {
         voltageInitParametersRepository.deleteById(parametersUuid);
     }
 
-    private Map<String, VoltageLimitEntity> resolveVoltageLevelLimits(List<VoltageLimitEntity> voltageLimits, UUID networkUuid, String networkVariant) {
+    private Map<String, VoltageLimitEntity> resolveVoltageLevelLimits(VoltageInitRunContext context, List<VoltageLimitEntity> voltageLimits) {
         Map<String, VoltageLimitEntity> voltageLevelLimits = new HashMap<>();
         //each voltage level is associated to a voltage limit setting
         //if a voltage level is resolved by multiple filters the highest priority setting will be kept
         voltageLimits.stream().forEach(voltageLimit ->
-            filterService.exportFilters(voltageLimit.getFilters().stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, networkVariant)
+            filterService.exportFilters(voltageLimit.getFilters().stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), context.getNetworkUuid(), context.getVariantId())
                 .forEach(filterEquipment -> filterEquipment.getIdentifiableAttributes().stream().map(IdentifiableAttributes::getId)
                     .forEach(voltageLevelsId -> voltageLevelLimits.put(voltageLevelsId, voltageLimit))
                 )
@@ -91,19 +91,54 @@ public class VoltageInitParametersService {
         return voltageLevelLimits;
     }
 
-    private void fillSpecificVoltageLimits(List<VoltageLimitOverride> specificVoltageLimits, Map<String, VoltageLimitEntity> voltageLevelModificationLimits, Map<String, VoltageLimitEntity> voltageLevelDefaultLimits, VoltageLevel voltageLevel) {
+    private void fillSpecificVoltageLimits(List<VoltageLimitOverride> specificVoltageLimits, Map<String, VoltageLimitEntity> voltageLevelModificationLimits, Map<String, VoltageLimitEntity> voltageLevelDefaultLimits, VoltageLevel voltageLevel, HashMap<String, Double> voltageLevelsIdsRestricted) {
         boolean isLowVoltageLimitModificationSet = voltageLevelModificationLimits.containsKey(voltageLevel.getId()) && voltageLevelModificationLimits.get(voltageLevel.getId()).getLowVoltageLimit() != null;
         boolean isHighVoltageLimitModificationSet = voltageLevelModificationLimits.containsKey(voltageLevel.getId()) && voltageLevelModificationLimits.get(voltageLevel.getId()).getHighVoltageLimit() != null;
         boolean isLowVoltageLimitDefaultSet = voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) && voltageLevelDefaultLimits.get(voltageLevel.getId()).getLowVoltageLimit() != null;
         boolean isHighVoltageLimitDefaultSet = voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) && voltageLevelDefaultLimits.get(voltageLevel.getId()).getHighVoltageLimit() != null;
 
-        //for a given voltage level we set only the modification override if the voltage already has a preexisting limit set
-        //otherwise we use the default setting combined with the modification
-        if (!Double.isNaN(voltageLevel.getLowVoltageLimit()) && isLowVoltageLimitModificationSet) {
-            specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, voltageLevelModificationLimits.get(voltageLevel.getId()).getLowVoltageLimit()));
-        } else if (Double.isNaN(voltageLevel.getLowVoltageLimit()) && isLowVoltageLimitDefaultSet) {
-            specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, voltageLevelDefaultLimits.get(voltageLevel.getId()).getLowVoltageLimit() + (isLowVoltageLimitModificationSet ? voltageLevelModificationLimits.get(voltageLevel.getId()).getLowVoltageLimit() : 0.)));
+        setLowVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isLowVoltageLimitModificationSet, isLowVoltageLimitDefaultSet, voltageLevel, voltageLevelsIdsRestricted);
+        setHighVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isHighVoltageLimitModificationSet, isHighVoltageLimitDefaultSet, voltageLevel);
+    }
+
+    private void setLowVoltageLimit(List<VoltageLimitOverride> specificVoltageLimits,
+                                    Map<String, VoltageLimitEntity> voltageLevelModificationLimits,
+                                    Map<String, VoltageLimitEntity> voltageLevelDefaultLimits,
+                                    boolean isLowVoltageLimitModificationSet,
+                                    boolean isLowVoltageLimitDefaultSet,
+                                    VoltageLevel voltageLevel,
+                                    HashMap<String, Double> voltageLevelsIdsRestricted) {
+        double newLowVoltageLimit;
+        double lowVoltageLimit = voltageLevel.getLowVoltageLimit();
+        if (!Double.isNaN(lowVoltageLimit) && isLowVoltageLimitModificationSet) {
+            double lowVoltageLimitModification = voltageLevelModificationLimits.get(voltageLevel.getId()).getLowVoltageLimit();
+
+            if (lowVoltageLimit + lowVoltageLimitModification < 0) {
+                newLowVoltageLimit = lowVoltageLimit * -1;
+                voltageLevelsIdsRestricted.put(voltageLevel.getId(), newLowVoltageLimit);
+            } else {
+                newLowVoltageLimit = lowVoltageLimitModification;
+            }
+            specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, newLowVoltageLimit));
+
+        } else if (Double.isNaN(lowVoltageLimit) && isLowVoltageLimitDefaultSet) {
+            double voltageLimit = voltageLevelDefaultLimits.get(voltageLevel.getId()).getLowVoltageLimit() + (isLowVoltageLimitModificationSet ? voltageLevelModificationLimits.get(voltageLevel.getId()).getLowVoltageLimit() : 0.);
+            if (voltageLimit < 0) {
+                newLowVoltageLimit = 0.0;
+                voltageLevelsIdsRestricted.put(voltageLevel.getId(), newLowVoltageLimit);
+            } else {
+                newLowVoltageLimit = voltageLimit;
+            }
+            specificVoltageLimits.add(
+                new VoltageLimitOverride(voltageLevel.getId(),
+                    VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT,
+                    false,
+                    newLowVoltageLimit
+                ));
         }
+    }
+
+    private void setHighVoltageLimit(List<VoltageLimitOverride> specificVoltageLimits, Map<String, VoltageLimitEntity> voltageLevelModificationLimits, Map<String, VoltageLimitEntity> voltageLevelDefaultLimits, boolean isHighVoltageLimitModificationSet, boolean isHighVoltageLimitDefaultSet, VoltageLevel voltageLevel) {
         if (!Double.isNaN(voltageLevel.getHighVoltageLimit()) && isHighVoltageLimitModificationSet) {
             specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, voltageLevelModificationLimits.get(voltageLevel.getId()).getHighVoltageLimit()));
         } else if (Double.isNaN(voltageLevel.getHighVoltageLimit()) && isHighVoltageLimitDefaultSet) {
@@ -129,15 +164,22 @@ public class VoltageInitParametersService {
 
         voltageInitParametersEntity.ifPresent(voltageInitParameters -> {
             if (voltageInitParameters.getVoltageLimits() != null) {
-                Map<String, VoltageLimitEntity> voltageLevelDefaultLimits = resolveVoltageLevelLimits(voltageInitParameters.getVoltageLimits().stream().filter(voltageLimit -> VoltageLimitParameterType.DEFAULT.equals(voltageLimit.getVoltageLimitParameterType())).toList(), context.getNetworkUuid(), context.getVariantId());
-                Map<String, VoltageLimitEntity> voltageLevelModificationLimits = resolveVoltageLevelLimits(voltageInitParameters.getVoltageLimits().stream().filter(voltageLimit -> VoltageLimitParameterType.MODIFICATION.equals(voltageLimit.getVoltageLimitParameterType())).toList(), context.getNetworkUuid(), context.getVariantId());
+                Map<String, VoltageLimitEntity> voltageLevelDefaultLimits = resolveVoltageLevelLimits(context, voltageInitParameters.getVoltageLimits().stream()
+                    .filter(voltageLimit -> VoltageLimitParameterType.DEFAULT.equals(voltageLimit.getVoltageLimitParameterType()))
+                    .toList());
+
+                Map<String, VoltageLimitEntity> voltageLevelModificationLimits = resolveVoltageLevelLimits(context, voltageInitParameters.getVoltageLimits().stream()
+                    .filter(voltageLimit -> VoltageLimitParameterType.MODIFICATION.equals(voltageLimit.getVoltageLimitParameterType()))
+                    .toList());
+
                 network.getVoltageLevelStream()
-                    .filter(voltageLevel -> voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) || voltageLevelModificationLimits.containsKey(voltageLevel.getId()))
-                    .forEach(voltageLevel -> fillSpecificVoltageLimits(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, voltageLevel));
+                    .filter(voltageLevel -> voltageLevelDefaultLimits.keySet().contains(voltageLevel.getId()) || voltageLevelModificationLimits.keySet().contains(voltageLevel.getId()))
+                    .forEach(voltageLevel -> fillSpecificVoltageLimits(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, voltageLevel, (HashMap<String, Double>) context.getVoltageLevelsIdsRestricted()));
             }
-            constantQGenerators.addAll(toEquipmentIdsList(voltageInitParameters.getConstantQGenerators(), context.getNetworkUuid(), context.getVariantId()));
-            variableTwoWindingsTransformers.addAll(toEquipmentIdsList(voltageInitParameters.getVariableTwoWindingsTransformers(), context.getNetworkUuid(), context.getVariantId()));
-            variableShuntCompensators.addAll(toEquipmentIdsList(voltageInitParameters.getVariableShuntCompensators(), context.getNetworkUuid(), context.getVariantId()));
+
+            constantQGenerators.addAll(toEquipmentIdsList(context, voltageInitParameters.getConstantQGenerators()));
+            variableTwoWindingsTransformers.addAll(toEquipmentIdsList(context, voltageInitParameters.getVariableTwoWindingsTransformers()));
+            variableShuntCompensators.addAll(toEquipmentIdsList(context, voltageInitParameters.getVariableShuntCompensators()));
         });
         parameters.addSpecificVoltageLimits(specificVoltageLimits)
             .addConstantQGenerators(constantQGenerators)
@@ -152,11 +194,11 @@ public class VoltageInitParametersService {
         return parameters;
     }
 
-    private List<String> toEquipmentIdsList(List<FilterEquipmentsEmbeddable> filters, UUID networkUuid, String variantId) {
+    private List<String> toEquipmentIdsList(VoltageInitRunContext context, List<FilterEquipmentsEmbeddable> filters) {
         if (filters == null || filters.isEmpty()) {
             return List.of();
         }
-        List<FilterEquipments> equipments = filterService.exportFilters(filters.stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, variantId);
+        List<FilterEquipments> equipments = filterService.exportFilters(filters.stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), context.getNetworkUuid(), context.getVariantId());
         Set<String> ids = new HashSet<>();
         equipments.forEach(filterEquipment ->
             filterEquipment.getIdentifiableAttributes().forEach(identifiableAttribute ->

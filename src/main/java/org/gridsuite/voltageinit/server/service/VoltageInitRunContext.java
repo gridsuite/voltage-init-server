@@ -8,6 +8,7 @@ package org.gridsuite.voltageinit.server.service;
 
 import lombok.Getter;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -27,17 +28,23 @@ public class VoltageInitRunContext {
 
     private final String reporterId;
 
+    private final String reportType;
+
     private final String userId;
 
     private final UUID parametersUuid;
 
-    public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String userId, UUID parametersUuid) {
+    private final Map<String, Double> voltageLevelsIdsRestricted;
+
+    public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid, Map<String, Double> voltageLevelsIdsRestricted) {
         this.networkUuid = Objects.requireNonNull(networkUuid);
         this.variantId = variantId;
         this.receiver = receiver;
         this.reportUuid = reportUuid;
         this.reporterId = reporterId;
+        this.reportType = reportType;
         this.userId = userId;
         this.parametersUuid = parametersUuid;
+        this.voltageLevelsIdsRestricted = voltageLevelsIdsRestricted;
     }
 }

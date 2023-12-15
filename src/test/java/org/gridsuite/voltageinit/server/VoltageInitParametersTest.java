@@ -6,13 +6,12 @@
  */
 package org.gridsuite.voltageinit.server;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.gridsuite.voltageinit.utils.assertions.Assertions.*;
-
-import java.util.*;
-
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.commons.reporter.Report;
+import com.powsybl.commons.reporter.ReporterModel;
+import com.powsybl.commons.reporter.TypedValue;
 import com.powsybl.iidm.network.IdentifiableType;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
@@ -32,6 +31,7 @@ import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
 import org.gridsuite.voltageinit.server.service.VoltageInitService;
+import org.gridsuite.voltageinit.server.service.VoltageInitWorkerService;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
@@ -43,18 +43,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.http.MediaType;
 
+import java.util.*;
+
+import static org.gridsuite.voltageinit.utils.assertions.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
@@ -305,7 +306,7 @@ public class VoltageInitParametersTest {
 
         VoltageInitParametersEntity voltageInitParameters = new VoltageInitParametersEntity(UUID.randomUUID(), null, "", List.of(voltageLimit, voltageLimit2), null, null, null);
         parametersRepository.save(voltageInitParameters);
-        VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, null, null, "", parametersRepository.findAll().get(0).getId());
+        VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, null, null, "", "", parametersRepository.findAll().get(0).getId(), new HashMap<>());
         OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         assertEquals(4, openReacParameters.getSpecificVoltageLimits().size());
         //No override should be relative since there are no voltage limit modification
@@ -326,7 +327,7 @@ public class VoltageInitParametersTest {
         VoltageLimitEntity voltageLimit3 = new VoltageLimitEntity(UUID.randomUUID(), -1., -2., 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
         voltageInitParameters.setVoltageLimits(List.of(voltageLimit, voltageLimit2, voltageLimit3));
         parametersRepository.save(voltageInitParameters);
-        context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, null, null, "", parametersRepository.findAll().get(1).getId());
+        context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, null, null, "", "", parametersRepository.findAll().get(1).getId(), new HashMap<>());
         openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         //There should nox be relative overrides since voltage limit modification are applied
         assertThat(openReacParameters.getSpecificVoltageLimits().stream().allMatch(voltageLimitOverride -> !voltageLimitOverride.isRelative())).isFalse();
@@ -339,6 +340,45 @@ public class VoltageInitParametersTest {
         assertEquals(43., openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLLOAD".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).findAny().get().getLimit());
         assertEquals(86., openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLLOAD".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).findAny().get().getLimit());
 
+        // We need to check for the case of relative = true with the modification less than 0 => the new low voltage limit = low voltage limit * -1
+        VoltageLimitEntity voltageLimit4 = new VoltageLimitEntity(UUID.randomUUID(), -20.0, 10.0, 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
+        voltageInitParameters.setVoltageLimits(List.of(voltageLimit4));
+        parametersRepository.save(voltageInitParameters);
+        context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, null, null, "", "", parametersRepository.findAll().get(2).getId(), new HashMap<>());
+        openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
+        //There should have relative true overrides since voltage limit modification are applied for VLGEN
+        assertTrue(openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLGEN".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).map(VoltageLimitOverride::isRelative).findFirst().get());
+        assertEquals(4, openReacParameters.getSpecificVoltageLimits().size());
+        // The low voltage limit must be impacted by the modification of the value
+        assertEquals(-10., openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLGEN".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).findAny().get().getLimit());
+
+        // We need to check for the case of relative = false with the modification less than 0 => the new low voltage limit = 0
+        VoltageLimitEntity voltageLimit5 = new VoltageLimitEntity(UUID.randomUUID(), 10.0, 10.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
+        voltageInitParameters.setVoltageLimits(List.of(voltageLimit4, voltageLimit5));
+        parametersRepository.save(voltageInitParameters);
+        context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, null, null, "", "", parametersRepository.findAll().get(3).getId(), new HashMap<>());
+        openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
+        //There should have relative false overrides since voltage limit modification are applied for VLHV1
+        assertFalse(openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLHV1".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).map(VoltageLimitOverride::isRelative).findFirst().get());
+        // The low voltage limit must be impacted by the modification of the value
+        assertEquals(0., openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLHV1".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).findAny().get().getLimit());
+    }
+
+    @Test
+    public void testAddRestrictedVoltageLevelReport() {
+        Map<String, Double> restrictedVoltageLevel = new HashMap<>();
+        restrictedVoltageLevel.put("vl", 10.0);
+        ReporterModel reporter = new ReporterModel("test", "test");
+        VoltageInitWorkerService.addRestrictedVoltageLevelReport(restrictedVoltageLevel, reporter);
+        assertEquals("restrictedVoltageLevels", reporter.getReports().stream().findFirst().get().getReportKey());
+        assertEquals("The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: vl : 10.0",
+                reporter.getReports().stream().findFirst().get().getDefaultMessage());
+        Optional<Map.Entry<String, TypedValue>> typedValues = reporter.getReports().stream()
+                .map(Report::getValues)
+                .findFirst()
+                .flatMap(values -> values.entrySet().stream().findFirst());
+        assertEquals("reportSeverity", typedValues.map(Map.Entry::getKey).get());
+        assertEquals("WARN", typedValues.map(value -> value.getValue().getValue()).get());
     }
 }
 
