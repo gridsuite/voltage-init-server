@@ -165,7 +165,6 @@ public class VoltageInitParametersService {
         }
     }
 
-
     public OpenReacParameters buildOpenReacParameters(Optional<VoltageInitParametersEntity> voltageInitParametersEntity, UUID networkUuid, String variantId, HashMap<String, Double> voltageLevelsIdsRestricted) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
