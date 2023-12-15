@@ -65,13 +65,16 @@ public class VoltageInitService {
         this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
-    public UUID runAndSaveResult(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String userId, UUID parametersUuid) {
+    public UUID runAndSaveResult(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String userId, String reportType, UUID parametersUuid) {
         Optional<VoltageInitParametersEntity> voltageInitParametersEntity = Optional.empty();
+        HashMap<String, Double> voltageLevelsIdsRestricted = new HashMap<>();
         if (parametersUuid != null) {
             voltageInitParametersEntity = voltageInitParametersRepository.findById(parametersUuid);
         }
-        OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(voltageInitParametersEntity, networkUuid, variantId);
-        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, userId, parameters);
+
+        OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(voltageInitParametersEntity, networkUuid, variantId, voltageLevelsIdsRestricted);
+        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parameters, voltageLevelsIdsRestricted);
+
         Objects.requireNonNull(runContext);
         var resultUuid = uuidGeneratorService.generate();
 
