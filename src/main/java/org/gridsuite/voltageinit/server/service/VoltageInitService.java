@@ -263,7 +263,7 @@ public class VoltageInitService {
         List<ReactiveSlack> reactiveSlacks = resultEntity.getReactiveSlacks().stream()
                 .map(slack -> new ReactiveSlack(slack.getBusId(), slack.getSlack()))
                 .toList();
-        return new VoltageInitResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), sortedIndicators, reactiveSlacks);
+        return new VoltageInitResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), sortedIndicators, reactiveSlacks, resultEntity.getModificationsGroupUuid());
     }
 
     public void deleteResult(UUID resultUuid) {
@@ -303,4 +303,9 @@ public class VoltageInitService {
         return result.map(VoltageInitResultEntity::getModificationsGroupUuid).orElse(null);
     }
 
+    @Transactional
+    public void resetModificationsGroupUuid(UUID resultUuid) {
+        Optional<VoltageInitResultEntity> result = resultRepository.find(resultUuid);
+        result.ifPresent(entity -> entity.setModificationsGroupUuid(null));
+    }
 }

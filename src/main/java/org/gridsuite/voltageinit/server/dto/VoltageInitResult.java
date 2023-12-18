@@ -31,4 +31,5 @@ public class VoltageInitResult {
 
     private List<ReactiveSlack> reactiveSlacks;
 
+    private UUID modificationsGroupUuid;
 }
