@@ -6,7 +6,6 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.reporter.Report;
@@ -20,10 +19,12 @@ import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.openreac.OpenReacConfig;
 import com.powsybl.openreac.OpenReacRunner;
+import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import org.apache.commons.lang3.StringUtils;
 import org.gridsuite.voltageinit.server.repository.VoltageInitResultRepository;
+import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +62,8 @@ public class VoltageInitWorkerService {
 
     private final NetworkModificationService networkModificationService;
 
+    private final VoltageInitParametersService voltageInitParametersService;
+
     private final ReportService reportService;
 
     private final VoltageInitResultRepository resultRepository;
@@ -77,23 +80,21 @@ public class VoltageInitWorkerService {
 
     private final Executor threadPool = ForkJoinPool.commonPool();
 
-    private final ObjectMapper objectMapper;
-
     @Autowired
     NotificationService notificationService;
 
     public VoltageInitWorkerService(NetworkStoreService networkStoreService,
                                     NetworkModificationService networkModificationService,
+                                    VoltageInitParametersService voltageInitParametersService,
                                     VoltageInitResultRepository resultRepository,
                                     ReportService reportService,
-                                    VoltageInitExecutionService voltageInitExecutionService,
-                                    ObjectMapper objectMapper) {
+                                    VoltageInitExecutionService voltageInitExecutionService) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
+        this.voltageInitParametersService = Objects.requireNonNull(voltageInitParametersService);
         this.reportService = reportService;
         this.resultRepository = Objects.requireNonNull(resultRepository);
         this.voltageInitExecutionService = Objects.requireNonNull(voltageInitExecutionService);
-        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     private Network getNetwork(UUID networkUuid, String variantId) {
@@ -153,8 +154,10 @@ public class VoltageInitWorkerService {
             if (resultUuid != null && cancelComputationRequests.get(resultUuid) != null) {
                 return null;
             }
+
+            OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(context, network);
             OpenReacConfig config = OpenReacConfig.load();
-            CompletableFuture<OpenReacResult> future = CompletableFutureTask.runAsync(() -> OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), context.getParameters(), config, voltageInitExecutionService.getComputationManager()), this.threadPool);
+            CompletableFuture<OpenReacResult> future = CompletableFutureTask.runAsync(() -> OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters, config, voltageInitExecutionService.getComputationManager()), this.threadPool);
             if (resultUuid != null) {
                 futures.put(resultUuid, future);
             }
@@ -189,7 +192,7 @@ public class VoltageInitWorkerService {
     @Bean
     public Consumer<Message<String>> consumeRun() {
         return message -> {
-            VoltageInitResultContext resultContext = VoltageInitResultContext.fromMessage(message, objectMapper);
+            VoltageInitResultContext resultContext = VoltageInitResultContext.fromMessage(message);
             try {
                 runRequests.add(resultContext.getResultUuid());
                 AtomicReference<Long> startTime = new AtomicReference<>();

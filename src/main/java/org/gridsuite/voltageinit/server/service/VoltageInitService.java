@@ -6,18 +6,13 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.network.store.client.NetworkStoreService;
-import com.powsybl.openreac.parameters.input.OpenReacParameters;
 
 import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.entities.VoltageInitResultEntity;
-import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.repository.VoltageInitResultRepository;
-import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
-import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Service;
@@ -41,46 +36,26 @@ public class VoltageInitService {
 
     private final UuidGeneratorService uuidGeneratorService;
 
-    private final VoltageInitParametersService voltageInitParametersService;
-
     private final VoltageInitResultRepository resultRepository;
-
-    private final VoltageInitParametersRepository voltageInitParametersRepository;
-
-    private final ObjectMapper objectMapper;
 
     public VoltageInitService(NotificationService notificationService,
                               NetworkModificationService networkModificationService,
                               UuidGeneratorService uuidGeneratorService,
-                              VoltageInitParametersService voltageInitParametersService,
-                              VoltageInitResultRepository resultRepository,
-                              VoltageInitParametersRepository voltageInitParametersRepository,
-                              ObjectMapper objectMapper) {
+                              VoltageInitResultRepository resultRepository) {
         this.notificationService = Objects.requireNonNull(notificationService);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
-        this.voltageInitParametersService = Objects.requireNonNull(voltageInitParametersService);
         this.uuidGeneratorService = Objects.requireNonNull(uuidGeneratorService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
-        this.voltageInitParametersRepository = Objects.requireNonNull(voltageInitParametersRepository);
-        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     public UUID runAndSaveResult(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String userId, String reportType, UUID parametersUuid) {
-        Optional<VoltageInitParametersEntity> voltageInitParametersEntity = Optional.empty();
-        HashMap<String, Double> voltageLevelsIdsRestricted = new HashMap<>();
-        if (parametersUuid != null) {
-            voltageInitParametersEntity = voltageInitParametersRepository.findById(parametersUuid);
-        }
-
-        OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(voltageInitParametersEntity, networkUuid, variantId, voltageLevelsIdsRestricted);
-        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parameters, voltageLevelsIdsRestricted);
+        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, new HashMap<>());
         Objects.requireNonNull(runContext);
         var resultUuid = uuidGeneratorService.generate();
 
         // update status to running status
         setStatus(List.of(resultUuid), VoltageInitStatus.RUNNING.name());
-
-        notificationService.sendRunMessage(new VoltageInitResultContext(resultUuid, runContext).toMessage(objectMapper));
+        notificationService.sendRunMessage(new VoltageInitResultContext(resultUuid, runContext).toMessage());
         return resultUuid;
     }
 
