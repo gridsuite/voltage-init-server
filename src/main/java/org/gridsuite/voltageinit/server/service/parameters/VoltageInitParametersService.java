@@ -91,7 +91,7 @@ public class VoltageInitParametersService {
         return voltageLevelLimits;
     }
 
-    private void fillSpecificVoltageLimits(List<VoltageLimitOverride> specificVoltageLimits, Map<String, VoltageLimitEntity> voltageLevelModificationLimits, Map<String, VoltageLimitEntity> voltageLevelDefaultLimits, VoltageLevel voltageLevel, HashMap<String, Double> voltageLevelsIdsRestricted) {
+    private void fillSpecificVoltageLimits(List<VoltageLimitOverride> specificVoltageLimits, Map<String, VoltageLimitEntity> voltageLevelModificationLimits, Map<String, VoltageLimitEntity> voltageLevelDefaultLimits, VoltageLevel voltageLevel, Map<String, Double> voltageLevelsIdsRestricted) {
         boolean isLowVoltageLimitModificationSet = voltageLevelModificationLimits.containsKey(voltageLevel.getId()) && voltageLevelModificationLimits.get(voltageLevel.getId()).getLowVoltageLimit() != null;
         boolean isHighVoltageLimitModificationSet = voltageLevelModificationLimits.containsKey(voltageLevel.getId()) && voltageLevelModificationLimits.get(voltageLevel.getId()).getHighVoltageLimit() != null;
         boolean isLowVoltageLimitDefaultSet = voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) && voltageLevelDefaultLimits.get(voltageLevel.getId()).getLowVoltageLimit() != null;
@@ -107,7 +107,7 @@ public class VoltageInitParametersService {
                                     boolean isLowVoltageLimitModificationSet,
                                     boolean isLowVoltageLimitDefaultSet,
                                     VoltageLevel voltageLevel,
-                                    HashMap<String, Double> voltageLevelsIdsRestricted) {
+                                    Map<String, Double> voltageLevelsIdsRestricted) {
         double newLowVoltageLimit;
         double lowVoltageLimit = voltageLevel.getLowVoltageLimit();
         if (!Double.isNaN(lowVoltageLimit) && isLowVoltageLimitModificationSet) {
@@ -174,7 +174,7 @@ public class VoltageInitParametersService {
 
                 network.getVoltageLevelStream()
                     .filter(voltageLevel -> voltageLevelDefaultLimits.keySet().contains(voltageLevel.getId()) || voltageLevelModificationLimits.keySet().contains(voltageLevel.getId()))
-                    .forEach(voltageLevel -> fillSpecificVoltageLimits(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, voltageLevel, (HashMap<String, Double>) context.getVoltageLevelsIdsRestricted()));
+                    .forEach(voltageLevel -> fillSpecificVoltageLimits(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, voltageLevel, context.getVoltageLevelsIdsRestricted()));
             }
 
             constantQGenerators.addAll(toEquipmentIdsList(context, voltageInitParameters.getConstantQGenerators()));
