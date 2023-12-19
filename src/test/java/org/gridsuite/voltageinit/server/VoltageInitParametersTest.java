@@ -29,9 +29,11 @@ import org.gridsuite.voltageinit.server.entities.parameters.FilterEquipmentsEmbe
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
+import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
 import org.gridsuite.voltageinit.server.service.VoltageInitService;
 import org.gridsuite.voltageinit.server.service.VoltageInitWorkerService;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
+import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
 import org.junit.After;
 import org.junit.Before;
@@ -79,6 +81,9 @@ public class VoltageInitParametersTest {
 
     @Autowired
     VoltageInitService voltageInitService;
+
+    @Autowired
+    VoltageInitParametersService voltageInitParametersService;
 
     @Autowired
     protected MockMvc mockMvc;
@@ -299,8 +304,10 @@ public class VoltageInitParametersTest {
         VoltageLimitEntity voltageLimit = new VoltageLimitEntity(UUID.randomUUID(), 5., 10., 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
         VoltageLimitEntity voltageLimit2 = new VoltageLimitEntity(UUID.randomUUID(), 44., 88., 1, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_2, FILTER_2)));
 
-        Optional<VoltageInitParametersEntity> voltageInitParameters = Optional.of(new VoltageInitParametersEntity(UUID.randomUUID(), null, "", List.of(voltageLimit, voltageLimit2), null, null, null));
-        OpenReacParameters openReacParameters = voltageInitService.buildOpenReacParameters(voltageInitParameters, NETWORK_UUID, VARIANT_ID_1, new HashMap<>());
+        VoltageInitParametersEntity voltageInitParameters = new VoltageInitParametersEntity(UUID.randomUUID(), null, "", List.of(voltageLimit, voltageLimit2), null, null, null);
+        parametersRepository.save(voltageInitParameters);
+        VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, null, null, "", "", parametersRepository.findAll().get(0).getId(), new HashMap<>());
+        OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         assertEquals(4, openReacParameters.getSpecificVoltageLimits().size());
         //No override should be relative since there are no voltage limit modification
         assertThat(openReacParameters.getSpecificVoltageLimits().stream().allMatch(voltageLimitOverride -> !voltageLimitOverride.isRelative())).isTrue();
@@ -318,8 +325,10 @@ public class VoltageInitParametersTest {
 
         //We now add limit modifications in additions to defaults settings
         VoltageLimitEntity voltageLimit3 = new VoltageLimitEntity(UUID.randomUUID(), -1., -2., 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
-        voltageInitParameters = Optional.of(new VoltageInitParametersEntity(UUID.randomUUID(), null, "", List.of(voltageLimit, voltageLimit2, voltageLimit3), null, null, null));
-        openReacParameters = voltageInitService.buildOpenReacParameters(voltageInitParameters, NETWORK_UUID, VARIANT_ID_1, new HashMap<>());
+        voltageInitParameters.setVoltageLimits(List.of(voltageLimit, voltageLimit2, voltageLimit3));
+        parametersRepository.save(voltageInitParameters);
+        context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, null, null, "", "", parametersRepository.findAll().get(1).getId(), new HashMap<>());
+        openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         //There should nox be relative overrides since voltage limit modification are applied
         assertThat(openReacParameters.getSpecificVoltageLimits().stream().allMatch(voltageLimitOverride -> !voltageLimitOverride.isRelative())).isFalse();
         //Limits that weren't impacted by default settings are now impacted by modification settings
@@ -333,8 +342,10 @@ public class VoltageInitParametersTest {
 
         // We need to check for the case of relative = true with the modification less than 0 => the new low voltage limit = low voltage limit * -1
         VoltageLimitEntity voltageLimit4 = new VoltageLimitEntity(UUID.randomUUID(), -20.0, 10.0, 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
-        voltageInitParameters = Optional.of(new VoltageInitParametersEntity(UUID.randomUUID(), null, "", List.of(voltageLimit4), null, null, null));
-        openReacParameters = voltageInitService.buildOpenReacParameters(voltageInitParameters, NETWORK_UUID, VARIANT_ID_1, new HashMap<>());
+        voltageInitParameters.setVoltageLimits(List.of(voltageLimit4));
+        parametersRepository.save(voltageInitParameters);
+        context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, null, null, "", "", parametersRepository.findAll().get(2).getId(), new HashMap<>());
+        openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         //There should have relative true overrides since voltage limit modification are applied for VLGEN
         assertTrue(openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLGEN".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).map(VoltageLimitOverride::isRelative).findFirst().get());
         assertEquals(4, openReacParameters.getSpecificVoltageLimits().size());
@@ -343,8 +354,10 @@ public class VoltageInitParametersTest {
 
         // We need to check for the case of relative = false with the modification less than 0 => the new low voltage limit = 0
         VoltageLimitEntity voltageLimit5 = new VoltageLimitEntity(UUID.randomUUID(), 10.0, 10.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
-        voltageInitParameters = Optional.of(new VoltageInitParametersEntity(UUID.randomUUID(), null, "", List.of(voltageLimit4, voltageLimit5), null, null, null));
-        openReacParameters = voltageInitService.buildOpenReacParameters(voltageInitParameters, NETWORK_UUID, VARIANT_ID_1, new HashMap<>());
+        voltageInitParameters.setVoltageLimits(List.of(voltageLimit4, voltageLimit5));
+        parametersRepository.save(voltageInitParameters);
+        context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, null, null, "", "", parametersRepository.findAll().get(3).getId(), new HashMap<>());
+        openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         //There should have relative false overrides since voltage limit modification are applied for VLHV1
         assertFalse(openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLHV1".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).map(VoltageLimitOverride::isRelative).findFirst().get());
         // The low voltage limit must be impacted by the modification of the value
