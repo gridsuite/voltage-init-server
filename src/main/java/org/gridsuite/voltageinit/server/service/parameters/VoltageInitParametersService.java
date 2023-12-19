@@ -110,7 +110,7 @@ public class VoltageInitParametersService {
         return voltageLevelLimits;
     }
 
-    private void fillSpecificVoltageLimits(List<VoltageLimitOverride> specificVoltageLimits, Map<String, VoltageLimitEntity> voltageLevelModificationLimits, Map<String, VoltageLimitEntity> voltageLevelDefaultLimits, VoltageLevel voltageLevel, HashMap<String, Double> voltageLevelsIdsRestricted) {
+    private void fillSpecificVoltageLimits(List<VoltageLimitOverride> specificVoltageLimits, Map<String, VoltageLimitEntity> voltageLevelModificationLimits, Map<String, VoltageLimitEntity> voltageLevelDefaultLimits, VoltageLevel voltageLevel, Map<String, Double> voltageLevelsIdsRestricted) {
         boolean isLowVoltageLimitModificationSet = voltageLevelModificationLimits.containsKey(voltageLevel.getId()) && voltageLevelModificationLimits.get(voltageLevel.getId()).getLowVoltageLimit() != null;
         boolean isHighVoltageLimitModificationSet = voltageLevelModificationLimits.containsKey(voltageLevel.getId()) && voltageLevelModificationLimits.get(voltageLevel.getId()).getHighVoltageLimit() != null;
         boolean isLowVoltageLimitDefaultSet = voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) && voltageLevelDefaultLimits.get(voltageLevel.getId()).getLowVoltageLimit() != null;
@@ -126,7 +126,7 @@ public class VoltageInitParametersService {
                                     boolean isLowVoltageLimitModificationSet,
                                     boolean isLowVoltageLimitDefaultSet,
                                     VoltageLevel voltageLevel,
-                                    HashMap<String, Double> voltageLevelsIdsRestricted) {
+                                    Map<String, Double> voltageLevelsIdsRestricted) {
         double newLowVoltageLimit;
         double lowVoltageLimit = voltageLevel.getLowVoltageLimit();
         if (!Double.isNaN(lowVoltageLimit) && isLowVoltageLimitModificationSet) {
@@ -165,7 +165,7 @@ public class VoltageInitParametersService {
         }
     }
 
-    public OpenReacParameters buildOpenReacParameters(Optional<VoltageInitParametersEntity> voltageInitParametersEntity, UUID networkUuid, String variantId, HashMap<String, Double> voltageLevelsIdsRestricted) {
+    public OpenReacParameters buildOpenReacParameters(Optional<VoltageInitParametersEntity> voltageInitParametersEntity, UUID networkUuid, String variantId, Map<String, Double> voltageLevelsIdsRestricted) {
         AtomicReference<Long> startTime = new AtomicReference<>();
         startTime.set(System.nanoTime());
 
