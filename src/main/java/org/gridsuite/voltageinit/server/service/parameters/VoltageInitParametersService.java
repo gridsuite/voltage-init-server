@@ -177,9 +177,9 @@ public class VoltageInitParametersService {
                     .forEach(voltageLevel -> fillSpecificVoltageLimits(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, voltageLevel, context.getVoltageLevelsIdsRestricted()));
             }
 
-            constantQGenerators.addAll(toEquipmentIdsList(context, voltageInitParameters.getConstantQGenerators()));
-            variableTwoWindingsTransformers.addAll(toEquipmentIdsList(context, voltageInitParameters.getVariableTwoWindingsTransformers()));
-            variableShuntCompensators.addAll(toEquipmentIdsList(context, voltageInitParameters.getVariableShuntCompensators()));
+            constantQGenerators.addAll(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getConstantQGenerators()));
+            variableTwoWindingsTransformers.addAll(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableTwoWindingsTransformers()));
+            variableShuntCompensators.addAll(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableShuntCompensators()));
         });
         parameters.addSpecificVoltageLimits(specificVoltageLimits)
             .addConstantQGenerators(constantQGenerators)
@@ -194,11 +194,11 @@ public class VoltageInitParametersService {
         return parameters;
     }
 
-    private List<String> toEquipmentIdsList(VoltageInitRunContext context, List<FilterEquipmentsEmbeddable> filters) {
+    private List<String> toEquipmentIdsList(UUID networkUuid, String variantId, List<FilterEquipmentsEmbeddable> filters) {
         if (filters == null || filters.isEmpty()) {
             return List.of();
         }
-        List<FilterEquipments> equipments = filterService.exportFilters(filters.stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), context.getNetworkUuid(), context.getVariantId());
+        List<FilterEquipments> equipments = filterService.exportFilters(filters.stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, variantId);
         Set<String> ids = new HashSet<>();
         equipments.forEach(filterEquipment ->
             filterEquipment.getIdentifiableAttributes().forEach(identifiableAttribute ->
