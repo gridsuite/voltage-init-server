@@ -30,10 +30,10 @@ public class VoltageInitParametersService {
     }
 
     public UUID createParameters(VoltageInitParametersInfos parametersInfos) {
-        return voltageInitParametersRepository.save(parametersInfos.toEntity()).toVoltageInitParametersInfos().getUuid();
+        return voltageInitParametersRepository.save(parametersInfos.toEntity()).getId();
     }
 
-    public Optional<UUID> createParameters(UUID sourceParametersId) {
+    public Optional<UUID> duplicateParameters(UUID sourceParametersId) {
         Optional<VoltageInitParametersInfos> sourceVoltageInitParametersInfos = voltageInitParametersRepository.findById(sourceParametersId).map(VoltageInitParametersEntity::toVoltageInitParametersInfos);
         if (sourceVoltageInitParametersInfos.isPresent()) {
             VoltageInitParametersEntity entity = new VoltageInitParametersEntity(sourceVoltageInitParametersInfos.get());
