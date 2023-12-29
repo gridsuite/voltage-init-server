@@ -52,7 +52,7 @@ public class VoltageInitParametersController {
         @ApiResponse(responseCode = "404", description = "source parameters were not found")})
     public ResponseEntity<UUID> duplicateParameters(
         @Parameter(description = "source parameters UUID") @RequestParam(name = "duplicateFrom") UUID sourceParametersUuid) {
-        return parametersService.createParameters(sourceParametersUuid).map(duplicatedParametersUuid -> ResponseEntity.ok()
+        return parametersService.duplicateParameters(sourceParametersUuid).map(duplicatedParametersUuid -> ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(duplicatedParametersUuid))
             .orElse(ResponseEntity.notFound().build());
