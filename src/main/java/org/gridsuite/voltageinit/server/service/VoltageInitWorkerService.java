@@ -70,6 +70,8 @@ public class VoltageInitWorkerService {
 
     private final VoltageInitExecutionService voltageInitExecutionService;
 
+    private final VoltageInitObserver voltageInitObserver;
+
     private final Map<UUID, CompletableFuture<OpenReacResult>> futures = new ConcurrentHashMap<>();
 
     private final Map<UUID, VoltageInitCancelContext> cancelComputationRequests = new ConcurrentHashMap<>();
@@ -88,13 +90,15 @@ public class VoltageInitWorkerService {
                                     VoltageInitParametersService voltageInitParametersService,
                                     VoltageInitResultRepository resultRepository,
                                     ReportService reportService,
-                                    VoltageInitExecutionService voltageInitExecutionService) {
+                                    VoltageInitExecutionService voltageInitExecutionService,
+                                    VoltageInitObserver voltageInitObserver) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
         this.voltageInitParametersService = Objects.requireNonNull(voltageInitParametersService);
         this.reportService = reportService;
         this.resultRepository = Objects.requireNonNull(resultRepository);
         this.voltageInitExecutionService = Objects.requireNonNull(voltageInitExecutionService);
+        this.voltageInitObserver = voltageInitObserver;
     }
 
     private Network getNetwork(UUID networkUuid, String variantId) {
@@ -124,28 +128,31 @@ public class VoltageInitWorkerService {
         }
     }
 
-    private OpenReacResult run(VoltageInitRunContext context, UUID resultUuid) throws ExecutionException, InterruptedException {
+    private OpenReacResult run(VoltageInitRunContext context, UUID resultUuid) throws Exception {
         Objects.requireNonNull(context);
 
         LOGGER.info("Run voltage init...");
-        Network network = getNetwork(context.getNetworkUuid(), context.getVariantId());
+        Network network = voltageInitObserver.observe("network.load", context, () ->
+                getNetwork(context.getNetworkUuid(), context.getVariantId()));
 
-        Reporter rootReporter = Reporter.NO_OP;
+        AtomicReference<Reporter> rootReporter = new AtomicReference<>(Reporter.NO_OP);
         Reporter reporter = Reporter.NO_OP;
         if (context.getReportUuid() != null) {
             String rootReporterId = context.getReporterId() == null ? VOLTAGE_INIT_TYPE_REPORT : context.getReporterId() + "@" + context.getReportType();
-            rootReporter = new ReporterModel(rootReporterId, rootReporterId);
-            reporter = rootReporter.createSubReporter(context.getReportType(), VOLTAGE_INIT_TYPE_REPORT, VOLTAGE_INIT_TYPE_REPORT, context.getReportUuid().toString());
+            rootReporter.set(new ReporterModel(rootReporterId, rootReporterId));
+            reporter = rootReporter.get().createSubReporter(context.getReportType(), VOLTAGE_INIT_TYPE_REPORT, VOLTAGE_INIT_TYPE_REPORT, context.getReportUuid().toString());
             // Delete any previous VoltageInit computation logs
-            reportService.deleteReport(context.getReportUuid(), context.getReportType());
+            voltageInitObserver.observe("report.delete", context, () ->
+                    reportService.deleteReport(context.getReportUuid(), context.getReportType()));
         }
         CompletableFuture<OpenReacResult> future = runVoltageInitAsync(context, network, resultUuid);
         if (context.getReportUuid() != null) {
             addRestrictedVoltageLevelReport(context.getVoltageLevelsIdsRestricted(), reporter);
-            reportService.sendReport(context.getReportUuid(), rootReporter);
+            voltageInitObserver.observe("report.send", context, () ->
+                    reportService.sendReport(context.getReportUuid(), rootReporter.get()));
         }
 
-        return future == null ? null : future.get();
+        return future == null ? null : voltageInitObserver.observeRun("run", context, future::get);
     }
 
     public CompletableFuture<OpenReacResult> runVoltageInitAsync(VoltageInitRunContext context, Network network, UUID resultUuid) {
@@ -203,7 +210,8 @@ public class VoltageInitWorkerService {
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
                 UUID modificationsGroupUuid = networkModificationService.createVoltageInitModificationGroup(result);
-                resultRepository.insert(resultContext.getResultUuid(), result, modificationsGroupUuid, result.getStatus().name());
+                voltageInitObserver.observe("results.save", resultContext.getRunContext(), () ->
+                        resultRepository.insert(resultContext.getResultUuid(), result, modificationsGroupUuid, result.getStatus().name()));
                 LOGGER.info("Status : {}", result.getStatus());
                 LOGGER.info("Reactive slacks : {}", result.getReactiveSlacks());
                 LOGGER.info("Indicators : {}", result.getIndicators());
