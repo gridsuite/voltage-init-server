@@ -12,7 +12,6 @@ import com.powsybl.commons.reporter.Report;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
 import com.powsybl.commons.reporter.TypedValue;
-import com.powsybl.computation.CompletableFutureTask;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -77,8 +76,6 @@ public class VoltageInitWorkerService {
     private final Set<UUID> runRequests = Sets.newConcurrentHashSet();
 
     private final Lock lockRunAndCancelVoltageInit = new ReentrantLock();
-
-    private final Executor threadPool = ForkJoinPool.commonPool();
 
     @Autowired
     NotificationService notificationService;
@@ -157,7 +154,7 @@ public class VoltageInitWorkerService {
 
             OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(context, network);
             OpenReacConfig config = OpenReacConfig.load();
-            CompletableFuture<OpenReacResult> future = CompletableFutureTask.runAsync(() -> OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters, config, voltageInitExecutionService.getComputationManager()), this.threadPool);
+            CompletableFuture<OpenReacResult> future = OpenReacRunner.runAsync(network, network.getVariantManager().getWorkingVariantId(), parameters, config, voltageInitExecutionService.getComputationManager());
             if (resultUuid != null) {
                 futures.put(resultUuid, future);
             }
