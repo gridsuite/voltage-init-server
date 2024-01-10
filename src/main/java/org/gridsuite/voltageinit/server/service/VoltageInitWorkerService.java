@@ -132,7 +132,7 @@ public class VoltageInitWorkerService {
         Objects.requireNonNull(context);
 
         LOGGER.info("Run voltage init...");
-        Network network = voltageInitObserver.observe("network.load", context, () ->
+        Network network = voltageInitObserver.observe("network.load", () ->
                 getNetwork(context.getNetworkUuid(), context.getVariantId()));
 
         AtomicReference<Reporter> rootReporter = new AtomicReference<>(Reporter.NO_OP);
@@ -142,17 +142,17 @@ public class VoltageInitWorkerService {
             rootReporter.set(new ReporterModel(rootReporterId, rootReporterId));
             reporter = rootReporter.get().createSubReporter(context.getReportType(), VOLTAGE_INIT_TYPE_REPORT, VOLTAGE_INIT_TYPE_REPORT, context.getReportUuid().toString());
             // Delete any previous VoltageInit computation logs
-            voltageInitObserver.observe("report.delete", context, () ->
+            voltageInitObserver.observe("report.delete", () ->
                     reportService.deleteReport(context.getReportUuid(), context.getReportType()));
         }
         CompletableFuture<OpenReacResult> future = runVoltageInitAsync(context, network, resultUuid);
         if (context.getReportUuid() != null) {
             addRestrictedVoltageLevelReport(context.getVoltageLevelsIdsRestricted(), reporter);
-            voltageInitObserver.observe("report.send", context, () ->
+            voltageInitObserver.observe("report.send", () ->
                     reportService.sendReport(context.getReportUuid(), rootReporter.get()));
         }
 
-        return future == null ? null : voltageInitObserver.observeRun("run", context, future::get);
+        return future == null ? null : voltageInitObserver.observeRun("run", future::get);
     }
 
     public CompletableFuture<OpenReacResult> runVoltageInitAsync(VoltageInitRunContext context, Network network, UUID resultUuid) {
@@ -164,7 +164,7 @@ public class VoltageInitWorkerService {
 
             OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(context, network);
             OpenReacConfig config = OpenReacConfig.load();
-            CompletableFuture<OpenReacResult> future = CompletableFutureTask.runAsync(() -> OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters, config, voltageInitExecutionService.getComputationManager()), this.threadPool);
+            CompletableFuture<OpenReacResult> future = CompletableFutureTask.runAsync(() -> OpenReacRunner.run(network, "network.getVariantManager().getWorkingVariantId()", parameters, config, voltageInitExecutionService.getComputationManager()), this.threadPool);
             if (resultUuid != null) {
                 futures.put(resultUuid, future);
             }
@@ -210,7 +210,7 @@ public class VoltageInitWorkerService {
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
                 UUID modificationsGroupUuid = networkModificationService.createVoltageInitModificationGroup(result);
-                voltageInitObserver.observe("results.save", resultContext.getRunContext(), () ->
+                voltageInitObserver.observe("results.save", () ->
                         resultRepository.insert(resultContext.getResultUuid(), result, modificationsGroupUuid, result.getStatus().name()));
                 LOGGER.info("Status : {}", result.getStatus());
                 LOGGER.info("Reactive slacks : {}", result.getReactiveSlacks());

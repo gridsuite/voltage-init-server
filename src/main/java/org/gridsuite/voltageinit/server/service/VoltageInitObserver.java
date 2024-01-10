@@ -23,6 +23,8 @@ public class VoltageInitObserver {
     private static final String OBSERVATION_PREFIX = "app.computation.";
 
     private static final String TYPE_TAG_NAME = "type";
+
+    private static final String PROVIDER_TAG_NAME = "provider";
     private static final String STATUS_TAG_NAME = "status";
 
     private static final String COMPUTATION_TYPE = "voltageInit";
@@ -40,27 +42,29 @@ public class VoltageInitObserver {
         this.meterRegistry = meterRegistry;
     }
 
-    public <E extends Throwable> void observe(String name, VoltageInitRunContext runContext, Observation.CheckedRunnable<E> callable) throws E {
-        createObservation(name, runContext).observeChecked(callable);
+    public <E extends Throwable> void observe(String name, Observation.CheckedRunnable<E> callable) throws E {
+        createObservation(name).observeChecked(callable);
     }
 
-    public <T, E extends Throwable> T observe(String name, VoltageInitRunContext runContext, Observation.CheckedCallable<T, E> callable) throws E {
-        return createObservation(name, runContext).observeChecked(callable);
+    public <T, E extends Throwable> T observe(String name, Observation.CheckedCallable<T, E> callable) throws E {
+        return createObservation(name).observeChecked(callable);
     }
 
-    public <T extends OpenReacResult, E extends Throwable> T observeRun(String name, VoltageInitRunContext runContext, Observation.CheckedCallable<T, E> callable) throws E {
-        T result = createObservation(name, runContext).observeChecked(callable);
-        incrementCount(runContext, result);
+    public <T extends OpenReacResult, E extends Throwable> T observeRun(String name, Observation.CheckedCallable<T, E> callable) throws E {
+        T result = createObservation(name).observeChecked(callable);
+        incrementCount(result);
         return result;
     }
 
-    private Observation createObservation(String name, VoltageInitRunContext runContext) {
+    private Observation createObservation(String name) {
         return Observation.createNotStarted(OBSERVATION_PREFIX + name, observationRegistry)
+                .lowCardinalityKeyValue(PROVIDER_TAG_NAME, COMPUTATION_TYPE)
                 .lowCardinalityKeyValue(TYPE_TAG_NAME, COMPUTATION_TYPE);
     }
 
-    private void incrementCount(VoltageInitRunContext runContext, OpenReacResult result) {
+    private void incrementCount(OpenReacResult result) {
         Counter.builder(COMPUTATION_COUNTER_NAME)
+                .tag(PROVIDER_TAG_NAME, COMPUTATION_TYPE)
                 .tag(TYPE_TAG_NAME, COMPUTATION_TYPE)
                 .tag(STATUS_TAG_NAME, getStatusFromResult(result))
                 .register(meterRegistry)
