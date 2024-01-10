@@ -72,9 +72,6 @@ public class VoltageInitObserver {
     }
 
     private static String getStatusFromResult(OpenReacResult result) {
-        if (result == null) {
-            return NOK;
-        }
         return result.getStatus() == OpenReacStatus.OK ? OK : NOK;
     }
 
