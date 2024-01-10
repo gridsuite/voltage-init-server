@@ -164,7 +164,7 @@ public class VoltageInitWorkerService {
 
             OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(context, network);
             OpenReacConfig config = OpenReacConfig.load();
-            CompletableFuture<OpenReacResult> future = CompletableFutureTask.runAsync(() -> OpenReacRunner.run(network, "network.getVariantManager().getWorkingVariantId()", parameters, config, voltageInitExecutionService.getComputationManager()), this.threadPool);
+            CompletableFuture<OpenReacResult> future = CompletableFutureTask.runAsync(() -> OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters, config, voltageInitExecutionService.getComputationManager()), this.threadPool);
             if (resultUuid != null) {
                 futures.put(resultUuid, future);
             }
