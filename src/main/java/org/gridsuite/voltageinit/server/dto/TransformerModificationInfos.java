@@ -7,7 +7,7 @@
 package org.gridsuite.voltageinit.server.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.powsybl.iidm.network.ThreeWindingsTransformer;
+import com.powsybl.iidm.network.ThreeSides;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
@@ -25,5 +25,5 @@ public class TransformerModificationInfos {
     private Integer ratioTapChangerPosition;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private ThreeWindingsTransformer.Side legSide;
+    private ThreeSides legSide;
 }

@@ -49,11 +49,9 @@
     </developers>
 
     <properties>
-        <gridsuite-dependencies.version>28</gridsuite-dependencies.version>
-        <commons-lang3.version>3.9</commons-lang3.version>
+        <powsybl-ws-dependencies.version>2.7.0</powsybl-ws-dependencies.version>
         <powsybl-open-reac.version>0.4.0</powsybl-open-reac.version>
         <mockito-inline.version>3.11.1</mockito-inline.version>
-        <assertj.version>3.24.2</assertj.version>
         <liquibase-hibernate-package>org.gridsuite.voltageinit.server</liquibase-hibernate-package>
     </properties>
 
@@ -90,33 +88,17 @@
     <dependencyManagement>
         <dependencies>
             <!-- overrides of imports -->
-            <dependency><!-- TODO: to delete when spring is updated -->
-                <groupId>org.assertj</groupId>
-                <artifactId>assertj-core</artifactId>
-                <version>${assertj.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.assertj</groupId>
-                <artifactId>assertj-guava</artifactId>
-                <version>${assertj.version}</version>
-                <scope>test</scope>
-            </dependency>
+
             <!-- imports -->
             <dependency>
-                <groupId>org.gridsuite</groupId>
-                <artifactId>gridsuite-dependencies</artifactId>
-                <version>${gridsuite-dependencies.version}</version>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-ws-dependencies</artifactId>
+                <version>${powsybl-ws-dependencies.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
 
             <!-- project specific dependencies -->
-            <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-lang3</artifactId>
-                <version>${commons-lang3.version}</version>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 
