@@ -7,6 +7,7 @@
 package org.gridsuite.voltageinit.server.service;
 
 import com.google.common.collect.Sets;
+import com.powsybl.ampl.converter.AmplExportConfig;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.reporter.Report;
 import com.powsybl.commons.reporter.Reporter;
@@ -161,7 +162,8 @@ public class VoltageInitWorkerService {
 
             OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(context, network);
             OpenReacConfig config = OpenReacConfig.load();
-            CompletableFuture<OpenReacResult> future = OpenReacRunner.runAsync(network, network.getVariantManager().getWorkingVariantId(), parameters, config, voltageInitExecutionService.getComputationManager());
+            AmplExportConfig amplExportConfig = new AmplExportConfig(AmplExportConfig.ExportScope.ALL, false, AmplExportConfig.ExportActionType.CURATIVE, false, false, AmplExportVersion.defaultVersion(), true);
+            CompletableFuture<OpenReacResult> future = OpenReacRunner.runAsync(network, network.getVariantManager().getWorkingVariantId(), parameters, config, voltageInitExecutionService.getComputationManager(), amplExportConfig);
             if (resultUuid != null) {
                 futures.put(resultUuid, future);
             }
