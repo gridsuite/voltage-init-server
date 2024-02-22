@@ -134,9 +134,6 @@ public class VoltageInitControllerTest {
     private final ObjectMapper mapper = restTemplateConfig.objectMapper();
 
     private Network network;
-    private Network network1;
-    private Network networkForMergingView;
-    private Network otherNetworkForMergingView;
     OpenReacParameters openReacParameters;
     OpenReacResult openReacResult;
     CompletableFutureTask<OpenReacResult> completableFutureResultsTask;
@@ -145,6 +142,8 @@ public class VoltageInitControllerTest {
 
     private OpenReacResult buildOpenReacResult() {
         OpenReacAmplIOFiles openReacAmplIOFiles = new OpenReacAmplIOFiles(openReacParameters, network, false);
+        // TODO : after powsybl upgrade to 2024.0.0, replace previous line by the following line uncommented
+        //OpenReacAmplIOFiles openReacAmplIOFiles = new OpenReacAmplIOFiles(openReacParameters, network, false, Reporter.NO_OP);
 
         GeneratorModification.Modifs m1 = new GeneratorModification.Modifs();
         m1.setTargetV(228.);
@@ -159,6 +158,11 @@ public class VoltageInitControllerTest {
         openReacAmplIOFiles.getNetworkModifications().getSvcModifications().add(new StaticVarCompensatorModification("SVC_1", 227., 50.));
         openReacAmplIOFiles.getNetworkModifications().getVscModifications().add(new VscConverterStationModification("VSC_1", 385., 70.));
         openReacAmplIOFiles.getNetworkModifications().getShuntModifications().add(new ShuntCompensatorModification("SHUNT_1", true, 1));
+
+        // TODO : after powsybl upgrade to 2024.0.0, uncomment these following commented lines
+        //Map<String, Pair<Double, Double>> voltageProfile = openReacAmplIOFiles.getNetworkModifications().getVoltageProfileOutput().getVoltageProfile();
+        //voltageProfile.put("NHV2_NLOAD_busId1", Pair.of(100., 100.));
+        //voltageProfile.put("SHUNT_1_busId1", Pair.of(100., 100.));
 
         openReacResult = new OpenReacResult(OpenReacStatus.OK, openReacAmplIOFiles, INDICATORS);
         return openReacResult;
@@ -213,6 +217,21 @@ public class VoltageInitControllerTest {
 
         // network store service mocking
         network = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
+        network.getVoltageLevel("VLGEN").newShuntCompensator()
+            .setId("SHUNT_1")
+            .setBus("NGEN")
+            .setConnectableBus("NGEN")
+            .setTargetV(30.)
+            .setTargetDeadband(10)
+            .setVoltageRegulatorOn(false)
+            .newLinearModel()
+            .setMaximumSectionCount(1)
+            .setBPerSection(1)
+            .setGPerSection(1)
+            .add()
+            .setSectionCount(1)
+            .add();
+
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_1_ID);
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_3_ID);
@@ -220,9 +239,6 @@ public class VoltageInitControllerTest {
         given(networkStoreService.getNetwork(NETWORK_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willReturn(network);
         given(networkStoreService.getNetwork(NETWORK_UUID, PreloadingStrategy.COLLECTION)).willReturn(network);
         given(networkStoreService.getNetwork(OTHER_NETWORK_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willThrow(new PowsyblException("Not found"));
-
-        network1 = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
-        network1.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
 
         // OpenReac run mocking
         openReacParameters = new OpenReacParameters();
