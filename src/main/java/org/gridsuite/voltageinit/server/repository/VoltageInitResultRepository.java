@@ -6,6 +6,9 @@
  */
 package org.gridsuite.voltageinit.server.repository;
 
+import com.powsybl.iidm.network.Bus;
+import org.apache.commons.lang3.tuple.Pair;
+import org.gridsuite.voltageinit.server.entities.BusVoltageEmbeddable;
 import org.gridsuite.voltageinit.server.entities.GlobalStatusEntity;
 import org.gridsuite.voltageinit.server.entities.ReactiveSlackEmbeddable;
 import org.gridsuite.voltageinit.server.entities.VoltageInitResultEntity;
@@ -15,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,12 +41,27 @@ public class VoltageInitResultRepository {
         this.resultRepository = resultRepository;
     }
 
-    private static VoltageInitResultEntity toVoltageInitResultEntity(UUID resultUuid, OpenReacResult result, UUID modificationsGroupUuid) {
+    private static VoltageInitResultEntity toVoltageInitResultEntity(UUID resultUuid, OpenReacResult result, Map<String, Bus> networkBuses, UUID modificationsGroupUuid) {
         Map<String, String> indicators = result.getIndicators();
         List<ReactiveSlackEmbeddable> reactiveSlacks = result.getReactiveSlacks().stream().map(rs ->
                 new ReactiveSlackEmbeddable(rs.getBusId(), rs.getSlack()))
             .collect(Collectors.toList());
-        return new VoltageInitResultEntity(resultUuid, ZonedDateTime.now(), indicators, reactiveSlacks, modificationsGroupUuid);
+        Map<String, Pair<Double, Double>> voltageProfile = new HashMap<>();
+        // TODO : after powsybl upgrade to 2024.0.0, replace previous line by the following line uncommented
+        //Map<String, Pair<Double, Double>> voltageProfile = result.getVoltageProfile();
+        List<BusVoltageEmbeddable> busVoltages = voltageProfile.entrySet().stream()
+            .map(vp -> {
+                Bus b = networkBuses.get(vp.getKey());
+                if (b != null) {
+                    return new BusVoltageEmbeddable(vp.getKey(),
+                        vp.getValue().getLeft() * b.getVoltageLevel().getNominalV(),
+                        Math.toDegrees(vp.getValue().getRight()));
+                } else {
+                    return null;
+                }
+            }
+        ).filter(Objects::nonNull).toList();
+        return new VoltageInitResultEntity(resultUuid, ZonedDateTime.now(), indicators, reactiveSlacks, busVoltages, modificationsGroupUuid);
     }
 
     @Transactional
@@ -90,10 +109,10 @@ public class VoltageInitResultRepository {
     }
 
     @Transactional
-    public void insert(UUID resultUuid, OpenReacResult result, UUID modificationsGroupUuid, String status) {
+    public void insert(UUID resultUuid, OpenReacResult result, Map<String, Bus> networkBuses, UUID modificationsGroupUuid, String status) {
         Objects.requireNonNull(resultUuid);
         if (result != null) {
-            resultRepository.save(toVoltageInitResultEntity(resultUuid, result, modificationsGroupUuid));
+            resultRepository.save(toVoltageInitResultEntity(resultUuid, result, networkBuses, modificationsGroupUuid));
         }
         globalStatusRepository.save(toStatusEntity(resultUuid, status));
     }
@@ -101,6 +120,6 @@ public class VoltageInitResultRepository {
     @Transactional
     public void insertErrorResult(UUID resultUuid, Map<String, String> errorIndicators) {
         Objects.requireNonNull(resultUuid);
-        resultRepository.save(new VoltageInitResultEntity(resultUuid, ZonedDateTime.now(), errorIndicators, List.of(), null));
+        resultRepository.save(new VoltageInitResultEntity(resultUuid, ZonedDateTime.now(), errorIndicators, List.of(), List.of(), null));
     }
 }

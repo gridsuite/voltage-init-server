@@ -49,6 +49,10 @@ public class VoltageInitResultEntity {
     @CollectionTable
     private List<ReactiveSlackEmbeddable> reactiveSlacks;
 
+    @ElementCollection
+    @CollectionTable
+    private List<BusVoltageEmbeddable> busVoltages;
+
     @Column
     private UUID modificationsGroupUuid;
 }
