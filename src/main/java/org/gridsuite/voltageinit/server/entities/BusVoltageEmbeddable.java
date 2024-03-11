@@ -25,7 +25,7 @@ public class BusVoltageEmbeddable {
     private String busId;
 
     @Column
-    private double voltage;
+    private double v;
 
     @Column
     private double angle;

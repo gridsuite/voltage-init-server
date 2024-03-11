@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 public class BusVoltage {
     private String busId;
 
-    private double voltage;
+    private double v;
 
     private double angle;
 }
