@@ -6,15 +6,12 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
-import com.powsybl.network.store.client.NetworkStoreService;
-
 import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.entities.VoltageInitResultEntity;
 import org.gridsuite.voltageinit.server.repository.VoltageInitResultRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,7 +22,6 @@ import java.util.stream.Collectors;
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
-@ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
 public class VoltageInitService {
     @Autowired
