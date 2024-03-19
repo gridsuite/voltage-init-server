@@ -371,7 +371,7 @@ public class VoltageInitParametersTest {
         ReporterModel reporter = new ReporterModel("test", "test");
         VoltageInitWorkerService.addRestrictedVoltageLevelReport(restrictedVoltageLevel, reporter);
         assertEquals("restrictedVoltageLevels", reporter.getReports().stream().findFirst().get().getReportKey());
-        assertEquals("The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: vl : 10.0",
+        assertEquals("The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: vl=10.0",
                 reporter.getReports().stream().findFirst().get().getDefaultMessage());
         Optional<Map.Entry<String, TypedValue>> typedValues = reporter.getReports().stream()
                 .map(Report::getValues)
