@@ -27,7 +27,6 @@ import org.gridsuite.voltageinit.server.repository.VoltageInitResultRepository;
 import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
@@ -35,7 +34,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -80,8 +82,7 @@ public class VoltageInitWorkerService {
 
     private final Lock lockRunAndCancelVoltageInit = new ReentrantLock();
 
-    @Autowired
-    NotificationService notificationService;
+    private final NotificationService notificationService;
 
     public VoltageInitWorkerService(NetworkStoreService networkStoreService,
                                     NetworkModificationService networkModificationService,
@@ -89,7 +90,8 @@ public class VoltageInitWorkerService {
                                     VoltageInitResultRepository resultRepository,
                                     ReportService reportService,
                                     VoltageInitExecutionService voltageInitExecutionService,
-                                    VoltageInitObserver voltageInitObserver) {
+                                    VoltageInitObserver voltageInitObserver,
+                                    NotificationService notificationService) {
         this.networkStoreService = Objects.requireNonNull(networkStoreService);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
         this.voltageInitParametersService = Objects.requireNonNull(voltageInitParametersService);
@@ -97,18 +99,18 @@ public class VoltageInitWorkerService {
         this.resultRepository = Objects.requireNonNull(resultRepository);
         this.voltageInitExecutionService = Objects.requireNonNull(voltageInitExecutionService);
         this.voltageInitObserver = voltageInitObserver;
+        this.notificationService = notificationService;
     }
 
     private Network getNetwork(UUID networkUuid, String variantId) {
-        Network network;
         try {
-            network = networkStoreService.getNetwork(networkUuid, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW);
+            Network network = networkStoreService.getNetwork(networkUuid, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW);
             String variant = StringUtils.isBlank(variantId) ? VariantManagerConstants.INITIAL_VARIANT_ID : variantId;
             network.getVariantManager().setWorkingVariant(variant);
+            return network;
         } catch (PowsyblException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
-        return network;
     }
 
     public static void addRestrictedVoltageLevelReport(Map<String, Double> voltageLevelsIdsRestricted, Reporter reporter) {

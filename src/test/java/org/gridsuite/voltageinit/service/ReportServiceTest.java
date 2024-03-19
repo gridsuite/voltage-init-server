@@ -73,7 +73,7 @@ public class ReportServiceTest {
 
         configureWireMockServer(reportJson);
 
-        reportService.setReportServiceBaseUri("http://localhost:" + server.port());
+        reportService.setBaseUri("http://localhost:" + server.port());
     }
 
     @After

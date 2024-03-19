@@ -6,6 +6,7 @@
  */
 package org.gridsuite.voltageinit.server.service.parameters;
 
+import lombok.Setter;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -23,21 +24,18 @@ import java.util.stream.Collectors;
  */
 @Service
 public class FilterService {
-
     private static final String FILTER_SERVER_API_VERSION = "v1";
-
     private static final String DELIMITER = "/";
 
-    private static String filterServerBaseUri;
+    @Setter
+    private String filterServerBaseUri;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
-    public FilterService(@Value("${gridsuite.services.filter-server.base-uri:http://filter-server/}") String filterServerBaseUri) {
-        setFilterServerBaseUri(filterServerBaseUri);
-    }
-
-    public static void setFilterServerBaseUri(String filterServerBaseUri) {
-        FilterService.filterServerBaseUri = filterServerBaseUri;
+    public FilterService(@Value("${gridsuite.services.filter-server.base-uri:http://filter-server/}") String filterServerBaseUri,
+                         RestTemplate restTemplate) {
+        this.filterServerBaseUri = filterServerBaseUri;
+        this.restTemplate = restTemplate;
     }
 
     public List<FilterEquipments> exportFilters(List<UUID> filtersUuids, UUID networkUuid, String variantId) {
