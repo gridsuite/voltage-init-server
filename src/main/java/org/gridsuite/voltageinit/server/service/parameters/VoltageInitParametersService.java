@@ -52,13 +52,13 @@ public class VoltageInitParametersService {
     }
 
     public Optional<UUID> duplicateParameters(UUID sourceParametersId) {
-        Optional<VoltageInitParametersInfos> sourceVoltageInitParametersInfos = voltageInitParametersRepository.findById(sourceParametersId).map(VoltageInitParametersEntity::toVoltageInitParametersInfos);
-        if (sourceVoltageInitParametersInfos.isPresent()) {
-            VoltageInitParametersEntity entity = new VoltageInitParametersEntity(sourceVoltageInitParametersInfos.get());
-            voltageInitParametersRepository.save(entity);
-            return Optional.of(entity.getId());
-        }
-        return Optional.empty();
+        return voltageInitParametersRepository.findById(sourceParametersId)
+                                              .map(VoltageInitParametersEntity::toVoltageInitParametersInfos)
+                                              .map(VoltageInitParametersEntity::new)
+                                              .map(entity -> {
+                                                  voltageInitParametersRepository.save(entity);
+                                                  return entity.getId();
+                                              });
     }
 
     public VoltageInitParametersInfos getParameters(UUID parametersUuid) {
@@ -82,11 +82,14 @@ public class VoltageInitParametersService {
         Map<String, VoltageLimitEntity> voltageLevelLimits = new HashMap<>();
         //each voltage level is associated to a voltage limit setting
         //if a voltage level is resolved by multiple filters the highest priority setting will be kept
-        voltageLimits.stream().forEach(voltageLimit ->
-            filterService.exportFilters(voltageLimit.getFilters().stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), context.getNetworkUuid(), context.getVariantId())
-                .forEach(filterEquipment -> filterEquipment.getIdentifiableAttributes().stream().map(IdentifiableAttributes::getId)
-                    .forEach(voltageLevelsId -> voltageLevelLimits.put(voltageLevelsId, voltageLimit))
-                )
+        voltageLimits.forEach(voltageLimit -> filterService.exportFilters(
+                    voltageLimit.getFilters().stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(),
+                    context.getNetworkUuid(), context.getVariantId()
+            ).stream()
+                .map(FilterEquipments::getIdentifiableAttributes)
+                .flatMap(List::stream)
+                .map(IdentifiableAttributes::getId)
+                .forEach(voltageLevelsId -> voltageLevelLimits.put(voltageLevelsId, voltageLimit))
         );
         return voltageLevelLimits;
     }
@@ -197,14 +200,14 @@ public class VoltageInitParametersService {
     private List<String> toEquipmentIdsList(UUID networkUuid, String variantId, List<FilterEquipmentsEmbeddable> filters) {
         if (filters == null || filters.isEmpty()) {
             return List.of();
+        } else {
+            return filterService.exportFilters(filters.stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, variantId)
+                                .stream()
+                                .map(FilterEquipments::getIdentifiableAttributes)
+                                .flatMap(List::stream)
+                                .map(IdentifiableAttributes::getId)
+                                .distinct()
+                                .toList();
         }
-        List<FilterEquipments> equipments = filterService.exportFilters(filters.stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, variantId);
-        Set<String> ids = new HashSet<>();
-        equipments.forEach(filterEquipment ->
-            filterEquipment.getIdentifiableAttributes().forEach(identifiableAttribute ->
-                ids.add(identifiableAttribute.getId())
-            )
-        );
-        return new ArrayList<>(ids);
     }
 }
