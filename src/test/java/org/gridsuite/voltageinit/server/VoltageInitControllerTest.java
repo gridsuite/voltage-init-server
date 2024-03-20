@@ -44,6 +44,7 @@ import org.gridsuite.voltageinit.server.service.NetworkModificationService;
 import org.gridsuite.voltageinit.server.service.UuidGeneratorService;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.gridsuite.voltageinit.server.util.annotations.PostCompletionAdapter;
+import org.jgrapht.alg.util.Pair;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -142,8 +143,6 @@ public class VoltageInitControllerTest {
 
     private OpenReacResult buildOpenReacResult() {
         OpenReacAmplIOFiles openReacAmplIOFiles = new OpenReacAmplIOFiles(openReacParameters, network, false);
-        // TODO : after powsybl upgrade to 2024.0.0, replace previous line by the following line uncommented
-        //OpenReacAmplIOFiles openReacAmplIOFiles = new OpenReacAmplIOFiles(openReacParameters, network, false, Reporter.NO_OP);
 
         GeneratorModification.Modifs m1 = new GeneratorModification.Modifs();
         m1.setTargetV(228.);
@@ -154,15 +153,16 @@ public class VoltageInitControllerTest {
         openReacAmplIOFiles.getNetworkModifications().getGeneratorModifications().add(new GeneratorModification("GEN2", m2));
 
         openReacAmplIOFiles.getNetworkModifications().getTapPositionModifications().add(new RatioTapPositionModification("NHV2_NLOAD", 2));
+        openReacAmplIOFiles.getNetworkModifications().getTapPositionModifications().add(new RatioTapPositionModification("unknown2WT", 2));
 
         openReacAmplIOFiles.getNetworkModifications().getSvcModifications().add(new StaticVarCompensatorModification("SVC_1", 227., 50.));
         openReacAmplIOFiles.getNetworkModifications().getVscModifications().add(new VscConverterStationModification("VSC_1", 385., 70.));
         openReacAmplIOFiles.getNetworkModifications().getShuntModifications().add(new ShuntCompensatorModification("SHUNT_1", true, 1));
+        openReacAmplIOFiles.getNetworkModifications().getShuntModifications().add(new ShuntCompensatorModification("unknownShunt", true, 1));
 
-        // TODO : after powsybl upgrade to 2024.0.0, uncomment these following commented lines
-        //Map<String, Pair<Double, Double>> voltageProfile = openReacAmplIOFiles.getNetworkModifications().getVoltageProfileOutput().getVoltageProfile();
-        //voltageProfile.put("NHV2_NLOAD_busId1", Pair.of(100., 100.));
-        //voltageProfile.put("SHUNT_1_busId1", Pair.of(100., 100.));
+        Map<String, Pair<Double, Double>> voltageProfile = openReacAmplIOFiles.getVoltageProfileOutput().getVoltageProfile();
+        voltageProfile.put("NHV2_NLOAD_busId1", Pair.of(100., 100.));
+        voltageProfile.put("SHUNT_1_busId1", Pair.of(100., 100.));
 
         openReacResult = new OpenReacResult(OpenReacStatus.OK, openReacAmplIOFiles, INDICATORS);
         return openReacResult;
