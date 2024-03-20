@@ -7,18 +7,17 @@
 package org.gridsuite.voltageinit.server.repository;
 
 import com.powsybl.iidm.network.Bus;
-import org.apache.commons.lang3.tuple.Pair;
 import org.gridsuite.voltageinit.server.entities.BusVoltageEmbeddable;
 import org.gridsuite.voltageinit.server.entities.GlobalStatusEntity;
 import org.gridsuite.voltageinit.server.entities.ReactiveSlackEmbeddable;
 import org.gridsuite.voltageinit.server.entities.VoltageInitResultEntity;
+import org.jgrapht.alg.util.Pair;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 
 import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -46,16 +45,14 @@ public class VoltageInitResultRepository {
         List<ReactiveSlackEmbeddable> reactiveSlacks = result.getReactiveSlacks().stream().map(rs ->
                 new ReactiveSlackEmbeddable(rs.getBusId(), rs.getSlack()))
             .collect(Collectors.toList());
-        Map<String, Pair<Double, Double>> voltageProfile = new HashMap<>();
-        // TODO : after powsybl upgrade to 2024.0.0, replace previous line by the following line uncommented
-        //Map<String, Pair<Double, Double>> voltageProfile = result.getVoltageProfile();
+        Map<String, Pair<Double, Double>> voltageProfile = result.getVoltageProfile();
         List<BusVoltageEmbeddable> busVoltages = voltageProfile.entrySet().stream()
             .map(vp -> {
                 Bus b = networkBuses.get(vp.getKey());
                 if (b != null) {
                     return new BusVoltageEmbeddable(vp.getKey(),
-                        vp.getValue().getLeft() * b.getVoltageLevel().getNominalV(),
-                        Math.toDegrees(vp.getValue().getRight()));
+                        vp.getValue().getFirst() * b.getVoltageLevel().getNominalV(),
+                        Math.toDegrees(vp.getValue().getSecond()));
                 } else {
                     return null;
                 }
