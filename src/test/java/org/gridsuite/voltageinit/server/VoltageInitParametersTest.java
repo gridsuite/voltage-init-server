@@ -30,21 +30,18 @@ import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParameter
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
-import org.gridsuite.voltageinit.server.service.VoltageInitService;
 import org.gridsuite.voltageinit.server.service.VoltageInitWorkerService;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,14 +57,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
  */
-@RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-public class VoltageInitParametersTest {
-
+class VoltageInitParametersTest {
     private static final String URI_PARAMETERS_BASE = "/v1/parameters";
-
     private static final String URI_PARAMETERS_GET_PUT = URI_PARAMETERS_BASE + "/";
 
     private static final UUID NETWORK_UUID = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
@@ -80,16 +74,13 @@ public class VoltageInitParametersTest {
     private Network network;
 
     @Autowired
-    VoltageInitService voltageInitService;
+    private VoltageInitParametersService voltageInitParametersService;
 
     @Autowired
-    VoltageInitParametersService voltageInitParametersService;
+    private MockMvc mockMvc;
 
     @Autowired
-    protected MockMvc mockMvc;
-
-    @Autowired
-    protected ObjectMapper mapper;
+    private ObjectMapper mapper;
 
     @Autowired
     private VoltageInitParametersRepository parametersRepository;
@@ -100,7 +91,7 @@ public class VoltageInitParametersTest {
     @MockBean
     private FilterService filterService;
 
-    @Before
+    @BeforeEach
     public void setup() {
         network = EurostagTutorialExample1Factory.create(new NetworkFactoryImpl());
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_ID_1);
@@ -130,13 +121,13 @@ public class VoltageInitParametersTest {
         parametersRepository.deleteAll();
     }
 
-    @After
+    @AfterEach
     public void tearOff() {
         parametersRepository.deleteAll();
     }
 
     @Test
-    public void testCreate() throws Exception {
+    void testCreate() throws Exception {
 
         VoltageInitParametersInfos parametersToCreate = buildParameters();
         String parametersToCreateJson = mapper.writeValueAsString(parametersToCreate);
@@ -150,7 +141,7 @@ public class VoltageInitParametersTest {
     }
 
     @Test
-    public void testRead() throws Exception {
+    void testRead() throws Exception {
 
         VoltageInitParametersInfos parametersToRead = buildParameters();
 
@@ -166,7 +157,7 @@ public class VoltageInitParametersTest {
     }
 
     @Test
-    public void testUpdate() throws Exception {
+    void testUpdate() throws Exception {
 
         VoltageInitParametersInfos parametersToUpdate = buildParameters();
 
@@ -185,7 +176,7 @@ public class VoltageInitParametersTest {
     }
 
     @Test
-    public void testDelete() throws Exception {
+    void testDelete() throws Exception {
 
         VoltageInitParametersInfos parametersToDelete = buildParameters();
 
@@ -199,7 +190,7 @@ public class VoltageInitParametersTest {
     }
 
     @Test
-    public void testGetAll() throws Exception {
+    void testGetAll() throws Exception {
         VoltageInitParametersInfos parameters1 = buildParameters();
 
         VoltageInitParametersInfos parameters2 = buildParametersUpdate();
@@ -218,7 +209,7 @@ public class VoltageInitParametersTest {
     }
 
     @Test
-    public void testDuplicate() throws Exception {
+    void testDuplicate() throws Exception {
 
         VoltageInitParametersInfos parametersToCreate = buildParameters();
         String parametersToCreateJson = mapper.writeValueAsString(parametersToCreate);
@@ -300,7 +291,7 @@ public class VoltageInitParametersTest {
     }
 
     @Test
-    public void testBuildSpecificVoltageLimits() {
+    void testBuildSpecificVoltageLimits() {
         VoltageLimitEntity voltageLimit = new VoltageLimitEntity(UUID.randomUUID(), 5., 10., 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
         VoltageLimitEntity voltageLimit2 = new VoltageLimitEntity(UUID.randomUUID(), 44., 88., 1, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_2, FILTER_2)));
 
@@ -310,7 +301,7 @@ public class VoltageInitParametersTest {
         OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         assertEquals(4, openReacParameters.getSpecificVoltageLimits().size());
         //No override should be relative since there are no voltage limit modification
-        assertThat(openReacParameters.getSpecificVoltageLimits().stream().allMatch(voltageLimitOverride -> !voltageLimitOverride.isRelative())).isTrue();
+        assertThat(openReacParameters.getSpecificVoltageLimits().stream().noneMatch(VoltageLimitOverride::isRelative)).isTrue();
         //VLHV1, VLHV2 and VLLOAD should be applied default voltage limits since those are missing one or both limits
         assertThat(openReacParameters.getSpecificVoltageLimits().stream().anyMatch(voltageLimitOverride -> "VLHV1".equals(voltageLimitOverride.getVoltageLevelId()))).isTrue();
         assertEquals(1, openReacParameters.getSpecificVoltageLimits().stream().filter(voltageLimitOverride -> "VLHV1".equals(voltageLimitOverride.getVoltageLevelId()) && VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT.equals(voltageLimitOverride.getVoltageLimitType())).count());
@@ -330,7 +321,7 @@ public class VoltageInitParametersTest {
         context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, null, null, "", "", parametersRepository.findAll().get(1).getId(), new HashMap<>());
         openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         //There should nox be relative overrides since voltage limit modification are applied
-        assertThat(openReacParameters.getSpecificVoltageLimits().stream().allMatch(voltageLimitOverride -> !voltageLimitOverride.isRelative())).isFalse();
+        assertThat(openReacParameters.getSpecificVoltageLimits().stream().noneMatch(VoltageLimitOverride::isRelative)).isFalse();
         //Limits that weren't impacted by default settings are now impacted by modification settings
         assertEquals(8, openReacParameters.getSpecificVoltageLimits().size());
         //VLGEN has both it limits set so it should now be impacted by modifications override
@@ -365,7 +356,7 @@ public class VoltageInitParametersTest {
     }
 
     @Test
-    public void testAddRestrictedVoltageLevelReport() {
+    void testAddRestrictedVoltageLevelReport() {
         Map<String, Double> restrictedVoltageLevel = new HashMap<>();
         restrictedVoltageLevel.put("vl", 10.0);
         ReporterModel reporter = new ReporterModel("test", "test");
@@ -381,4 +372,3 @@ public class VoltageInitParametersTest {
         assertEquals("WARN", typedValues.map(value -> value.getValue().getValue()).get());
     }
 }
-
