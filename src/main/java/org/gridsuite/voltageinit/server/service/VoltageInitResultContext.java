@@ -45,11 +45,12 @@ public class VoltageInitResultContext {
     }
 
     private static String getNonNullHeader(MessageHeaders headers, String name) {
-        String header = (String) headers.get(name);
+        final String header = headers.get(name, String.class);
         if (header == null) {
             throw new PowsyblException("Header '" + name + "' not found");
+        } else {
+            return header;
         }
-        return header;
     }
 
     public static VoltageInitResultContext fromMessage(Message<String> message) {
@@ -57,17 +58,16 @@ public class VoltageInitResultContext {
         MessageHeaders headers = message.getHeaders();
         UUID resultUuid = UUID.fromString(getNonNullHeader(headers, "resultUuid"));
         UUID networkUuid = UUID.fromString(getNonNullHeader(headers, "networkUuid"));
-        String variantId = (String) headers.get(VARIANT_ID_HEADER);
-        String receiver = (String) headers.get(HEADER_RECEIVER);
-        String userId = (String) headers.get(HEADER_USER_ID);
-        Map<String, Double> voltageLevelsIdsRestricted = (Map<String, Double>) headers.get(VOLTAGE_LEVELS_IDS_RESTRICTED);
-
-        UUID parametersUuid = headers.containsKey(PARAMETERS_UUID_HEADER) ? UUID.fromString((String) headers.get(PARAMETERS_UUID_HEADER)) : null;
-        UUID reportUuid = headers.containsKey(REPORT_UUID_HEADER) ? UUID.fromString((String) headers.get(REPORT_UUID_HEADER)) : null;
-        String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
-        String reportType = headers.containsKey(REPORT_TYPE_HEADER) ? (String) headers.get(REPORT_TYPE_HEADER) : null;
-        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, voltageLevelsIdsRestricted);
-        return new VoltageInitResultContext(resultUuid, runContext);
+        String variantId = headers.get(VARIANT_ID_HEADER, String.class);
+        String receiver = headers.get(HEADER_RECEIVER, String.class);
+        String userId = headers.get(HEADER_USER_ID, String.class);
+        @SuppressWarnings("unchecked")
+        Map<String, Double> voltageLevelsIdsRestricted = headers.get(VOLTAGE_LEVELS_IDS_RESTRICTED, Map.class);
+        UUID parametersUuid = headers.containsKey(PARAMETERS_UUID_HEADER) ? UUID.fromString(headers.get(PARAMETERS_UUID_HEADER, String.class)) : null;
+        UUID reportUuid = headers.containsKey(REPORT_UUID_HEADER) ? UUID.fromString(headers.get(REPORT_UUID_HEADER, String.class)) : null;
+        String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? headers.get(REPORTER_ID_HEADER, String.class) : null;
+        String reportType = headers.containsKey(REPORT_TYPE_HEADER) ? headers.get(REPORT_TYPE_HEADER, String.class) : null;
+        return new VoltageInitResultContext(resultUuid, new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, voltageLevelsIdsRestricted));
     }
 
     public Message<String> toMessage() {
