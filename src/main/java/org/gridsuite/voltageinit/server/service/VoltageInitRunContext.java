@@ -6,18 +6,22 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NonNull;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
-@Getter
+@Data
+@AllArgsConstructor
 public class VoltageInitRunContext {
 
+    @NonNull
     private final UUID networkUuid;
 
     private final String variantId;
@@ -36,15 +40,7 @@ public class VoltageInitRunContext {
 
     private final Map<String, Double> voltageLevelsIdsRestricted;
 
-    public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid, Map<String, Double> voltageLevelsIdsRestricted) {
-        this.networkUuid = Objects.requireNonNull(networkUuid);
-        this.variantId = variantId;
-        this.receiver = receiver;
-        this.reportUuid = reportUuid;
-        this.reporterId = reporterId;
-        this.reportType = reportType;
-        this.userId = userId;
-        this.parametersUuid = parametersUuid;
-        this.voltageLevelsIdsRestricted = voltageLevelsIdsRestricted;
+    public VoltageInitRunContext(@NonNull UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid) {
+        this(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, new HashMap<>());
     }
 }
