@@ -34,7 +34,6 @@ import org.gridsuite.voltageinit.server.service.VoltageInitWorkerService;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +41,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,6 +59,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
  */
 @SpringBootTest
+@DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 @AutoConfigureMockMvc
 @Transactional
 class VoltageInitParametersTest {
@@ -117,13 +119,6 @@ class VoltageInitParametersTest {
         equipmentsList2.add(new FilterEquipments(FILTER_UUID_2, FILTER_2, identifiableAttributes2, List.of()));
         given(filterService.exportFilters(List.of(FILTER_UUID_1), NETWORK_UUID, VARIANT_ID_1)).willReturn(equipmentsList1);
         given(filterService.exportFilters(List.of(FILTER_UUID_2), NETWORK_UUID, VARIANT_ID_1)).willReturn(equipmentsList2);
-
-        parametersRepository.deleteAll();
-    }
-
-    @AfterEach
-    public void tearOff() {
-        parametersRepository.deleteAll();
     }
 
     @Test

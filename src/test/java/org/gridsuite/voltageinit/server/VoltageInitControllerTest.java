@@ -58,6 +58,8 @@ import org.springframework.cloud.stream.binder.test.OutputDestination;
 import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.http.MediaType;
 import org.springframework.messaging.Message;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.web.servlet.MockMvc;
@@ -86,8 +88,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @ExtendWith({ MockitoExtension.class })
-@AutoConfigureMockMvc
 @SpringBootTest
+@AutoConfigureMockMvc
+@DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 @ContextHierarchy({@ContextConfiguration(classes = {VoltageInitApplication.class, TestChannelBinderConfiguration.class})})
 class VoltageInitControllerTest {
     private static final UUID NETWORK_UUID = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
@@ -253,8 +256,6 @@ class VoltageInitControllerTest {
 
     @AfterEach
     public void tearDown() throws Exception {
-        mockMvc.perform(delete("/" + VERSION + "/results"))
-                .andExpect(status().isOk());
         server.shutdown();
     }
 
