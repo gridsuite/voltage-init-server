@@ -105,8 +105,8 @@ public class NetworkModificationService {
                 if (gm.getModifs().getTargetV() != null || gm.getModifs().getTargetQ() != null) {
                     GeneratorModificationInfos.GeneratorModificationInfosBuilder builder = GeneratorModificationInfos.builder()
                         .generatorId(gm.getGeneratorId())
-                        .voltageSetpoint(gm.getModifs().getTargetV())
-                        .reactivePowerSetpoint(gm.getModifs().getTargetQ());
+                        .targetV(gm.getModifs().getTargetV())
+                        .targetQ(gm.getModifs().getTargetQ());
                     voltageInitModificationInfos.addGeneratorModification(builder.build());
                 }
             });
