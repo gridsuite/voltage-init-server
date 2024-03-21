@@ -10,6 +10,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.iidm.network.Bus;
+import com.powsybl.iidm.network.Identifiable;
+import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.ShuntCompensator;
+import com.powsybl.iidm.network.Terminal;
+import com.powsybl.iidm.network.TwoWindingsTransformer;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import org.gridsuite.voltageinit.server.dto.GeneratorModificationInfos;
 import org.gridsuite.voltageinit.server.dto.ShuntCompensatorModificationInfos;
@@ -17,6 +23,7 @@ import org.gridsuite.voltageinit.server.dto.StaticVarCompensatorModificationInfo
 import org.gridsuite.voltageinit.server.dto.TransformerModificationInfos;
 import org.gridsuite.voltageinit.server.dto.VoltageInitModificationInfos;
 import org.gridsuite.voltageinit.server.dto.VscConverterStationModificationInfos;
+import org.jgrapht.alg.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -28,8 +35,13 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static com.powsybl.iidm.network.IdentifiableType.TWO_WINDINGS_TRANSFORMER;
 
 /**
  * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
@@ -76,28 +88,50 @@ public class NetworkModificationService {
         }
     }
 
-    public UUID createVoltageInitModificationGroup(OpenReacResult result) {
-        UUID modificationsGroupUuid = null;
+    private Optional<Bus> getRegulatingBus(Terminal terminal) {
+        return terminal != null && terminal.getBusView().getBus() != null ? Optional.of(terminal.getBusView().getBus()) : Optional.empty();
+    }
+
+    public UUID createVoltageInitModificationGroup(Network network, OpenReacResult result) {
+        UUID modificationsGroupUuid;
 
         try {
             VoltageInitModificationInfos voltageInitModificationInfos = new VoltageInitModificationInfos();
+
+            Map<String, Pair<Double, Double>> voltageProfile = result.getVoltageProfile();
 
             // generator modifications
             result.getGeneratorModifications().forEach(gm -> {
                 if (gm.getModifs().getTargetV() != null || gm.getModifs().getTargetQ() != null) {
                     GeneratorModificationInfos.GeneratorModificationInfosBuilder builder = GeneratorModificationInfos.builder()
                         .generatorId(gm.getGeneratorId())
-                        .voltageSetpoint(gm.getModifs().getTargetV())
-                        .reactivePowerSetpoint(gm.getModifs().getTargetQ());
+                        .targetV(gm.getModifs().getTargetV())
+                        .targetQ(gm.getModifs().getTargetQ());
                     voltageInitModificationInfos.addGeneratorModification(builder.build());
                 }
             });
 
             // transformer modifications
+            AtomicReference<Double> targetV = new AtomicReference<>();
             result.getTapPositionModifications().forEach(tp -> {
+                targetV.set(null);
+                Identifiable<?> identifiable = network.getIdentifiable(tp.getTransformerId());
+                if (identifiable != null && identifiable.getType() == TWO_WINDINGS_TRANSFORMER) {  // Only for 2WT
+                    TwoWindingsTransformer twoWindingsTransformer = (TwoWindingsTransformer) identifiable;
+                    if (twoWindingsTransformer.getRatioTapChanger() != null) {
+                        Optional<Bus> bus = getRegulatingBus(twoWindingsTransformer.getRatioTapChanger().getRegulationTerminal());
+                        bus.ifPresent(b -> {
+                            Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
+                            if (busUpdate != null) {
+                                targetV.set(busUpdate.getFirst() * b.getVoltageLevel().getNominalV());
+                            }
+                        });
+                    }
+                }
                 TransformerModificationInfos.TransformerModificationInfosBuilder builder = TransformerModificationInfos.builder()
                     .transformerId(tp.getTransformerId())
                     .ratioTapChangerPosition(tp.getTapPosition())
+                    .ratioTapChangerTargetV(targetV.get())
                     .legSide(tp.getLegSide());
                 voltageInitModificationInfos.addTransformerModification(builder.build());
             });
@@ -126,10 +160,22 @@ public class NetworkModificationService {
 
             // shunt compensator modifications
             result.getShuntsModifications().forEach(shuntCompensatorModification -> {
+                targetV.set(null);
+                ShuntCompensator shuntCompensator = network.getShuntCompensator(shuntCompensatorModification.getShuntCompensatorId());
+                if (shuntCompensator != null) {
+                    Optional<Bus> bus = getRegulatingBus(shuntCompensator.getRegulatingTerminal());
+                    bus.ifPresent(b -> {
+                        Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
+                        if (busUpdate != null) {
+                            targetV.set(busUpdate.getFirst() * b.getVoltageLevel().getNominalV());
+                        }
+                    });
+                }
                 ShuntCompensatorModificationInfos.ShuntCompensatorModificationInfosBuilder builder = ShuntCompensatorModificationInfos.builder()
                     .shuntCompensatorId(shuntCompensatorModification.getShuntCompensatorId())
                     .sectionCount(shuntCompensatorModification.getSectionCount())
-                    .connect(shuntCompensatorModification.getConnect());
+                    .connect(shuntCompensatorModification.getConnect())
+                    .targetV(targetV.get());
                 voltageInitModificationInfos.addShuntCompensatorModification(builder.build());
             });
 

@@ -44,6 +44,7 @@ import org.gridsuite.voltageinit.server.service.NetworkModificationService;
 import org.gridsuite.voltageinit.server.service.UuidGeneratorService;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.gridsuite.voltageinit.server.util.annotations.PostCompletionAdapter;
+import org.jgrapht.alg.util.Pair;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -134,9 +135,6 @@ public class VoltageInitControllerTest {
     private final ObjectMapper mapper = restTemplateConfig.objectMapper();
 
     private Network network;
-    private Network network1;
-    private Network networkForMergingView;
-    private Network otherNetworkForMergingView;
     OpenReacParameters openReacParameters;
     OpenReacResult openReacResult;
     CompletableFutureTask<OpenReacResult> completableFutureResultsTask;
@@ -155,10 +153,16 @@ public class VoltageInitControllerTest {
         openReacAmplIOFiles.getNetworkModifications().getGeneratorModifications().add(new GeneratorModification("GEN2", m2));
 
         openReacAmplIOFiles.getNetworkModifications().getTapPositionModifications().add(new RatioTapPositionModification("NHV2_NLOAD", 2));
+        openReacAmplIOFiles.getNetworkModifications().getTapPositionModifications().add(new RatioTapPositionModification("unknown2WT", 2));
 
         openReacAmplIOFiles.getNetworkModifications().getSvcModifications().add(new StaticVarCompensatorModification("SVC_1", 227., 50.));
         openReacAmplIOFiles.getNetworkModifications().getVscModifications().add(new VscConverterStationModification("VSC_1", 385., 70.));
         openReacAmplIOFiles.getNetworkModifications().getShuntModifications().add(new ShuntCompensatorModification("SHUNT_1", true, 1));
+        openReacAmplIOFiles.getNetworkModifications().getShuntModifications().add(new ShuntCompensatorModification("unknownShunt", true, 1));
+
+        Map<String, Pair<Double, Double>> voltageProfile = openReacAmplIOFiles.getVoltageProfileOutput().getVoltageProfile();
+        voltageProfile.put("NHV2_NLOAD_busId1", Pair.of(100., 100.));
+        voltageProfile.put("SHUNT_1_busId1", Pair.of(100., 100.));
 
         openReacResult = new OpenReacResult(OpenReacStatus.OK, openReacAmplIOFiles, INDICATORS);
         return openReacResult;
@@ -213,6 +217,21 @@ public class VoltageInitControllerTest {
 
         // network store service mocking
         network = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
+        network.getVoltageLevel("VLGEN").newShuntCompensator()
+            .setId("SHUNT_1")
+            .setBus("NGEN")
+            .setConnectableBus("NGEN")
+            .setTargetV(30.)
+            .setTargetDeadband(10)
+            .setVoltageRegulatorOn(false)
+            .newLinearModel()
+            .setMaximumSectionCount(1)
+            .setBPerSection(1)
+            .setGPerSection(1)
+            .add()
+            .setSectionCount(1)
+            .add();
+
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_1_ID);
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_3_ID);
@@ -220,9 +239,6 @@ public class VoltageInitControllerTest {
         given(networkStoreService.getNetwork(NETWORK_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willReturn(network);
         given(networkStoreService.getNetwork(NETWORK_UUID, PreloadingStrategy.COLLECTION)).willReturn(network);
         given(networkStoreService.getNetwork(OTHER_NETWORK_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willThrow(new PowsyblException("Not found"));
-
-        network1 = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
-        network1.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
 
         // OpenReac run mocking
         openReacParameters = new OpenReacParameters();
