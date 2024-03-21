@@ -7,6 +7,9 @@
 package org.gridsuite.voltageinit.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.computation.CompletableFutureTask;
 import com.powsybl.computation.ComputationManager;
@@ -27,11 +30,6 @@ import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
-import okhttp3.HttpUrl;
-import okhttp3.mockwebserver.Dispatcher;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
@@ -43,6 +41,7 @@ import org.gridsuite.voltageinit.server.service.NetworkModificationService;
 import org.gridsuite.voltageinit.server.service.UuidGeneratorService;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.gridsuite.voltageinit.server.util.annotations.PostCompletionAdapter;
+import org.gridsuite.voltageinit.utils.ContextConfigurationWithTestChannel;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,21 +54,18 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.cloud.stream.binder.test.OutputDestination;
-import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.http.MediaType;
 import org.springframework.messaging.Message;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
 import static org.gridsuite.voltageinit.server.service.NotificationService.CANCEL_MESSAGE;
 import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_USER_ID;
@@ -78,7 +74,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -86,9 +85,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @ExtendWith({ MockitoExtension.class })
+@WireMockTest
 @AutoConfigureMockMvc
+@ContextConfigurationWithTestChannel
 @SpringBootTest
-@ContextHierarchy({@ContextConfiguration(classes = {VoltageInitApplication.class, TestChannelBinderConfiguration.class})})
 class VoltageInitControllerTest {
     private static final UUID NETWORK_UUID = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
     private static final UUID OTHER_NETWORK_UUID = UUID.fromString("06824085-db85-4883-9458-8c5c9f1585d6");
@@ -131,14 +131,11 @@ class VoltageInitControllerTest {
     private ObjectMapper mapper;
 
     private Network network;
-    private OpenReacParameters openReacParameters;
     private OpenReacResult openReacResult;
     private CompletableFutureTask<OpenReacResult> completableFutureResultsTask;
 
-    public MockWebServer server;
-
-    private OpenReacResult buildOpenReacResult() {
-        OpenReacAmplIOFiles openReacAmplIOFiles = new OpenReacAmplIOFiles(openReacParameters, network, false);
+    private void buildOpenReacResult() {
+        OpenReacAmplIOFiles openReacAmplIOFiles = new OpenReacAmplIOFiles(new OpenReacParameters(), network, false);
 
         GeneratorModification.Modifs m1 = new GeneratorModification.Modifs();
         m1.setTargetV(228.);
@@ -155,10 +152,9 @@ class VoltageInitControllerTest {
         openReacAmplIOFiles.getNetworkModifications().getShuntModifications().add(new ShuntCompensatorModification("SHUNT_1", true, 1));
 
         openReacResult = new OpenReacResult(OpenReacStatus.OK, openReacAmplIOFiles, INDICATORS);
-        return openReacResult;
     }
 
-    private VoltageInitParametersEntity buildVoltageInitParametersEntity() {
+    private static VoltageInitParametersEntity buildVoltageInitParametersEntity() {
         return VoltageInitParametersInfos.builder()
             .voltageLimitsModification(List.of(VoltageLimitInfos.builder()
                 .priority(0)
@@ -194,14 +190,9 @@ class VoltageInitControllerTest {
     }
 
     @BeforeEach
-    public void setUp() throws Exception {
-        server = new MockWebServer();
-        server.start();
-
-        HttpUrl baseHttpUrl = server.url("");
-        String baseUrl = baseHttpUrl.toString().substring(0, baseHttpUrl.toString().length() - 1);
-        networkModificationService.setNetworkModificationServerBaseUri(baseUrl);
-        filterService.setFilterServerBaseUri(baseUrl);
+    public void setUp(final WireMockRuntimeInfo wmRuntimeInfo) {
+        networkModificationService.setNetworkModificationServerBaseUri(wmRuntimeInfo.getHttpBaseUrl());
+        filterService.setFilterServerBaseUri(wmRuntimeInfo.getHttpBaseUrl());
 
         // network store service mocking
         network = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
@@ -214,32 +205,17 @@ class VoltageInitControllerTest {
         given(networkStoreService.getNetwork(OTHER_NETWORK_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willThrow(new PowsyblException("Not found"));
 
         // OpenReac run mocking
-        openReacParameters = new OpenReacParameters();
-        openReacResult = buildOpenReacResult();
-
+        buildOpenReacResult();
         completableFutureResultsTask = CompletableFutureTask.runAsync(() -> openReacResult, ForkJoinPool.commonPool());
 
         // UUID service mocking to always generate the same result UUID
         given(uuidGeneratorService.generate()).willReturn(RESULT_UUID);
 
-        final Dispatcher dispatcher = new Dispatcher() {
-            @Override
-            public MockResponse dispatch(RecordedRequest request) {
-                String path = Objects.requireNonNull(request.getPath());
-                if (path.matches("/v1/groups/.*") && "DELETE".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200)
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/groups/modification") && "POST".equals(request.getMethod())) {
-                    return new MockResponse().setResponseCode(200).setBody("\"" + MODIFICATIONS_GROUP_UUID + "\"")
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/filters/export\\?networkUuid=" + NETWORK_UUID + "&variantId=" + VARIANT_2_ID + "&ids=.*")) {
-                    return new MockResponse().setResponseCode(200).setBody(FILTER_EQUIPMENT_JSON)
-                            .addHeader("Content-Type", "application/json; charset=utf-8");
-                }
-                return new MockResponse().setResponseCode(418);
-            }
-        };
-        server.setDispatcher(dispatcher);
+        final WireMock server = wmRuntimeInfo.getWireMock();
+        server.register(WireMock.delete(urlPathMatching("/v1/groups/.+")).willReturn(okJson("")));
+        server.register(WireMock.post(urlPathEqualTo("/v1/groups/modification")).willReturn(okJson("\"" + MODIFICATIONS_GROUP_UUID + "\"")));
+        server.register(WireMock.any(urlMatching("/v1/filters/export\\?networkUuid=" + NETWORK_UUID + "&variantId=" + VARIANT_2_ID + "&ids=.+")).willReturn(okJson(FILTER_EQUIPMENT_JSON)));
+        server.register(WireMock.any(WireMock.anyUrl()).atPriority(Integer.MAX_VALUE).willReturn(WireMock.serviceUnavailable()));
 
         // purge messages
         while (output.receive(1000, "voltageinit.result") != null) {
@@ -259,7 +235,6 @@ class VoltageInitControllerTest {
     public void tearDown() throws Exception {
         mockMvc.perform(delete("/" + VERSION + "/results"))
                 .andExpect(status().isOk());
-        server.shutdown();
     }
 
     @Test
