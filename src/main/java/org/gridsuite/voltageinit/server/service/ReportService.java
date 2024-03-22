@@ -8,6 +8,7 @@
 package org.gridsuite.voltageinit.server.service;
 
 import com.powsybl.commons.reporter.Reporter;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -34,18 +35,15 @@ public class ReportService {
     private static final String QUERY_PARAM_REPORT_TYPE_FILTER = "reportTypeFilter";
     private static final String QUERY_PARAM_REPORT_THROW_ERROR = "errorOnReportNotFound";
 
+    @Setter
     private String baseUri;
 
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
 
     @Autowired
     public ReportService(@Value("${gridsuite.services.report-server.base-uri:http://report-server/}") String baseUri, RestTemplate restTemplate) {
         this.baseUri = baseUri;
         this.restTemplate = restTemplate;
-    }
-
-    public void setReportServiceBaseUri(String baseUri) {
-        this.baseUri = baseUri;
     }
 
     public void sendReport(UUID reportUuid, Reporter reporter) {

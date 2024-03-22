@@ -8,21 +8,10 @@ package org.gridsuite.voltageinit.server.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.iidm.network.Bus;
-import com.powsybl.iidm.network.Identifiable;
-import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.ShuntCompensator;
-import com.powsybl.iidm.network.Terminal;
-import com.powsybl.iidm.network.TwoWindingsTransformer;
+import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
-import org.gridsuite.voltageinit.server.dto.GeneratorModificationInfos;
-import org.gridsuite.voltageinit.server.dto.ShuntCompensatorModificationInfos;
-import org.gridsuite.voltageinit.server.dto.StaticVarCompensatorModificationInfos;
-import org.gridsuite.voltageinit.server.dto.TransformerModificationInfos;
-import org.gridsuite.voltageinit.server.dto.VoltageInitModificationInfos;
-import org.gridsuite.voltageinit.server.dto.VscConverterStationModificationInfos;
+import org.gridsuite.voltageinit.server.dto.*;
 import org.jgrapht.alg.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,18 +40,19 @@ public class NetworkModificationService {
     private static final String NETWORK_MODIFICATION_API_VERSION = "v1";
     private static final String DELIMITER = "/";
     private static final String GROUP_PATH = "groups" + DELIMITER + "{groupUuid}";
-    public static final String QUERY_PARAM_ERROR_ON_GROUP_NOT_FOUND = "errorOnGroupNotFound";
+    private static final String QUERY_PARAM_ERROR_ON_GROUP_NOT_FOUND = "errorOnGroupNotFound";
 
     private String networkModificationServerBaseUri;
 
-    private final RestTemplate restTemplate = new RestTemplate();
-
+    private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
     @Autowired
     NetworkModificationService(@Value("${gridsuite.services.network-modification-server.base-uri:http://network-modification-server/}") String networkModificationServerBaseUri,
+                               RestTemplate restTemplate,
                                ObjectMapper objectMapper) {
         this.networkModificationServerBaseUri = networkModificationServerBaseUri;
+        this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
     }
 
@@ -88,13 +78,11 @@ public class NetworkModificationService {
         }
     }
 
-    private Optional<Bus> getRegulatingBus(Terminal terminal) {
+    private static Optional<Bus> getRegulatingBus(Terminal terminal) {
         return terminal != null && terminal.getBusView().getBus() != null ? Optional.of(terminal.getBusView().getBus()) : Optional.empty();
     }
 
     public UUID createVoltageInitModificationGroup(Network network, OpenReacResult result) {
-        UUID modificationsGroupUuid;
-
         try {
             VoltageInitModificationInfos voltageInitModificationInfos = new VoltageInitModificationInfos();
 
@@ -190,14 +178,12 @@ public class NetworkModificationService {
 
             HttpEntity<String> httpEntity = new HttpEntity<>(objectMapper.writeValueAsString(voltageInitModificationInfos), headers);
 
-            modificationsGroupUuid = restTemplate.exchange(path, HttpMethod.POST, httpEntity, UUID.class)
+            return restTemplate.exchange(path, HttpMethod.POST, httpEntity, UUID.class)
                 .getBody();
         } catch (JsonProcessingException e) {
             throw new PowsyblException("Error generating json modifications", e);
         } catch (HttpStatusCodeException e) {
             throw new PowsyblException("Error creating modifications group", e);
         }
-
-        return modificationsGroupUuid;
     }
 }
