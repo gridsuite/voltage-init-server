@@ -18,6 +18,7 @@ import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.gridsuite.voltageinit.server.repository.VoltageInitResultRepository;
 import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
 import org.slf4j.Logger;
@@ -105,7 +106,7 @@ public class VoltageInitWorkerService {
         return network;
     }
 
-    private OpenReacResult run(VoltageInitRunContext context, UUID resultUuid) throws Exception {
+    private Pair<Network, OpenReacResult> run(VoltageInitRunContext context, UUID resultUuid) throws Exception {
         Objects.requireNonNull(context);
 
         LOGGER.info("Run voltage init...");
@@ -123,7 +124,7 @@ public class VoltageInitWorkerService {
                     reportService.sendReport(context.getReportUuid(), context.getRootReporter()));
         }
 
-        return future == null ? null : voltageInitObserver.observeRun("run", future::get);
+        return future == null ? Pair.of(network, null) : Pair.of(network, voltageInitObserver.observeRun("run", future::get));
     }
 
     public CompletableFuture<OpenReacResult> runVoltageInitAsync(VoltageInitRunContext context, Network network, UUID resultUuid) {
@@ -175,18 +176,20 @@ public class VoltageInitWorkerService {
                 AtomicReference<Long> startTime = new AtomicReference<>();
 
                 startTime.set(System.nanoTime());
-                OpenReacResult result = run(resultContext.getRunContext(), resultContext.getResultUuid());
+                Pair<Network, OpenReacResult> res = run(resultContext.getRunContext(), resultContext.getResultUuid());
+                Network network = res.getLeft();
+                OpenReacResult openReacResult = res.getRight();
                 long nanoTime = System.nanoTime();
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
-                UUID modificationsGroupUuid = networkModificationService.createVoltageInitModificationGroup(result);
-                voltageInitObserver.observe("results.save", () ->
-                        resultRepository.insert(resultContext.getResultUuid(), result, modificationsGroupUuid, result.getStatus().name()));
-                LOGGER.info("Status : {}", result.getStatus());
-                LOGGER.info("Reactive slacks : {}", result.getReactiveSlacks());
-                LOGGER.info("Indicators : {}", result.getIndicators());
+                if (openReacResult != null) {  // result available
+                    UUID modificationsGroupUuid = networkModificationService.createVoltageInitModificationGroup(network, openReacResult);
+                    voltageInitObserver.observe("results.save", () ->
+                        resultRepository.insert(resultContext.getResultUuid(), openReacResult, modificationsGroupUuid, openReacResult.getStatus().name()));
+                    LOGGER.info("Status : {}", openReacResult.getStatus());
+                    LOGGER.info("Reactive slacks : {}", openReacResult.getReactiveSlacks());
+                    LOGGER.info("Indicators : {}", openReacResult.getIndicators());
 
-                if (result != null) {  // result available
                     notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver());
                     LOGGER.info("Voltage initialization complete (resultUuid='{}')", resultContext.getResultUuid());
                 } else {  // result not available : stop computation request

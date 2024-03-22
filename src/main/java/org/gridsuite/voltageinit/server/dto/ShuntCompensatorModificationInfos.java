@@ -25,4 +25,7 @@ public class ShuntCompensatorModificationInfos {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Boolean connect;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Double targetV;
 }

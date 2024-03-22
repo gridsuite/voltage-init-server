@@ -21,8 +21,8 @@ public class GeneratorModificationInfos {
     private String generatorId;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private Double voltageSetpoint;
+    private Double targetV;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private Double reactivePowerSetpoint;
+    private Double targetQ;
 }

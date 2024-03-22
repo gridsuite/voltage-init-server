@@ -25,5 +25,8 @@ public class TransformerModificationInfos {
     private Integer ratioTapChangerPosition;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Double ratioTapChangerTargetV;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private ThreeSides legSide;
 }
