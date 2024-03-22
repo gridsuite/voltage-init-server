@@ -13,13 +13,15 @@ import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
 import org.gridsuite.voltageinit.server.service.ReportService;
 import org.gridsuite.voltageinit.utils.ContextConfigurationWithTestChannel;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.*;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -30,6 +32,7 @@ import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.gridsuite.voltageinit.utils.TestUtils.resourceToString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -37,8 +40,9 @@ import static org.mockito.Mockito.verify;
  * @author Anis TOURI <anis.touri at rte-france.com>
  */
 @SpringBootTest
+@RunWith(SpringRunner.class)
 @ContextConfigurationWithTestChannel
-class ReportServiceTest {
+public class ReportServiceTest {
 
     private static final UUID REPORT_UUID = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
     private static final String BASE_URI = "http://localhost:";
@@ -60,7 +64,7 @@ class ReportServiceTest {
 
     }
 
-    @BeforeEach
+    @Before
     public void setUp() throws IOException, URISyntaxException {
         String reportJson = resourceToString("report.json");
         server = new WireMockServer(WireMockConfiguration.wireMockConfig().dynamicPort());
@@ -72,23 +76,23 @@ class ReportServiceTest {
         reportService.setReportServiceBaseUri("http://localhost:" + server.port());
     }
 
-    @AfterEach
+    @After
     public void tearDown() {
         server.stop();
     }
 
     @Test
-    void testSendReport() {
+    public void testSendReport() {
         Reporter reporter = new ReporterModel("test", "test");
         URI expectedUri = UriComponentsBuilder
                 .fromPath(DELIMITER + REPORT_API_VERSION + "/reports/{reportUuid}")
                 .build(REPORT_UUID);
         reportService.sendReport(REPORT_UUID, reporter);
-        verify(restTemplate, times(1)).put(BASE_URI + server.port() + expectedUri, reporter);
+        verify(restTemplate, times(1)).put(eq(BASE_URI + server.port() + expectedUri), eq(reporter));
     }
 
     @Test
-    void testDeleteReport() {
+    public void testDeleteReport() {
         reportService.deleteReport(REPORT_UUID, "VoltageInit");
         URI expectedUri = UriComponentsBuilder
                 .fromPath(DELIMITER + REPORT_API_VERSION + "/reports/{reportUuid}")
@@ -97,6 +101,6 @@ class ReportServiceTest {
                 .build(REPORT_UUID);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        verify(restTemplate, times(1)).exchange(BASE_URI + server.port() + expectedUri, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+        verify(restTemplate, times(1)).exchange(eq(BASE_URI + server.port() + expectedUri), eq(HttpMethod.DELETE), eq(new HttpEntity<>(headers)), eq(Void.class));
     }
 }

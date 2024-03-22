@@ -27,6 +27,7 @@ import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
+import lombok.SneakyThrows;
 import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -44,13 +45,13 @@ import org.gridsuite.voltageinit.server.service.UuidGeneratorService;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.gridsuite.voltageinit.server.util.annotations.PostCompletionAdapter;
 import org.jgrapht.alg.util.Pair;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -59,10 +60,9 @@ import org.springframework.cloud.stream.binder.test.OutputDestination;
 import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.http.MediaType;
 import org.springframework.messaging.Message;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -76,8 +76,8 @@ import java.util.concurrent.ForkJoinPool;
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
 import static org.gridsuite.voltageinit.server.service.NotificationService.CANCEL_MESSAGE;
 import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_USER_ID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -88,12 +88,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
-@ExtendWith({ MockitoExtension.class })
-@SpringBootTest
+@RunWith(SpringRunner.class)
 @AutoConfigureMockMvc
-@DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
+@SpringBootTest
 @ContextHierarchy({@ContextConfiguration(classes = {VoltageInitApplication.class, TestChannelBinderConfiguration.class})})
-class VoltageInitControllerTest {
+public class VoltageInitControllerTest {
+
     private static final UUID NETWORK_UUID = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
     private static final UUID OTHER_NETWORK_UUID = UUID.fromString("06824085-db85-4883-9458-8c5c9f1585d6");
     private static final UUID RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5d");
@@ -131,17 +131,18 @@ class VoltageInitControllerTest {
     @MockBean
     private UuidGeneratorService uuidGeneratorService;
 
-    @Autowired
-    private ObjectMapper mapper;
+    private final RestTemplateConfig restTemplateConfig = new RestTemplateConfig();
+    private final ObjectMapper mapper = restTemplateConfig.objectMapper();
 
     private Network network;
-    private OpenReacResult openReacResult;
-    private CompletableFutureTask<OpenReacResult> completableFutureResultsTask;
+    OpenReacParameters openReacParameters;
+    OpenReacResult openReacResult;
+    CompletableFutureTask<OpenReacResult> completableFutureResultsTask;
 
-    public MockWebServer server;
+    private MockWebServer server;
 
-    private void buildOpenReacResult() {
-        OpenReacAmplIOFiles openReacAmplIOFiles = new OpenReacAmplIOFiles(new OpenReacParameters(), network, false);
+    private OpenReacResult buildOpenReacResult() {
+        OpenReacAmplIOFiles openReacAmplIOFiles = new OpenReacAmplIOFiles(openReacParameters, network, false);
 
         GeneratorModification.Modifs m1 = new GeneratorModification.Modifs();
         m1.setTargetV(228.);
@@ -164,9 +165,10 @@ class VoltageInitControllerTest {
         voltageProfile.put("SHUNT_1_busId1", Pair.of(100., 100.));
 
         openReacResult = new OpenReacResult(OpenReacStatus.OK, openReacAmplIOFiles, INDICATORS);
+        return openReacResult;
     }
 
-    private static VoltageInitParametersEntity buildVoltageInitParametersEntity() {
+    private VoltageInitParametersEntity buildVoltageInitParametersEntity() {
         return VoltageInitParametersInfos.builder()
             .voltageLimitsModification(List.of(VoltageLimitInfos.builder()
                 .priority(0)
@@ -201,8 +203,10 @@ class VoltageInitControllerTest {
             .build().toEntity();
     }
 
-    @BeforeEach
+    @Before
     public void setUp() throws Exception {
+        MockitoAnnotations.initMocks(this);
+
         server = new MockWebServer();
         server.start();
 
@@ -237,20 +241,24 @@ class VoltageInitControllerTest {
         given(networkStoreService.getNetwork(OTHER_NETWORK_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willThrow(new PowsyblException("Not found"));
 
         // OpenReac run mocking
-        buildOpenReacResult();
+        openReacParameters = new OpenReacParameters();
+        openReacResult = buildOpenReacResult();
+
         completableFutureResultsTask = CompletableFutureTask.runAsync(() -> openReacResult, ForkJoinPool.commonPool());
 
         // UUID service mocking to always generate the same result UUID
         given(uuidGeneratorService.generate()).willReturn(RESULT_UUID);
 
         final Dispatcher dispatcher = new Dispatcher() {
+            @SneakyThrows
             @Override
             public MockResponse dispatch(RecordedRequest request) {
                 String path = Objects.requireNonNull(request.getPath());
-                if (path.matches("/v1/groups/.*") && "DELETE".equals(request.getMethod())) {
+
+                if (path.matches("/v1/groups/.*") && request.getMethod().equals("DELETE")) {
                     return new MockResponse().setResponseCode(200)
                             .addHeader("Content-Type", "application/json; charset=utf-8");
-                } else if (path.matches("/v1/groups/modification") && "POST".equals(request.getMethod())) {
+                } else if (path.matches("/v1/groups/modification") && request.getMethod().equals("POST")) {
                     return new MockResponse().setResponseCode(200).setBody("\"" + MODIFICATIONS_GROUP_UUID + "\"")
                             .addHeader("Content-Type", "application/json; charset=utf-8");
                 } else if (path.matches("/v1/filters/export\\?networkUuid=" + NETWORK_UUID + "&variantId=" + VARIANT_2_ID + "&ids=.*")) {
@@ -276,13 +284,15 @@ class VoltageInitControllerTest {
         }
     }
 
-    @AfterEach
-    public void tearDown() throws Exception {
-        server.shutdown();
+    @SneakyThrows
+    @After
+    public void tearDown() {
+        mockMvc.perform(delete("/" + VERSION + "/results"))
+                .andExpect(status().isOk());
     }
 
     @Test
-    void runTest() throws Exception {
+    public void runTest() throws Exception {
         try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
             openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class)))
                     .thenReturn(completableFutureResultsTask);
@@ -345,7 +355,7 @@ class VoltageInitControllerTest {
     }
 
     @Test
-    void runWrongNetworkTest() throws Exception {
+    public void runWrongNetworkTest() throws Exception {
         MvcResult result = mockMvc.perform(post(
                         "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, OTHER_NETWORK_UUID)
                         .header(HEADER_USER_ID, "userId"))
@@ -366,7 +376,7 @@ class VoltageInitControllerTest {
     }
 
     @Test
-    void runWithReportTest() throws Exception {
+    public void runWithReportTest() throws Exception {
         MvcResult result = mockMvc.perform(post(
                         "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId={variantId}&reportType=VoltageInit&reportUuid=" + REPORT_UUID + "&reporterId=" + UUID.randomUUID(), NETWORK_UUID, VARIANT_2_ID)
                         .header(HEADER_USER_ID, "userId"))
@@ -376,7 +386,7 @@ class VoltageInitControllerTest {
     }
 
     @Test
-    void stopTest() throws Exception {
+    public void stopTest() throws Exception {
         try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
             openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class)))
                     .thenReturn(completableFutureResultsTask);
@@ -402,8 +412,9 @@ class VoltageInitControllerTest {
         }
     }
 
+    @SneakyThrows
     @Test
-    void getStatusTest() throws Exception {
+    public void getStatusTest() {
         MvcResult result = mockMvc.perform(get(
                         "/" + VERSION + "/results/{resultUuid}/status", RESULT_UUID))
                 .andExpect(status().isOk())
@@ -421,8 +432,9 @@ class VoltageInitControllerTest {
         assertEquals(VoltageInitStatus.NOT_DONE.name(), result.getResponse().getContentAsString());
     }
 
+    @SneakyThrows
     @Test
-    void postCompletionAdapterTest() {
+    public void postCompletionAdapterTest() {
         CompletableFutureTask<OpenReacResult> task = CompletableFutureTask.runAsync(() -> openReacResult, ForkJoinPool.commonPool());
         PostCompletionAdapter adapter = new PostCompletionAdapter();
         adapter.execute(task);

@@ -19,7 +19,7 @@ import com.powsybl.network.store.iidm.impl.NetworkFactoryImpl;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride.VoltageLimitType;
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Condition;
 import org.assertj.core.api.ListAssert;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
@@ -60,7 +60,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -75,9 +74,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
  */
 @SpringBootTest
-@DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureMockMvc
 @Transactional
+@Slf4j
 class VoltageInitParametersTest {
     private static final String URI_PARAMETERS_BASE = "/v1/parameters";
     private static final String URI_PARAMETERS_GET_PUT = URI_PARAMETERS_BASE + "/";
@@ -144,73 +144,101 @@ class VoltageInitParametersTest {
     @Test
     void testCreate() throws Exception {
         VoltageInitParametersInfos parametersToCreate = buildParameters();
-        mockMvc.perform(post(URI_PARAMETERS_BASE).content(mapper.writeValueAsString(parametersToCreate)).contentType(MediaType.APPLICATION_JSON))
-               .andExpect(status().isOk()).andReturn();
-        assertThat(parametersRepository.findAll().get(0).toVoltageInitParametersInfos())
-                .as("created parameters")
-                .recursivelyEquals(parametersToCreate);
+        String parametersToCreateJson = mapper.writeValueAsString(parametersToCreate);
+
+        mockMvc.perform(post(URI_PARAMETERS_BASE).content(parametersToCreateJson).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk()).andReturn();
+
+        VoltageInitParametersInfos createdParameters = parametersRepository.findAll().get(0).toVoltageInitParametersInfos();
+
+        assertThat(createdParameters).recursivelyEquals(parametersToCreate);
     }
 
     @Test
     void testRead() throws Exception {
         VoltageInitParametersInfos parametersToRead = buildParameters();
+
         UUID parametersUuid = saveAndReturnId(parametersToRead);
+
         MvcResult mvcResult = mockMvc.perform(get(URI_PARAMETERS_GET_PUT + parametersUuid))
-                                     .andExpect(status().isOk()).andReturn();
+                .andExpect(status().isOk()).andReturn();
         String resultAsString = mvcResult.getResponse().getContentAsString();
-        assertThat(mapper.readValue(resultAsString, new TypeReference<VoltageInitParametersInfos>() { }))
-                .as("received parameters")
-                .recursivelyEquals(parametersToRead);
+        VoltageInitParametersInfos receivedParameters = mapper.readValue(resultAsString, new TypeReference<>() {
+        });
+
+        assertThat(receivedParameters).recursivelyEquals(parametersToRead);
     }
 
     @Test
     void testUpdate() throws Exception {
-        UUID parametersUuid = saveAndReturnId(buildParameters());
-        VoltageInitParametersInfos parametersToUpdate = buildParametersUpdate();
-        mockMvc.perform(put(URI_PARAMETERS_GET_PUT + parametersUuid).content(mapper.writeValueAsString(parametersToUpdate)).contentType(MediaType.APPLICATION_JSON))
-               .andExpect(status().isOk());
-        assertThat(parametersRepository.findById(parametersUuid).get().toVoltageInitParametersInfos())
-                .as("updated parameters")
-                .recursivelyEquals(parametersToUpdate);
+        VoltageInitParametersInfos parametersToUpdate = buildParameters();
+
+        UUID parametersUuid = saveAndReturnId(parametersToUpdate);
+
+        parametersToUpdate = buildParametersUpdate();
+
+        String parametersToUpdateJson = mapper.writeValueAsString(parametersToUpdate);
+
+        mockMvc.perform(put(URI_PARAMETERS_GET_PUT + parametersUuid).content(parametersToUpdateJson).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        VoltageInitParametersInfos updatedParameters = parametersRepository.findById(parametersUuid).get().toVoltageInitParametersInfos();
+
+        assertThat(updatedParameters).recursivelyEquals(parametersToUpdate);
     }
 
     @Test
     void testDelete() throws Exception {
-        UUID parametersUuid = saveAndReturnId(buildParameters());
+        VoltageInitParametersInfos parametersToDelete = buildParameters();
+
+        UUID parametersUuid = saveAndReturnId(parametersToDelete);
+
         mockMvc.perform(delete(URI_PARAMETERS_GET_PUT + parametersUuid)).andExpect(status().isOk()).andReturn();
         assertThat(parametersRepository.count()).as("parameters repository items count").isZero();
     }
 
     @Test
     void testGetAll() throws Exception {
-        saveAndReturnId(buildParameters());
-        saveAndReturnId(buildParametersUpdate());
+        VoltageInitParametersInfos parameters1 = buildParameters();
+
+        VoltageInitParametersInfos parameters2 = buildParametersUpdate();
+
+        saveAndReturnId(parameters1);
+
+        saveAndReturnId(parameters2);
+
         MvcResult mvcResult = mockMvc.perform(get(URI_PARAMETERS_BASE))
-                                     .andExpect(status().isOk()).andReturn();
+                .andExpect(status().isOk()).andReturn();
         String resultAsString = mvcResult.getResponse().getContentAsString();
-        assertThat(mapper.readValue(resultAsString, new TypeReference<List<VoltageInitParametersInfos>>() { }))
-                .as("received parameters")
-                .hasSize(2);
+        List<VoltageInitParametersInfos> receivedParameters = mapper.readValue(resultAsString, new TypeReference<>() {
+        });
+
+        assertThat(receivedParameters).hasSize(2);
     }
 
     @Test
     void testDuplicate() throws Exception {
-        mockMvc.perform(post(URI_PARAMETERS_BASE).content(mapper.writeValueAsString(buildParameters())).contentType(MediaType.APPLICATION_JSON))
-               .andExpect(status().isOk()).andReturn();
+        VoltageInitParametersInfos parametersToCreate = buildParameters();
+        String parametersToCreateJson = mapper.writeValueAsString(parametersToCreate);
+        mockMvc.perform(post(URI_PARAMETERS_BASE).content(parametersToCreateJson).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk()).andReturn();
         VoltageInitParametersInfos createdParameters = parametersRepository.findAll().get(0).toVoltageInitParametersInfos();
-        mockMvc.perform(post(URI_PARAMETERS_BASE).param("duplicateFrom", UUID.randomUUID().toString()))
-               .andExpect(status().isNotFound());
-        mockMvc.perform(post(URI_PARAMETERS_BASE).param("duplicateFrom", createdParameters.getUuid().toString()))
-               .andExpect(status().isOk());
-        assertThat(parametersRepository.findAll().get(1).toVoltageInitParametersInfos())
-                .as("duplicated parameters")
-                .recursivelyEquals(createdParameters);
+
+        mockMvc.perform(post(URI_PARAMETERS_BASE)
+                        .param("duplicateFrom", UUID.randomUUID().toString()))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(post(URI_PARAMETERS_BASE)
+                        .param("duplicateFrom", createdParameters.getUuid().toString()))
+                .andExpect(status().isOk());
+
+        VoltageInitParametersInfos duplicatedParameters = parametersRepository.findAll().get(1).toVoltageInitParametersInfos();
+        assertThat(duplicatedParameters).recursivelyEquals(createdParameters);
     }
 
     /** Save parameters into the repository and return its UUID. */
     private UUID saveAndReturnId(VoltageInitParametersInfos parametersInfos) {
-        parametersRepository.save(parametersInfos.toEntity());
-        return parametersRepository.findAll().get(0).getId();
+        return parametersRepository.save(parametersInfos.toEntity()).getId();
     }
 
     private static VoltageInitParametersInfos buildParameters() {
@@ -295,8 +323,7 @@ class VoltageInitParametersTest {
             );
             final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
             final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
-            /*TODO*/System.out.println(parametersRepository.findAll().stream().map(ToStringBuilder::reflectionToString).collect(Collectors.joining()));
-            /*TODO*/System.out.println(mapper.writeValueAsString(context.getRootReporter()));
+            log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getRootReporter()));
             JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString(reportFilename), mapper.writeValueAsString(context.getRootReporter()), REPORTER_COMPARATOR);
             return assertThat(openReacParameters.getSpecificVoltageLimits()).as("SpecificVoltageLimits");
         };

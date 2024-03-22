@@ -6,12 +6,15 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
+import com.powsybl.network.store.client.NetworkStoreService;
+
 import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.entities.VoltageInitResultEntity;
 import org.gridsuite.voltageinit.server.repository.VoltageInitResultRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +25,7 @@ import java.util.stream.Collectors;
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
+@ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
 public class VoltageInitService {
     @Autowired
@@ -45,8 +49,9 @@ public class VoltageInitService {
     }
 
     public UUID runAndSaveResult(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String userId, String reportType, UUID parametersUuid) {
-        final VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid);
-        final UUID resultUuid = uuidGeneratorService.generate();
+        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, new HashMap<>());
+        Objects.requireNonNull(runContext);
+        var resultUuid = uuidGeneratorService.generate();
 
         // update status to running status
         setStatus(List.of(resultUuid), VoltageInitStatus.RUNNING.name());
