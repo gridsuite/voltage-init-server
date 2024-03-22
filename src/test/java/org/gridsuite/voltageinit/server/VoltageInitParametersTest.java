@@ -307,7 +307,7 @@ class VoltageInitParametersTest {
         final VoltageLimitEntity voltageLimit4 = new VoltageLimitEntity(UUID.randomUUID(), -20.0, 10.0, 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
         final VoltageLimitEntity voltageLimit5 = new VoltageLimitEntity(UUID.randomUUID(), 10.0, 10.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
         return List.of(
-            DynamicTest.dynamicTest("No voltage limit modification", () -> initTestEnv.apply(List.of(voltageLimit, voltageLimit2), "report_empty.json")
+            DynamicTest.dynamicTest("No voltage limit modification", () -> initTestEnv.apply(List.of(voltageLimit, voltageLimit2), "reporter_buildOpenReacParameters.json")
                 .hasSize(4)
                 //No override should be relative since there is no voltage limit modification
                 .noneMatch(VoltageLimitOverride::isRelative)
@@ -320,7 +320,7 @@ class VoltageInitParametersTest {
                     assertVoltageLimitOverride("VLLOAD", VoltageLimitType.HIGH_VOLTAGE_LIMIT, 88.)
                 )),
             //We now add limit modifications in additions to defaults settings
-            DynamicTest.dynamicTest("With voltage limit modifications", () -> initTestEnv.apply(List.of(voltageLimit, voltageLimit2, voltageLimit3), "report_empty.json")
+            DynamicTest.dynamicTest("With voltage limit modifications", () -> initTestEnv.apply(List.of(voltageLimit, voltageLimit2, voltageLimit3), "reporter_buildOpenReacParameters_withLimitModifications.json")
                 //Limits that weren't impacted by default settings are now impacted by modification settings
                 .hasSize(8)
                 //There should (not?) be relative overrides since voltage limit modification are applied
@@ -333,13 +333,13 @@ class VoltageInitParametersTest {
                 .satisfiesOnlyOnce(assertVoltageLimitOverride("VLLOAD", VoltageLimitType.HIGH_VOLTAGE_LIMIT, 86.))),
             //note: VoltageLimitOverride implement equals() correctly, so we can use it
             // We need to check for the case of relative = true with the modification less than 0 => the new low voltage limit = low voltage limit * -1
-            DynamicTest.dynamicTest("Case relative true overrides", () -> initTestEnv.apply(List.of(voltageLimit4), "report_case_relative_true.json")
+            DynamicTest.dynamicTest("Case relative true overrides", () -> initTestEnv.apply(List.of(voltageLimit4), "reporter_buildOpenReacParameters_caseRelativeTrue.json")
                 .hasSize(4)
                 // isRelative: There should have relative true overrides since voltage limit modification are applied for VLGEN
                 // getLimit: The low voltage limit must be impacted by the modification of the value
                 .containsOnlyOnce(new VoltageLimitOverride("VLGEN", VoltageLimitType.LOW_VOLTAGE_LIMIT, true, -10.0))),
             // We need to check for the case of relative = false with the modification less than 0 => the new low voltage limit = 0
-            DynamicTest.dynamicTest("Case relative false overrides", () -> initTestEnv.apply(List.of(voltageLimit4, voltageLimit5), "report_case_relative_false.json")
+            DynamicTest.dynamicTest("Case relative false overrides", () -> initTestEnv.apply(List.of(voltageLimit4, voltageLimit5), "reporter_buildOpenReacParameters_caseRelativeFalse.json")
                 .hasSize(8)
                 // isRelative: There should have relative false overrides since voltage limit modification are applied for VLHV1
                 // getLimit: The low voltage limit must be impacted by the modification of the value
