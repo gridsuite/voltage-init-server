@@ -1,0 +1,7 @@
+{
+  "version": "1.0",
+  "reportTree": { "taskKey": "test" },
+  "dics": {
+    "default": { "test": "test" }
+  }
+}

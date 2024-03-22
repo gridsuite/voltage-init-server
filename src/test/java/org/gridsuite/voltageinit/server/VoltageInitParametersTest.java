@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.reporter.Report;
+import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
 import com.powsybl.commons.reporter.TypedValue;
 import com.powsybl.iidm.network.IdentifiableType;
@@ -38,10 +39,12 @@ import org.gridsuite.voltageinit.server.service.VoltageInitWorkerService;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
+import org.gridsuite.voltageinit.utils.TestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -52,10 +55,13 @@ import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.function.ThrowingBiFunction;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -281,14 +287,17 @@ class VoltageInitParametersTest {
 
     @TestFactory
     List<DynamicTest> dynamicTestsBuildSpecificVoltageLimits() {
-        final Function<List<VoltageLimitEntity>, ListAssert<VoltageLimitOverride>> initTestEnv = (voltageLimits) -> {
+        final ThrowingBiFunction<List<VoltageLimitEntity>, String, ListAssert<VoltageLimitOverride>> initTestEnv = (voltageLimits, reportFilename) -> {
             final VoltageInitParametersEntity voltageInitParameters = parametersRepository.save(
                 new VoltageInitParametersEntity(UUID.randomUUID(), null, "", voltageLimits, null, null, null)
             );
             final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
             final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
             /*TODO*/System.out.println(parametersRepository.findAll().stream().map(ToStringBuilder::reflectionToString).collect(Collectors.joining()));
-            /*TODO*///System.out.println(mapper.writeValueAsString(context.getRootReporter()));
+            ReporterModel reporter = new ReporterModel("test", "test");
+            VoltageInitWorkerService.addRestrictedVoltageLevelReport(context.getVoltageLevelsIdsRestricted(), reporter);
+            /*TODO*/System.out.println(mapper.writeValueAsString(reporter));
+            JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString(reportFilename), mapper.writeValueAsString(reporter), false);
             return assertThat(openReacParameters.getSpecificVoltageLimits()).as("SpecificVoltageLimits");
         };
         final VoltageLimitEntity voltageLimit = new VoltageLimitEntity(UUID.randomUUID(), 5., 10., 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
@@ -297,7 +306,7 @@ class VoltageInitParametersTest {
         final VoltageLimitEntity voltageLimit4 = new VoltageLimitEntity(UUID.randomUUID(), -20.0, 10.0, 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
         final VoltageLimitEntity voltageLimit5 = new VoltageLimitEntity(UUID.randomUUID(), 10.0, 10.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
         return List.of(
-            DynamicTest.dynamicTest("No voltage limit modification", () -> initTestEnv.apply(List.of(voltageLimit, voltageLimit2))
+            DynamicTest.dynamicTest("No voltage limit modification", () -> initTestEnv.apply(List.of(voltageLimit, voltageLimit2), "report_empty.json")
                 .hasSize(4)
                 //No override should be relative since there is no voltage limit modification
                 .noneMatch(VoltageLimitOverride::isRelative)
@@ -310,7 +319,7 @@ class VoltageInitParametersTest {
                     assertVoltageLimitOverride("VLLOAD", VoltageLimitType.HIGH_VOLTAGE_LIMIT, 88.)
                 )),
             //We now add limit modifications in additions to defaults settings
-            DynamicTest.dynamicTest("With voltage limit modifications", () -> initTestEnv.apply(List.of(voltageLimit, voltageLimit2, voltageLimit3))
+            DynamicTest.dynamicTest("With voltage limit modifications", () -> initTestEnv.apply(List.of(voltageLimit, voltageLimit2, voltageLimit3), "report_empty.json")
                 //Limits that weren't impacted by default settings are now impacted by modification settings
                 .hasSize(8)
                 //There should (not?) be relative overrides since voltage limit modification are applied
@@ -323,13 +332,13 @@ class VoltageInitParametersTest {
                 .satisfiesOnlyOnce(assertVoltageLimitOverride("VLLOAD", VoltageLimitType.HIGH_VOLTAGE_LIMIT, 86.))),
             //note: VoltageLimitOverride implement equals() correctly, so we can use it
             // We need to check for the case of relative = true with the modification less than 0 => the new low voltage limit = low voltage limit * -1
-            DynamicTest.dynamicTest("Case relative true overrides", () -> initTestEnv.apply(List.of(voltageLimit4))
+            DynamicTest.dynamicTest("Case relative true overrides", () -> initTestEnv.apply(List.of(voltageLimit4), "report_case_relative_true.json")
                 .hasSize(4)
                 // isRelative: There should have relative true overrides since voltage limit modification are applied for VLGEN
                 // getLimit: The low voltage limit must be impacted by the modification of the value
                 .containsOnlyOnce(new VoltageLimitOverride("VLGEN", VoltageLimitType.LOW_VOLTAGE_LIMIT, true, -10.0))),
             // We need to check for the case of relative = false with the modification less than 0 => the new low voltage limit = 0
-            DynamicTest.dynamicTest("Case relative false overrides", () -> initTestEnv.apply(List.of(voltageLimit4, voltageLimit5))
+            DynamicTest.dynamicTest("Case relative false overrides", () -> initTestEnv.apply(List.of(voltageLimit4, voltageLimit5), "report_case_relative_false.json")
                 .hasSize(8)
                 // isRelative: There should have relative false overrides since voltage limit modification are applied for VLHV1
                 // getLimit: The low voltage limit must be impacted by the modification of the value
@@ -342,18 +351,10 @@ class VoltageInitParametersTest {
         Map<String, Double> restrictedVoltageLevel = Map.of("vl", 10.0);
         ReporterModel reporter = new ReporterModel("test", "test");
         VoltageInitWorkerService.addRestrictedVoltageLevelReport(restrictedVoltageLevel, reporter);
-        assertThat(reporter.getReports()).first()
-            .returns("restrictedVoltageLevels", Report::getReportKey)
-            .returns("The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: vl=10.0", Report::getDefaultMessage);
-
-        Optional<Map.Entry<String, TypedValue>> typedValues = reporter.getReports()
-                .stream()
-                .map(Report::getValues) //Stream<Map<String, TypedValue>>
-                .findFirst() //Optional<Map<String, TypedValue>>
-                .flatMap(values -> values.entrySet().stream().findFirst());
-        assertThat(typedValues.map(Map.Entry::getKey)).contains("reportSeverity");
-        assertThat(typedValues.map(value -> value.getValue().getValue())).contains("WARN");
-
-        //TODO replace by json resource
+        Reporter expected = new ReporterModel("test", "test");
+        expected.report("restrictedVoltageLevels",
+                        "The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: vl=10.0",
+                        Map.of(Report.REPORT_SEVERITY_KEY, TypedValue.WARN_SEVERITY));
+        assertThat(reporter).usingRecursiveComparison().isEqualTo(expected);
     }
 }

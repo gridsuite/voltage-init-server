@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "reportTree": {
+    "taskKey": "test",
+    "reports": [
+      {
+        "reportKey": "restrictedVoltageLevels",
+        "values": {
+          "reportSeverity": {
+            "value": "WARN",
+            "type": "SEVERITY"
+          }
+        }
+      }
+    ]
+  },
+  "dics": {
+    "default": {
+      "restrictedVoltageLevels": "The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: VLHV2=-10.0, VLHV1=0.0, VLGEN=-10.0, VLLOAD=0.0",
+      "test": "test"
+    }
+  }
+}

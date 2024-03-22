@@ -25,11 +25,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.gridsuite.voltageinit.utils.TestUtils.resourceToString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -61,8 +61,8 @@ class ReportServiceTest {
     }
 
     @BeforeEach
-    public void setUp() throws IOException {
-        String reportJson = resourceToString("/report.json");
+    public void setUp() throws IOException, URISyntaxException {
+        String reportJson = resourceToString("report.json");
         server = new WireMockServer(WireMockConfiguration.wireMockConfig().dynamicPort());
         server.start();
         WireMock.configureFor("localhost", server.port());
