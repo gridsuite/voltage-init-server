@@ -16,7 +16,9 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
 import lombok.AllArgsConstructor;
@@ -50,7 +52,7 @@ public class VoltageInitResultEntity {
     private List<ReactiveSlackEmbeddable> reactiveSlacks;
 
     @ElementCollection
-    @CollectionTable
+    @CollectionTable(foreignKey = @ForeignKey(name = "voltageInitResultEntity_busVoltages_fk1"), indexes = {@Index(name = "voltageInitResultEntity_busVoltages_idx1", columnList = "voltage_init_result_entity_result_uuid")})
     private List<BusVoltageEmbeddable> busVoltages;
 
     @Column
