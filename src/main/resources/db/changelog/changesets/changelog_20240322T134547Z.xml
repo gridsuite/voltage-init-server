@@ -3,10 +3,12 @@
     <changeSet author="lecuyerfra (generated)" id="1711115162726-1">
         <createTable tableName="voltage_init_result_entity_bus_voltages">
             <column name="voltage_init_result_entity_result_uuid" type="UUID">
-                <constraints nullable="false"/>
+                <constraints nullable="false" primaryKey="true" primaryKeyName="result_uuid_bus_idPK"/>
             </column>
             <column name="angle" type="FLOAT(53)"/>
-            <column name="bus_id" type="VARCHAR(255)"/>
+            <column name="bus_id" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="result_uuid_bus_idPK"/>
+            </column>
             <column name="v" type="FLOAT(53)"/>
         </createTable>
     </changeSet>
