@@ -9,10 +9,6 @@ package org.gridsuite.voltageinit.server;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.powsybl.commons.reporter.Report;
-import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.commons.reporter.ReporterModel;
-import com.powsybl.commons.reporter.TypedValue;
 import com.powsybl.iidm.network.IdentifiableType;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
@@ -35,7 +31,6 @@ import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParameter
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
-import org.gridsuite.voltageinit.server.service.VoltageInitWorkerService;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
@@ -44,7 +39,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.skyscreamer.jsonassert.Customization;
 import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
+import org.skyscreamer.jsonassert.comparator.CustomComparator;
+import org.skyscreamer.jsonassert.comparator.JSONComparator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -58,7 +57,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.function.ThrowingBiFunction;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -91,6 +89,11 @@ class VoltageInitParametersTest {
     private static final String FILTER_1 = "FILTER_1";
     private static final String FILTER_2 = "FILTER_2";
     private static final UUID REPORT_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+
+    private static final JSONComparator reporterComparator = new CustomComparator(JSONCompareMode.STRICT,
+            // ignore field having uuid changing each run
+            new Customization("reportTree.subReporters[*].taskValues.parameters_id.value", (o1, o2) -> (o1 == null) == (o2 == null))
+    );
 
 
     private Network network;
@@ -294,10 +297,8 @@ class VoltageInitParametersTest {
             final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
             final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
             /*TODO*/System.out.println(parametersRepository.findAll().stream().map(ToStringBuilder::reflectionToString).collect(Collectors.joining()));
-            ReporterModel reporter = new ReporterModel("test", "test");
-            VoltageInitWorkerService.addRestrictedVoltageLevelReport(context.getVoltageLevelsIdsRestricted(), reporter);
-            /*TODO*/System.out.println(mapper.writeValueAsString(reporter));
-            JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString(reportFilename), mapper.writeValueAsString(reporter), false);
+            /*TODO*/System.out.println(mapper.writeValueAsString(context.getRootReporter()));
+            JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString(reportFilename), mapper.writeValueAsString(context.getRootReporter()), reporterComparator);
             return assertThat(openReacParameters.getSpecificVoltageLimits()).as("SpecificVoltageLimits");
         };
         final VoltageLimitEntity voltageLimit = new VoltageLimitEntity(UUID.randomUUID(), 5., 10., 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
@@ -344,17 +345,5 @@ class VoltageInitParametersTest {
                 // getLimit: The low voltage limit must be impacted by the modification of the value
                 .containsOnlyOnce(new VoltageLimitOverride("VLHV1", VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 0.0)))
         );
-    }
-
-    @Test
-    void testAddRestrictedVoltageLevelReport() {
-        Map<String, Double> restrictedVoltageLevel = Map.of("vl", 10.0);
-        ReporterModel reporter = new ReporterModel("test", "test");
-        VoltageInitWorkerService.addRestrictedVoltageLevelReport(restrictedVoltageLevel, reporter);
-        Reporter expected = new ReporterModel("test", "test");
-        expected.report("restrictedVoltageLevels",
-                        "The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: vl=10.0",
-                        Map.of(Report.REPORT_SEVERITY_KEY, TypedValue.WARN_SEVERITY));
-        assertThat(reporter).usingRecursiveComparison().isEqualTo(expected);
     }
 }

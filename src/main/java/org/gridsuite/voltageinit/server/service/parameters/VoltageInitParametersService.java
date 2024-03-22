@@ -6,6 +6,9 @@
  */
 package org.gridsuite.voltageinit.server.service.parameters;
 
+import com.powsybl.commons.reporter.Report;
+import com.powsybl.commons.reporter.Reporter;
+import com.powsybl.commons.reporter.TypedValue;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
@@ -28,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
@@ -35,11 +39,9 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 public class VoltageInitParametersService {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(VoltageInitParametersService.class);
 
     private final FilterService filterService;
-
     private final VoltageInitParametersRepository voltageInitParametersRepository;
 
     public VoltageInitParametersService(VoltageInitParametersRepository voltageInitParametersRepository, FilterService filterService) {
@@ -167,11 +169,14 @@ public class VoltageInitParametersService {
     @Transactional(readOnly = true)
     public OpenReacParameters buildOpenReacParameters(VoltageInitRunContext context, Network network) {
         final long startTime = System.nanoTime();
-        OpenReacParameters parameters = new OpenReacParameters();
+        final OpenReacParameters parameters = new OpenReacParameters();
+        final Reporter reporter = context.getRootReporter().createSubReporter("OpenReactParameters", "OpenReact parameters", Map.of(
+                "parameters_id", new TypedValue(Objects.toString(context.getParametersUuid()), "ID")
+        ));
 
         Optional.ofNullable(context.getParametersUuid())
                 .flatMap(voltageInitParametersRepository::findById)
-                .ifPresent(voltageInitParameters -> {
+                .ifPresentOrElse(voltageInitParameters -> {
                     if (voltageInitParameters.getVoltageLimits() != null) {
                         final Map<String, VoltageLimitEntity> voltageLevelDefaultLimits = resolveVoltageLevelLimits(context, voltageInitParameters.getVoltageLimits()
                                 .stream()
@@ -185,11 +190,27 @@ public class VoltageInitParametersService {
                         network.getVoltageLevelStream()
                                .forEach(voltageLevel -> fillSpecificVoltageLimits(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, voltageLevel, context.getVoltageLevelsIdsRestricted()));
                         parameters.addSpecificVoltageLimits(specificVoltageLimits);
+                        if (!context.getVoltageLevelsIdsRestricted().isEmpty()) {
+                            reporter.report(Report.builder()
+                                    .withKey("restrictedVoltageLevels")
+                                    .withDefaultMessage("The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: ${joinedVoltageLevelsIds}")
+                                    .withValue("joinedVoltageLevelsIds", context.getVoltageLevelsIdsRestricted()
+                                                                                .entrySet()
+                                                                                .stream()
+                                                                                .map(entry -> entry.getKey() + "=" + entry.getValue())
+                                                                                .collect(Collectors.joining(", ")))
+                                    .withSeverity(TypedValue.WARN_SEVERITY)
+                                    .build());
+                        }
                     }
                     parameters.addConstantQGenerators(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getConstantQGenerators()))
                             .addVariableTwoWindingsTransformers(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableTwoWindingsTransformers()))
                             .addVariableShuntCompensators(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableShuntCompensators()));
-                });
+                }, () -> reporter.report(Report.builder()
+                                               .withKey("noParameters")
+                                               .withDefaultMessage("No parameters were found for this analysis: using default parameters.")
+                                               .withSeverity(TypedValue.TRACE_SEVERITY)
+                                               .build()));
 
         //The optimizer will attach reactive slack variables to all buses
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
