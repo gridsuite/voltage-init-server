@@ -90,11 +90,10 @@ class VoltageInitParametersTest {
     private static final String FILTER_2 = "FILTER_2";
     private static final UUID REPORT_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
-    private static final JSONComparator reporterComparator = new CustomComparator(JSONCompareMode.STRICT,
+    private static final JSONComparator REPORTER_COMPARATOR = new CustomComparator(JSONCompareMode.STRICT,
             // ignore field having uuid changing each run
             new Customization("reportTree.subReporters[*].taskValues.parameters_id.value", (o1, o2) -> (o1 == null) == (o2 == null))
     );
-
 
     private Network network;
 
@@ -159,7 +158,7 @@ class VoltageInitParametersTest {
         MvcResult mvcResult = mockMvc.perform(get(URI_PARAMETERS_GET_PUT + parametersUuid))
                                      .andExpect(status().isOk()).andReturn();
         String resultAsString = mvcResult.getResponse().getContentAsString();
-        assertThat(mapper.readValue(resultAsString, new TypeReference<VoltageInitParametersInfos>() {}))
+        assertThat(mapper.readValue(resultAsString, new TypeReference<VoltageInitParametersInfos>() { }))
                 .as("received parameters")
                 .recursivelyEquals(parametersToRead);
     }
@@ -189,7 +188,7 @@ class VoltageInitParametersTest {
         MvcResult mvcResult = mockMvc.perform(get(URI_PARAMETERS_BASE))
                                      .andExpect(status().isOk()).andReturn();
         String resultAsString = mvcResult.getResponse().getContentAsString();
-        assertThat(mapper.readValue(resultAsString, new TypeReference<List<VoltageInitParametersInfos>>() {}))
+        assertThat(mapper.readValue(resultAsString, new TypeReference<List<VoltageInitParametersInfos>>() { }))
                 .as("received parameters")
                 .hasSize(2);
     }
@@ -298,7 +297,7 @@ class VoltageInitParametersTest {
             final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
             /*TODO*/System.out.println(parametersRepository.findAll().stream().map(ToStringBuilder::reflectionToString).collect(Collectors.joining()));
             /*TODO*/System.out.println(mapper.writeValueAsString(context.getRootReporter()));
-            JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString(reportFilename), mapper.writeValueAsString(context.getRootReporter()), reporterComparator);
+            JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString(reportFilename), mapper.writeValueAsString(context.getRootReporter()), REPORTER_COMPARATOR);
             return assertThat(openReacParameters.getSpecificVoltageLimits()).as("SpecificVoltageLimits");
         };
         final VoltageLimitEntity voltageLimit = new VoltageLimitEntity(UUID.randomUUID(), 5., 10., 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
