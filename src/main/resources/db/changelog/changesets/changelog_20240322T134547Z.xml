@@ -1,0 +1,23 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="lecuyerfra (generated)" id="1711115162726-1">
+        <createTable tableName="voltage_init_result_entity_bus_voltages">
+            <column name="voltage_init_result_entity_result_uuid" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="result_uuid_bus_idPK"/>
+            </column>
+            <column name="angle" type="FLOAT(53)"/>
+            <column name="bus_id" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="result_uuid_bus_idPK"/>
+            </column>
+            <column name="v" type="FLOAT(53)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="lecuyerfra (generated)" id="1711115162726-2">
+        <createIndex indexName="voltageInitResultEntity_busVoltages_idx1" tableName="voltage_init_result_entity_bus_voltages">
+            <column name="voltage_init_result_entity_result_uuid"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="lecuyerfra (generated)" id="1711115162726-3">
+        <addForeignKeyConstraint baseColumnNames="voltage_init_result_entity_result_uuid" baseTableName="voltage_init_result_entity_bus_voltages" constraintName="voltageInitResultEntity_busVoltages_fk1" deferrable="false" initiallyDeferred="false" referencedColumnNames="result_uuid" referencedTableName="voltage_init_result" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

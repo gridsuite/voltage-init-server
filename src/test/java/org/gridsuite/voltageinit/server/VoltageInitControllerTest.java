@@ -27,6 +27,7 @@ import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
+import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
 import lombok.SneakyThrows;
 import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.Dispatcher;
@@ -163,6 +164,10 @@ public class VoltageInitControllerTest {
         Map<String, Pair<Double, Double>> voltageProfile = openReacAmplIOFiles.getVoltageProfileOutput().getVoltageProfile();
         voltageProfile.put("NHV2_NLOAD_busId1", Pair.of(100., 100.));
         voltageProfile.put("SHUNT_1_busId1", Pair.of(100., 100.));
+        voltageProfile.put("VLHV1_0", Pair.of(100., 100.));
+        voltageProfile.put("VLGEN_0", Pair.of(100., 100.));
+
+        openReacAmplIOFiles.getReactiveSlackOutput().getSlacks().add(new ReactiveSlackOutput.ReactiveSlack("NGEN", "VLGEN", 10.));
 
         openReacResult = new OpenReacResult(OpenReacStatus.OK, openReacAmplIOFiles, INDICATORS);
         return openReacResult;

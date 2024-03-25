@@ -8,6 +8,7 @@ package org.gridsuite.voltageinit.server.service;
 
 import com.powsybl.network.store.client.NetworkStoreService;
 
+import org.gridsuite.voltageinit.server.dto.BusVoltage;
 import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
@@ -73,7 +74,10 @@ public class VoltageInitService {
         List<ReactiveSlack> reactiveSlacks = resultEntity.getReactiveSlacks().stream()
                 .map(slack -> new ReactiveSlack(slack.getBusId(), slack.getSlack()))
                 .toList();
-        return new VoltageInitResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), sortedIndicators, reactiveSlacks, resultEntity.getModificationsGroupUuid());
+        List<BusVoltage> busVoltages = resultEntity.getBusVoltages().stream()
+            .map(bv -> new BusVoltage(bv.getBusId(), bv.getV(), bv.getAngle()))
+            .toList();
+        return new VoltageInitResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), sortedIndicators, reactiveSlacks, busVoltages, resultEntity.getModificationsGroupUuid());
     }
 
     public void deleteResult(UUID resultUuid) {
