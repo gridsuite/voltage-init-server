@@ -9,32 +9,32 @@ package org.gridsuite.voltageinit.server.dto.parameters;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
-
 import org.gridsuite.voltageinit.server.entities.parameters.FilterEquipmentsEmbeddable;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
 
+import java.util.List;
+
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
  */
-@Getter
+@Data
 @AllArgsConstructor
 @Builder
 @NoArgsConstructor
 public class VoltageLimitInfos {
-
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Integer priority;
+
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Double lowVoltageLimit;
+
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Double highVoltageLimit;
 
-    List<FilterEquipments> filters;
+    private List<FilterEquipments> filters;
 
     public VoltageLimitEntity toEntity(VoltageLimitParameterType voltageLimitParameterType) {
         return new VoltageLimitEntity(null, lowVoltageLimit, highVoltageLimit, priority, voltageLimitParameterType,

@@ -7,13 +7,13 @@
 package org.gridsuite.voltageinit.server.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
  */
-@Getter
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class ReactiveSlack {

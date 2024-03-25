@@ -8,13 +8,15 @@ package org.gridsuite.voltageinit.server.dto.parameters;
 
 import com.powsybl.iidm.network.IdentifiableType;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Hugo Marcellin <hugo.marcelin at rte-france.com>
  */
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
