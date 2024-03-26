@@ -27,7 +27,7 @@ public class VoltageInitObserver {
     private static final String PROVIDER_TAG_NAME = "provider";
     private static final String STATUS_TAG_NAME = "status";
 
-    private static final String COMPUTATION_TYPE = "voltageInit";
+    private static final String COMPUTATION_TYPE = "voltageinit";
 
     private static final String COMPUTATION_COUNTER_NAME = OBSERVATION_PREFIX + "count";
     private static final String OK = "OK";
