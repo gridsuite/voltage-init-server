@@ -8,6 +8,7 @@ package org.gridsuite.voltageinit.server.service;
 
 import com.google.common.collect.Sets;
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -39,6 +40,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.gridsuite.voltageinit.server.service.NotificationService.CANCEL_MESSAGE;
 import static org.gridsuite.voltageinit.server.service.NotificationService.FAIL_MESSAGE;
@@ -184,8 +187,9 @@ public class VoltageInitWorkerService {
 
                 if (openReacResult != null) {  // result available
                     UUID modificationsGroupUuid = networkModificationService.createVoltageInitModificationGroup(network, openReacResult);
+                    Map<String, Bus> networkBuses = network.getBusView().getBusStream().collect(Collectors.toMap(Bus::getId, Function.identity()));
                     voltageInitObserver.observe("results.save", () ->
-                        resultRepository.insert(resultContext.getResultUuid(), openReacResult, modificationsGroupUuid, openReacResult.getStatus().name()));
+                        resultRepository.insert(resultContext.getResultUuid(), openReacResult, networkBuses, modificationsGroupUuid, openReacResult.getStatus().name()));
                     LOGGER.info("Status : {}", openReacResult.getStatus());
                     LOGGER.info("Reactive slacks : {}", openReacResult.getReactiveSlacks());
                     LOGGER.info("Indicators : {}", openReacResult.getIndicators());

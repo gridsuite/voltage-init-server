@@ -31,5 +31,7 @@ public class VoltageInitResult {
 
     private List<ReactiveSlack> reactiveSlacks;
 
+    private List<BusVoltage> busVoltages;
+
     private UUID modificationsGroupUuid;
 }

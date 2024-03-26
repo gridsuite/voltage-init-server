@@ -6,23 +6,16 @@
  */
 package org.gridsuite.voltageinit.server.entities;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import java.time.ZonedDateTime;
-
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
@@ -48,6 +41,10 @@ public class VoltageInitResultEntity {
     @ElementCollection
     @CollectionTable
     private List<ReactiveSlackEmbeddable> reactiveSlacks;
+
+    @ElementCollection
+    @CollectionTable(foreignKey = @ForeignKey(name = "voltageInitResultEntity_busVoltages_fk1"), indexes = {@Index(name = "voltageInitResultEntity_busVoltages_idx1", columnList = "voltage_init_result_entity_result_uuid")})
+    private List<BusVoltageEmbeddable> busVoltages;
 
     @Column
     private UUID modificationsGroupUuid;
