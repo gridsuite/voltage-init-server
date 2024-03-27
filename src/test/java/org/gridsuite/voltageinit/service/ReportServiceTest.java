@@ -7,11 +7,8 @@
 package org.gridsuite.voltageinit.service;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.client.WireMock;
-
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
 import org.gridsuite.voltageinit.server.service.ReportService;
@@ -28,13 +25,16 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import static org.gridsuite.voltageinit.utils.TestUtils.resourceToString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.UUID;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.gridsuite.voltageinit.utils.TestUtils.resourceToString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * @author Anis TOURI <anis.touri at rte-france.com>
@@ -65,8 +65,8 @@ public class ReportServiceTest {
     }
 
     @Before
-    public void setUp() throws IOException {
-        String reportJson = resourceToString("/report.json");
+    public void setUp() throws IOException, URISyntaxException {
+        String reportJson = resourceToString("report.json");
         server = new WireMockServer(WireMockConfiguration.wireMockConfig().dynamicPort());
         server.start();
         WireMock.configureFor("localhost", server.port());

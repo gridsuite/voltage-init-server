@@ -8,10 +8,6 @@ package org.gridsuite.voltageinit.server.service;
 
 import com.google.common.collect.Sets;
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.commons.reporter.Report;
-import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.commons.reporter.ReporterModel;
-import com.powsybl.commons.reporter.TypedValue;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
@@ -36,7 +32,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -52,13 +51,10 @@ import static org.gridsuite.voltageinit.server.service.NotificationService.FAIL_
  */
 @Service
 public class VoltageInitWorkerService {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(VoltageInitWorkerService.class);
 
     private static final String ERROR = "error";
     private static final String ERROR_DURING_VOLTAGE_PROFILE_INITIALISATION = "Error during voltage profile initialization";
-
-    private static final String VOLTAGE_INIT_TYPE_REPORT = "VoltageInit";
 
     private final NetworkStoreService networkStoreService;
 
@@ -113,21 +109,6 @@ public class VoltageInitWorkerService {
         return network;
     }
 
-    public static void addRestrictedVoltageLevelReport(Map<String, Double> voltageLevelsIdsRestricted, Reporter reporter) {
-        if (!voltageLevelsIdsRestricted.isEmpty()) {
-            String joinedVoltageLevelsIds = voltageLevelsIdsRestricted.entrySet()
-                    .stream()
-                    .map(entry -> entry.getKey() + " : " + entry.getValue())
-                    .collect(Collectors.joining(", "));
-
-            reporter.report(Report.builder()
-                    .withKey("restrictedVoltageLevels")
-                    .withDefaultMessage(String.format("The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: %s", joinedVoltageLevelsIds))
-                    .withSeverity(TypedValue.WARN_SEVERITY)
-                    .build());
-        }
-    }
-
     private Pair<Network, OpenReacResult> run(VoltageInitRunContext context, UUID resultUuid) throws Exception {
         Objects.requireNonNull(context);
 
@@ -135,21 +116,15 @@ public class VoltageInitWorkerService {
         Network network = voltageInitObserver.observe("network.load", () ->
                 getNetwork(context.getNetworkUuid(), context.getVariantId()));
 
-        AtomicReference<Reporter> rootReporter = new AtomicReference<>(Reporter.NO_OP);
-        Reporter reporter = Reporter.NO_OP;
         if (context.getReportUuid() != null) {
-            String rootReporterId = context.getReporterId() == null ? VOLTAGE_INIT_TYPE_REPORT : context.getReporterId() + "@" + context.getReportType();
-            rootReporter.set(new ReporterModel(rootReporterId, rootReporterId));
-            reporter = rootReporter.get().createSubReporter(context.getReportType(), VOLTAGE_INIT_TYPE_REPORT, VOLTAGE_INIT_TYPE_REPORT, context.getReportUuid().toString());
             // Delete any previous VoltageInit computation logs
             voltageInitObserver.observe("report.delete", () ->
                     reportService.deleteReport(context.getReportUuid(), context.getReportType()));
         }
         CompletableFuture<OpenReacResult> future = runVoltageInitAsync(context, network, resultUuid);
         if (context.getReportUuid() != null) {
-            addRestrictedVoltageLevelReport(context.getVoltageLevelsIdsRestricted(), reporter);
             voltageInitObserver.observe("report.send", () ->
-                    reportService.sendReport(context.getReportUuid(), rootReporter.get()));
+                    reportService.sendReport(context.getReportUuid(), context.getRootReporter()));
         }
 
         return future == null ? Pair.of(network, null) : Pair.of(network, voltageInitObserver.observeRun("run", future::get));
@@ -161,7 +136,6 @@ public class VoltageInitWorkerService {
             if (resultUuid != null && cancelComputationRequests.get(resultUuid) != null) {
                 return null;
             }
-
             OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(context, network);
             OpenReacConfig config = OpenReacConfig.load();
             CompletableFuture<OpenReacResult> future = OpenReacRunner.runAsync(network, network.getVariantManager().getWorkingVariantId(), parameters, config, voltageInitExecutionService.getComputationManager());

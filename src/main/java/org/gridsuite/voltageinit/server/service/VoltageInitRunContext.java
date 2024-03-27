@@ -6,8 +6,11 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
-import lombok.Getter;
+import com.powsybl.commons.reporter.Reporter;
+import com.powsybl.commons.reporter.ReporterModel;
+import lombok.Data;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -15,8 +18,9 @@ import java.util.UUID;
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
-@Getter
+@Data
 public class VoltageInitRunContext {
+    private static final String VOLTAGE_INIT_TYPE_REPORT = "VoltageInit";
 
     private final UUID networkUuid;
 
@@ -35,6 +39,7 @@ public class VoltageInitRunContext {
     private final UUID parametersUuid;
 
     private final Map<String, Double> voltageLevelsIdsRestricted;
+    private final Reporter rootReporter;
 
     public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid, Map<String, Double> voltageLevelsIdsRestricted) {
         this.networkUuid = Objects.requireNonNull(networkUuid);
@@ -46,5 +51,15 @@ public class VoltageInitRunContext {
         this.userId = userId;
         this.parametersUuid = parametersUuid;
         this.voltageLevelsIdsRestricted = voltageLevelsIdsRestricted;
+        if (this.reportUuid == null) {
+            this.rootReporter = Reporter.NO_OP;
+        } else {
+            final String rootReporterId = reporterId == null ? VOLTAGE_INIT_TYPE_REPORT : reporterId + "@" + reportType;
+            this.rootReporter = new ReporterModel(rootReporterId, rootReporterId);
+        }
+    }
+
+    public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid) {
+        this(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, new HashMap<>());
     }
 }
