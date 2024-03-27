@@ -36,9 +36,8 @@ import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParameters
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
 import org.gridsuite.voltageinit.utils.TestUtils;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestFactory;
 import org.skyscreamer.jsonassert.Customization;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
@@ -54,7 +53,6 @@ import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.function.ThrowingBiFunction;
 
 import java.util.List;
 import java.util.Objects;
@@ -89,6 +87,12 @@ class VoltageInitParametersTest {
     private static final String FILTER_1 = "FILTER_1";
     private static final String FILTER_2 = "FILTER_2";
     private static final UUID REPORT_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+
+    private static final VoltageLimitEntity VOLTAGE_LIMIT = new VoltageLimitEntity(UUID.randomUUID(), 5., 10., 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
+    private static final VoltageLimitEntity VOLTAGE_LIMIT_2 = new VoltageLimitEntity(UUID.randomUUID(), 44., 88., 1, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_2, FILTER_2)));
+    private static final VoltageLimitEntity VOLTAGE_LIMIT_3 = new VoltageLimitEntity(UUID.randomUUID(), -1., -2., 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
+    private static final VoltageLimitEntity VOLTAGE_LIMIT_4 = new VoltageLimitEntity(UUID.randomUUID(), -20.0, 10.0, 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
+    private static final VoltageLimitEntity VOLTAGE_LIMIT_5 = new VoltageLimitEntity(UUID.randomUUID(), 10.0, 10.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
 
     private static final JSONComparator REPORTER_COMPARATOR = new CustomComparator(JSONCompareMode.STRICT,
             // ignore field having uuid changing each run
@@ -315,61 +319,71 @@ class VoltageInitParametersTest {
         ).filter(Objects::nonNull).toArray(Condition[]::new)));
     }
 
-    @TestFactory
-    List<DynamicTest> dynamicTestsBuildSpecificVoltageLimits() {
-        final ThrowingBiFunction<List<VoltageLimitEntity>, String, ListAssert<VoltageLimitOverride>> initTestEnv = (voltageLimits, reportFilename) -> {
-            final VoltageInitParametersEntity voltageInitParameters = parametersRepository.save(
+    private ListAssert<VoltageLimitOverride> testsBuildSpecificVoltageLimitsCommon(List<VoltageLimitEntity> voltageLimits, String reportFilename) throws Exception {
+        final VoltageInitParametersEntity voltageInitParameters = parametersRepository.save(
                 new VoltageInitParametersEntity(UUID.randomUUID(), null, "", voltageLimits, null, null, null)
-            );
-            final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
-            final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
-            log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getRootReporter()));
-            JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString(reportFilename), mapper.writeValueAsString(context.getRootReporter()), REPORTER_COMPARATOR);
-            return assertThat(openReacParameters.getSpecificVoltageLimits()).as("SpecificVoltageLimits");
-        };
-        final VoltageLimitEntity voltageLimit = new VoltageLimitEntity(UUID.randomUUID(), 5., 10., 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
-        final VoltageLimitEntity voltageLimit2 = new VoltageLimitEntity(UUID.randomUUID(), 44., 88., 1, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_2, FILTER_2)));
-        final VoltageLimitEntity voltageLimit3 = new VoltageLimitEntity(UUID.randomUUID(), -1., -2., 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
-        final VoltageLimitEntity voltageLimit4 = new VoltageLimitEntity(UUID.randomUUID(), -20.0, 10.0, 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
-        final VoltageLimitEntity voltageLimit5 = new VoltageLimitEntity(UUID.randomUUID(), 10.0, 10.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
-        return List.of(
-            DynamicTest.dynamicTest("No voltage limit modification", () -> initTestEnv.apply(List.of(voltageLimit, voltageLimit2), "reporter_buildOpenReacParameters.json")
-                .hasSize(4)
-                //No override should be relative since there is no voltage limit modification
-                .noneMatch(VoltageLimitOverride::isRelative)
-                //VLHV1, VLHV2 and VLLOAD should be applied default voltage limits since those are missing one or both limits
-                .satisfiesExactlyInAnyOrder(
-                    assertVoltageLimitOverride("VLHV1", VoltageLimitType.LOW_VOLTAGE_LIMIT),
-                    assertVoltageLimitOverride("VLHV2", VoltageLimitType.HIGH_VOLTAGE_LIMIT),
-                    //The voltage limits attributed to VLLOAD should respectively be 44. and 88. since the priority of FILTER_2, related to VLLOAD, is higher than FILTER_1
-                    assertVoltageLimitOverride("VLLOAD", VoltageLimitType.LOW_VOLTAGE_LIMIT, 44.),
-                    assertVoltageLimitOverride("VLLOAD", VoltageLimitType.HIGH_VOLTAGE_LIMIT, 88.)
-                )),
-            //We now add limit modifications in additions to defaults settings
-            DynamicTest.dynamicTest("With voltage limit modifications", () -> initTestEnv.apply(List.of(voltageLimit, voltageLimit2, voltageLimit3), "reporter_buildOpenReacParameters_withLimitModifications.json")
-                //Limits that weren't impacted by default settings are now impacted by modification settings
-                .hasSize(8)
-                //There should (not?) be relative overrides since voltage limit modification are applied
-                .anyMatch(VoltageLimitOverride::isRelative)
-                //VLGEN has both it limits set so it should now be impacted by modifications override
-                .satisfiesOnlyOnce(assertVoltageLimitOverride("VLGEN", VoltageLimitType.LOW_VOLTAGE_LIMIT, -1.))
-                .satisfiesOnlyOnce(assertVoltageLimitOverride("VLGEN", VoltageLimitType.HIGH_VOLTAGE_LIMIT, -2.))
-                //Because of the modification setting the voltage limits attributed to VLLOAD should now respectively be 43. and 86.
-                .satisfiesOnlyOnce(assertVoltageLimitOverride("VLLOAD", VoltageLimitType.LOW_VOLTAGE_LIMIT, 43.))
-                .satisfiesOnlyOnce(assertVoltageLimitOverride("VLLOAD", VoltageLimitType.HIGH_VOLTAGE_LIMIT, 86.))),
-            //note: VoltageLimitOverride implement equals() correctly, so we can use it
-            // We need to check for the case of relative = true with the modification less than 0 => the new low voltage limit = low voltage limit * -1
-            DynamicTest.dynamicTest("Case relative true overrides", () -> initTestEnv.apply(List.of(voltageLimit4), "reporter_buildOpenReacParameters_caseRelativeTrue.json")
-                .hasSize(4)
-                // isRelative: There should have relative true overrides since voltage limit modification are applied for VLGEN
-                // getLimit: The low voltage limit must be impacted by the modification of the value
-                .containsOnlyOnce(new VoltageLimitOverride("VLGEN", VoltageLimitType.LOW_VOLTAGE_LIMIT, true, -10.0))),
-            // We need to check for the case of relative = false with the modification less than 0 => the new low voltage limit = 0
-            DynamicTest.dynamicTest("Case relative false overrides", () -> initTestEnv.apply(List.of(voltageLimit4, voltageLimit5), "reporter_buildOpenReacParameters_caseRelativeFalse.json")
-                .hasSize(8)
-                // isRelative: There should have relative false overrides since voltage limit modification are applied for VLHV1
-                // getLimit: The low voltage limit must be impacted by the modification of the value
-                .containsOnlyOnce(new VoltageLimitOverride("VLHV1", VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 0.0)))
         );
+        final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
+        final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
+        log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getRootReporter()));
+        JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString(reportFilename), mapper.writeValueAsString(context.getRootReporter()), REPORTER_COMPARATOR);
+        return assertThat(openReacParameters.getSpecificVoltageLimits()).as("SpecificVoltageLimits");
+    }
+
+    @DisplayName("buildSpecificVoltageLimits: No voltage limit modification")
+    @Test
+    void testsBuildSpecificVoltageLimitsSimple() throws Exception {
+        testsBuildSpecificVoltageLimitsCommon(List.of(VOLTAGE_LIMIT, VOLTAGE_LIMIT_2), "reporter_buildOpenReacParameters.json")
+            .hasSize(4)
+            //No override should be relative since there is no voltage limit modification
+            .noneMatch(VoltageLimitOverride::isRelative)
+            //VLHV1, VLHV2 and VLLOAD should be applied default voltage limits since those are missing one or both limits
+            .satisfiesExactlyInAnyOrder(
+                assertVoltageLimitOverride("VLHV1", VoltageLimitType.LOW_VOLTAGE_LIMIT),
+                assertVoltageLimitOverride("VLHV2", VoltageLimitType.HIGH_VOLTAGE_LIMIT),
+                //The voltage limits attributed to VLLOAD should respectively be 44. and 88. since the priority of FILTER_2, related to VLLOAD, is higher than FILTER_1
+                assertVoltageLimitOverride("VLLOAD", VoltageLimitType.LOW_VOLTAGE_LIMIT, 44.),
+                assertVoltageLimitOverride("VLLOAD", VoltageLimitType.HIGH_VOLTAGE_LIMIT, 88.)
+            );
+    }
+
+    @DisplayName("buildSpecificVoltageLimits: With voltage limit modifications")
+    @Test
+    void testsBuildSpecificVoltageLimitsWithLimitModifications() throws Exception {
+        //We now add limit modifications in additions to defaults settings
+        testsBuildSpecificVoltageLimitsCommon(List.of(VOLTAGE_LIMIT, VOLTAGE_LIMIT_2, VOLTAGE_LIMIT_3), "reporter_buildOpenReacParameters_withLimitModifications.json")
+            //Limits that weren't impacted by default settings are now impacted by modification settings
+            .hasSize(8)
+            //There should (not?) be relative overrides since voltage limit modification are applied
+            .anyMatch(VoltageLimitOverride::isRelative)
+            //VLGEN has both it limits set so it should now be impacted by modifications override
+            .satisfiesOnlyOnce(assertVoltageLimitOverride("VLGEN", VoltageLimitType.LOW_VOLTAGE_LIMIT, -1.))
+            .satisfiesOnlyOnce(assertVoltageLimitOverride("VLGEN", VoltageLimitType.HIGH_VOLTAGE_LIMIT, -2.))
+            //Because of the modification setting the voltage limits attributed to VLLOAD should now respectively be 43. and 86.
+            .satisfiesOnlyOnce(assertVoltageLimitOverride("VLLOAD", VoltageLimitType.LOW_VOLTAGE_LIMIT, 43.))
+            .satisfiesOnlyOnce(assertVoltageLimitOverride("VLLOAD", VoltageLimitType.HIGH_VOLTAGE_LIMIT, 86.));
+    }
+
+    @DisplayName("buildSpecificVoltageLimits: Case relative true overrides")
+    @Test
+    void testsBuildSpecificVoltageLimitsCaseRelativeTrue() throws Exception {
+        // We need to check for the case of relative = true with the modification less than 0 => the new low voltage limit = low voltage limit * -1
+        testsBuildSpecificVoltageLimitsCommon(List.of(VOLTAGE_LIMIT_4), "reporter_buildOpenReacParameters_caseRelativeTrue.json")
+            .hasSize(4)
+            // isRelative: There should have relative true overrides since voltage limit modification are applied for VLGEN
+            // getLimit: The low voltage limit must be impacted by the modification of the value
+            .containsOnlyOnce(new VoltageLimitOverride("VLGEN", VoltageLimitType.LOW_VOLTAGE_LIMIT, true, -10.0));
+        //note: VoltageLimitOverride implement equals() correctly, so we can use it
+    }
+
+    @DisplayName("buildSpecificVoltageLimits: No voltage limit modification")
+    @Test
+    void testsBuildSpecificVoltageLimitsCaseRelativeFalse() throws Exception {
+        // We need to check for the case of relative = false with the modification less than 0 => the new low voltage limit = 0
+        testsBuildSpecificVoltageLimitsCommon(List.of(VOLTAGE_LIMIT_4, VOLTAGE_LIMIT_5), "reporter_buildOpenReacParameters_caseRelativeFalse.json")
+            .hasSize(8)
+            // isRelative: There should have relative false overrides since voltage limit modification are applied for VLHV1
+            // getLimit: The low voltage limit must be impacted by the modification of the value
+            .containsOnlyOnce(new VoltageLimitOverride("VLHV1", VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 0.0));
     }
 }
