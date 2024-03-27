@@ -7,6 +7,7 @@
 package org.gridsuite.voltageinit.server.service;
 
 import com.powsybl.network.store.client.NetworkStoreService;
+
 import org.gridsuite.voltageinit.server.dto.BusVoltage;
 import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;

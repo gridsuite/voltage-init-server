@@ -7,7 +7,6 @@
 package org.gridsuite.voltageinit.server.repository;
 
 import com.powsybl.iidm.network.Bus;
-import com.powsybl.openreac.parameters.output.OpenReacResult;
 import org.gridsuite.voltageinit.server.entities.BusVoltageEmbeddable;
 import org.gridsuite.voltageinit.server.entities.GlobalStatusEntity;
 import org.gridsuite.voltageinit.server.entities.ReactiveSlackEmbeddable;
@@ -16,8 +15,14 @@ import org.jgrapht.alg.util.Pair;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.powsybl.openreac.parameters.output.OpenReacResult;
+
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**

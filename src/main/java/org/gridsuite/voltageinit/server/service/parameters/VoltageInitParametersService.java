@@ -39,9 +39,11 @@ import java.util.stream.Collectors;
 
 @Service
 public class VoltageInitParametersService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(VoltageInitParametersService.class);
 
     private final FilterService filterService;
+
     private final VoltageInitParametersRepository voltageInitParametersRepository;
 
     public VoltageInitParametersService(VoltageInitParametersRepository voltageInitParametersRepository, FilterService filterService) {

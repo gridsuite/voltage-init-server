@@ -6,16 +6,25 @@
  */
 package org.gridsuite.voltageinit.server.entities;
 
-import jakarta.persistence.*;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import java.time.ZonedDateTime;
+
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>

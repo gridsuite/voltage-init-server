@@ -23,13 +23,21 @@ public class VoltageInitRunContext {
     private static final String VOLTAGE_INIT_TYPE_REPORT = "VoltageInit";
 
     private final UUID networkUuid;
+
     private final String variantId;
+
     private final String receiver;
+
     private final UUID reportUuid;
+
     private final String reporterId;
+
     private final String reportType;
+
     private final String userId;
+
     private final UUID parametersUuid;
+
     private final Map<String, Double> voltageLevelsIdsRestricted;
     private final Reporter rootReporter;
 
