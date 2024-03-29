@@ -77,8 +77,7 @@ import java.util.concurrent.ForkJoinPool;
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
 import static org.gridsuite.voltageinit.server.service.NotificationService.CANCEL_MESSAGE;
 import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_USER_ID;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -170,6 +169,12 @@ public class VoltageInitControllerTest {
         openReacAmplIOFiles.getReactiveSlackOutput().getSlacks().add(new ReactiveSlackOutput.ReactiveSlack("NGEN", "VLGEN", 10.));
 
         openReacResult = new OpenReacResult(OpenReacStatus.OK, openReacAmplIOFiles, INDICATORS);
+        return openReacResult;
+    }
+
+    private OpenReacResult buildNokOpenReacResult() {
+        OpenReacAmplIOFiles openReacAmplIOFiles = new OpenReacAmplIOFiles(openReacParameters, network, false);
+        openReacResult = new OpenReacResult(OpenReacStatus.NOT_OK, openReacAmplIOFiles, INDICATORS);
         return openReacResult;
     }
 
@@ -357,6 +362,37 @@ public class VoltageInitControllerTest {
                 .andReturn();
         assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
 
+    }
+
+    @Test
+    public void testReturnsResultAndDoesNotGenerateModificationIfResultNotOk() throws Exception {
+        try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
+            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class)))
+                .thenReturn(CompletableFutureTask.runAsync(this::buildNokOpenReacResult, ForkJoinPool.commonPool()));
+
+            MvcResult result = mockMvc.perform(post(
+                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                    .header(HEADER_USER_ID, "userId"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+            assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
+
+            Message<byte[]> resultMessage = output.receive(TIMEOUT, "voltageinit.result");
+            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", resultMessage.getHeaders().get("receiver"));
+
+            result = mockMvc.perform(get(
+                    "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+
+            VoltageInitResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), VoltageInitResult.class);
+            assertEquals(RESULT_UUID, resultDto.getResultUuid());
+            assertEquals(INDICATORS, resultDto.getIndicators());
+            assertNull(resultDto.getModificationsGroupUuid());
+        }
     }
 
     @Test

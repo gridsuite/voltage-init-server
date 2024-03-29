@@ -212,7 +212,12 @@ public class VoltageInitWorkerService {
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
                 if (openReacResult != null) {  // result available
-                    UUID modificationsGroupUuid = networkModificationService.createVoltageInitModificationGroup(network, openReacResult);
+                    UUID modificationsGroupUuid;
+                    if (openReacResult.getStatus() == OpenReacStatus.OK) {
+                        modificationsGroupUuid = networkModificationService.createVoltageInitModificationGroup(network, openReacResult);
+                    } else {
+                        modificationsGroupUuid = null;
+                    }
                     Map<String, Bus> networkBuses = network.getBusView().getBusStream().collect(Collectors.toMap(Bus::getId, Function.identity()));
                     voltageInitObserver.observe("results.save", () ->
                         resultRepository.insert(resultContext.getResultUuid(), openReacResult, networkBuses, modificationsGroupUuid, openReacResult.getStatus().name()));
