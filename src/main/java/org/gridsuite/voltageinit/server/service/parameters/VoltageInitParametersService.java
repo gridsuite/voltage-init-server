@@ -61,6 +61,7 @@ public class VoltageInitParametersService {
         return Optional.empty();
     }
 
+    @Transactional
     public VoltageInitParametersInfos getParameters(UUID parametersUuid) {
         return voltageInitParametersRepository.findById(parametersUuid).map(VoltageInitParametersEntity::toVoltageInitParametersInfos).orElse(null);
     }

@@ -9,6 +9,7 @@ package org.gridsuite.voltageinit.server.dto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.UUID;
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
  */
 @Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class VoltageInitResult {
@@ -34,4 +36,8 @@ public class VoltageInitResult {
     private List<BusVoltage> busVoltages;
 
     private UUID modificationsGroupUuid;
+
+    private double reactiveSlacksThreshold;
+
+    private String reactiveSlacksOverThresholdLabel;
 }

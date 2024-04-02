@@ -304,7 +304,7 @@ public class VoltageInitParametersTest {
         VoltageLimitEntity voltageLimit = new VoltageLimitEntity(UUID.randomUUID(), 5., 10., 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
         VoltageLimitEntity voltageLimit2 = new VoltageLimitEntity(UUID.randomUUID(), 44., 88., 1, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_2, FILTER_2)));
 
-        VoltageInitParametersEntity voltageInitParameters = new VoltageInitParametersEntity(UUID.randomUUID(), null, "", List.of(voltageLimit, voltageLimit2), null, null, null);
+        VoltageInitParametersEntity voltageInitParameters = new VoltageInitParametersEntity(UUID.randomUUID(), null, "", List.of(voltageLimit, voltageLimit2), null, null, null, 100.);
         parametersRepository.save(voltageInitParameters);
         VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, null, null, "", "", parametersRepository.findAll().get(0).getId(), new HashMap<>());
         OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);

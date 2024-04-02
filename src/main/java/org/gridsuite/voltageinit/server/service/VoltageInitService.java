@@ -12,8 +12,10 @@ import org.gridsuite.voltageinit.server.dto.BusVoltage;
 import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
+import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
 import org.gridsuite.voltageinit.server.entities.VoltageInitResultEntity;
 import org.gridsuite.voltageinit.server.repository.VoltageInitResultRepository;
+import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+
+import static org.gridsuite.voltageinit.server.service.NotificationService.REACTIVE_SLACKS_OVER_THRESHOLD;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -35,6 +39,8 @@ public class VoltageInitService {
     @Autowired
     NetworkModificationService networkModificationService;
 
+    private final VoltageInitParametersService voltageInitParametersService;
+
     private final UuidGeneratorService uuidGeneratorService;
 
     private final VoltageInitResultRepository resultRepository;
@@ -42,9 +48,11 @@ public class VoltageInitService {
     public VoltageInitService(NotificationService notificationService,
                               NetworkModificationService networkModificationService,
                               UuidGeneratorService uuidGeneratorService,
+                              VoltageInitParametersService voltageInitParametersService,
                               VoltageInitResultRepository resultRepository) {
         this.notificationService = Objects.requireNonNull(notificationService);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
+        this.voltageInitParametersService = Objects.requireNonNull(voltageInitParametersService);
         this.uuidGeneratorService = Objects.requireNonNull(uuidGeneratorService);
         this.resultRepository = Objects.requireNonNull(resultRepository);
     }
@@ -61,23 +69,35 @@ public class VoltageInitService {
     }
 
     @Transactional(readOnly = true)
-    public VoltageInitResult getResult(UUID resultUuid) {
+    public VoltageInitResult getResult(UUID resultUuid, UUID parametersUuid) {
         Optional<VoltageInitResultEntity> result = resultRepository.find(resultUuid);
-        return result.map(VoltageInitService::fromEntity).orElse(null);
+        VoltageInitResult voltageInitResult = result.map(VoltageInitService::fromEntity).orElse(null);
+        if (voltageInitResult != null && parametersUuid != null) {
+            VoltageInitParametersInfos param = voltageInitParametersService.getParameters(parametersUuid);
+            if (param != null) {
+                long count = voltageInitResult.getReactiveSlacks().stream().filter(r -> Math.abs(r.getSlack()) > param.getReactiveSlacksThreshold()).count();
+                if (count > 0) {
+                    voltageInitResult.setReactiveSlacksThreshold(param.getReactiveSlacksThreshold());
+                    voltageInitResult.setReactiveSlacksOverThresholdLabel(REACTIVE_SLACKS_OVER_THRESHOLD);
+                }
+            }
+        }
+        return voltageInitResult;
     }
 
     private static VoltageInitResult fromEntity(VoltageInitResultEntity resultEntity) {
         LinkedHashMap<String, String> sortedIndicators = resultEntity.getIndicators().entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (collisionValue1, collisionValue2) -> collisionValue1, LinkedHashMap::new));
+            .stream()
+            .sorted(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (collisionValue1, collisionValue2) -> collisionValue1, LinkedHashMap::new));
         List<ReactiveSlack> reactiveSlacks = resultEntity.getReactiveSlacks().stream()
-                .map(slack -> new ReactiveSlack(slack.getBusId(), slack.getSlack()))
-                .toList();
+            .map(slack -> new ReactiveSlack(slack.getBusId(), slack.getSlack()))
+            .toList();
         List<BusVoltage> busVoltages = resultEntity.getBusVoltages().stream()
             .map(bv -> new BusVoltage(bv.getBusId(), bv.getV(), bv.getAngle()))
             .toList();
-        return new VoltageInitResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), sortedIndicators, reactiveSlacks, busVoltages, resultEntity.getModificationsGroupUuid());
+        return new VoltageInitResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), sortedIndicators,
+            reactiveSlacks, busVoltages, resultEntity.getModificationsGroupUuid(), 0., null);
     }
 
     public void deleteResult(UUID resultUuid) {
