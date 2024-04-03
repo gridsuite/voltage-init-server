@@ -19,6 +19,7 @@ import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride.VoltageLimitType;
 import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.gridsuite.voltageinit.server.dto.parameters.IdentifiableAttributes;
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
@@ -156,7 +157,7 @@ public class VoltageInitParametersService {
     @Transactional(readOnly = true)
     public OpenReacParameters buildOpenReacParameters(VoltageInitRunContext context, Network network) {
         final long startTime = System.nanoTime();
-        final Reporter reporter = context.getRootReporter().createSubReporter("OpenReactParameters", "OpenReact parameters", Map.of(
+        final Reporter reporter = context.getRootReporter().createSubReporter("OpenReacParameters", "OpenReac parameters", Map.of(
                 "parameters_id", new TypedValue(Objects.toString(context.getParametersUuid()), "ID")
         ));
 
@@ -208,18 +209,20 @@ public class VoltageInitParametersService {
             .addVariableTwoWindingsTransformers(variableTwoWindingsTransformers)
             .addVariableShuntCompensators(variableShuntCompensators);
 
-        long nbMissingVoltageLimits = 0L;
-        long nbVoltageLimitModifications = 0L;
+        // use Pair(nbMissingVoltageLimits, nbVoltageLimitModifications) because of "Variable used in lambda expression should be final or effectively final"
+        final MutablePair<Integer, Integer> nbVoltages = MutablePair.ofNonNull(0, 0);
         parameters.getSpecificVoltageLimits()
             .stream()
             .collect(Collectors.groupingBy(VoltageLimitOverride::getVoltageLevelId))
             .forEach((id, voltageLimits) -> {
                 final Map<VoltageLimitType, Double> newLimits = voltageLimits.stream()
-                        .collect(Collectors.groupingBy(VoltageLimitOverride::getVoltageLimitType, Collectors.summingDouble(VoltageLimitOverride::getLimit)));
+                        .collect(Collectors.groupingBy(VoltageLimitOverride::getVoltageLimitType,
+                                                       () -> new EnumMap<>(VoltageLimitType.class),
+                                                       Collectors.summingDouble(VoltageLimitOverride::getLimit)));
                 final VoltageLevel voltageLevel = network.getVoltageLevel(id);
                 reporter.report(Report.builder()
                         .withKey("voltageLimitModified")
-                        .withDefaultMessage("On or two voltage limits of voltage level ${voltageLevelId} have been replaced and/or modified  low voltage limit = ${newLowVoltageLimit}kV, high voltage limit = ${newHighVoltageLimit}kV (initial values: low voltage limit = ${initialLowVoltageLimit}kV, high voltage limit = ${initialHighVoltage}kV).")
+                        .withDefaultMessage("One or two voltage limits of voltage level ${voltageLevelId} have been replaced and/or modified: low voltage limit = ${newLowVoltageLimit}\u202FkV, high voltage limit = ${newHighVoltageLimit}\u202FkV (initial values: low voltage limit = ${initialLowVoltageLimit}\u202FkV, high voltage limit = ${initialHighVoltage}\u202FkV).")
                         .withTypedValue("voltageLevelId", voltageLevel.getId(), TypedValue.VOLTAGE_LEVEL)
                         .withTypedValue("newLowVoltageLimit", newLimits.getOrDefault(VoltageLimitType.LOW_VOLTAGE_LIMIT, voltageLevel.getLowVoltageLimit()), TypedValue.VOLTAGE)
                         .withTypedValue("newHighVoltageLimit", newLimits.getOrDefault(VoltageLimitType.HIGH_VOLTAGE_LIMIT, voltageLevel.getHighVoltageLimit()), TypedValue.VOLTAGE)
@@ -227,17 +230,32 @@ public class VoltageInitParametersService {
                         .withTypedValue("initialHighVoltage", voltageLevel.getHighVoltageLimit(), TypedValue.VOLTAGE)
                         .withSeverity(TypedValue.TRACE_SEVERITY)
                         .build());
+                // update counters for resume logs
+                if (newLimits.containsKey(VoltageLimitType.LOW_VOLTAGE_LIMIT)) {
+                    if (Double.isNaN(voltageLevel.getLowVoltageLimit())) {
+                        nbVoltages.left++;
+                    } else {
+                        nbVoltages.right++;
+                    }
+                }
+                if (newLimits.containsKey(VoltageLimitType.HIGH_VOLTAGE_LIMIT)) {
+                    if (Double.isNaN(voltageLevel.getHighVoltageLimit())) {
+                        nbVoltages.left++;
+                    } else {
+                        nbVoltages.right++;
+                    }
+                }
             });
         reporter.report(Report.builder()
                               .withKey("missingVoltageLimits")
                               .withDefaultMessage("Missing voltage limits of ${nbMissingVoltageLimits} voltage levels have been replaced with user-defined default values.")
-                              .withValue("nbMissingVoltageLimits", nbMissingVoltageLimits)
+                              .withValue("nbMissingVoltageLimits", nbVoltages.getLeft())
                               .withSeverity(TypedValue.INFO_SEVERITY)
                               .build());
         reporter.report(Report.builder()
                               .withKey("voltageLimitModifications")
                               .withDefaultMessage("Voltage limits of ${nbVoltageLimitModifications} voltage levels have been modified according to user input.")
-                              .withValue("nbVoltageLimitModifications", nbVoltageLimitModifications)
+                              .withValue("nbVoltageLimitModifications", nbVoltages.getRight())
                               .withSeverity(TypedValue.INFO_SEVERITY)
                               .build());
 
