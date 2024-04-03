@@ -44,7 +44,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 public class VoltageInitParametersTest {
+
     private static final String URI_PARAMETERS_BASE = "/v1/parameters";
+
     private static final String URI_PARAMETERS_GET_PUT = URI_PARAMETERS_BASE + "/";
 
     @Autowired
