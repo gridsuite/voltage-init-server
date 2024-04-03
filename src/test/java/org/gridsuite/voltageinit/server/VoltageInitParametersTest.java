@@ -13,6 +13,8 @@ import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfo
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageLimitInfos;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +55,12 @@ public class VoltageInitParametersTest {
 
     @Autowired
     private VoltageInitParametersRepository parametersRepository;
+
+    @Before
+    @After
+    public void cleanDB() {
+        parametersRepository.deleteAll();
+    }
 
     @Test
     public void testCreate() throws Exception {
