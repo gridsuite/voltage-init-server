@@ -41,7 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DirtiesContext
 @AutoConfigureMockMvc
 @Transactional
-public class VoltageInitParametersControllerTest {
+public class VoltageInitParametersTest {
     private static final String URI_PARAMETERS_BASE = "/v1/parameters";
     private static final String URI_PARAMETERS_GET_PUT = URI_PARAMETERS_BASE + "/";
 
@@ -61,7 +61,7 @@ public class VoltageInitParametersControllerTest {
         String parametersToCreateJson = mapper.writeValueAsString(parametersToCreate);
 
         mockMvc.perform(post(URI_PARAMETERS_BASE).content(parametersToCreateJson).contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk()).andReturn();
+                .andExpect(status().isOk()).andReturn();
 
         VoltageInitParametersInfos createdParameters = parametersRepository.findAll().get(0).toVoltageInitParametersInfos();
 
@@ -76,7 +76,7 @@ public class VoltageInitParametersControllerTest {
         UUID parametersUuid = saveAndRetunId(parametersToRead);
 
         MvcResult mvcResult = mockMvc.perform(get(URI_PARAMETERS_GET_PUT + parametersUuid))
-            .andExpect(status().isOk()).andReturn();
+                .andExpect(status().isOk()).andReturn();
         String resultAsString = mvcResult.getResponse().getContentAsString();
         VoltageInitParametersInfos receivedParameters = mapper.readValue(resultAsString, new TypeReference<>() {
         });
@@ -96,7 +96,7 @@ public class VoltageInitParametersControllerTest {
         String parametersToUpdateJson = mapper.writeValueAsString(parametersToUpdate);
 
         mockMvc.perform(put(URI_PARAMETERS_GET_PUT + parametersUuid).content(parametersToUpdateJson).contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk());
+                .andExpect(status().isOk());
 
         VoltageInitParametersInfos updatedParameters = parametersRepository.findById(parametersUuid).get().toVoltageInitParametersInfos();
 
@@ -128,7 +128,7 @@ public class VoltageInitParametersControllerTest {
         saveAndRetunId(parameters2);
 
         MvcResult mvcResult = mockMvc.perform(get(URI_PARAMETERS_BASE))
-            .andExpect(status().isOk()).andReturn();
+                .andExpect(status().isOk()).andReturn();
         String resultAsString = mvcResult.getResponse().getContentAsString();
         List<VoltageInitParametersInfos> receivedParameters = mapper.readValue(resultAsString, new TypeReference<>() {
         });
@@ -142,7 +142,7 @@ public class VoltageInitParametersControllerTest {
         VoltageInitParametersInfos parametersToCreate = buildParameters();
         String parametersToCreateJson = mapper.writeValueAsString(parametersToCreate);
         mockMvc.perform(post(URI_PARAMETERS_BASE).content(parametersToCreateJson).contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk()).andReturn();
+            .andExpect(status().isOk()).andReturn();
         VoltageInitParametersInfos createdParameters = parametersRepository.findAll().get(0).toVoltageInitParametersInfos();
 
         mockMvc.perform(post(URI_PARAMETERS_BASE)
@@ -167,19 +167,19 @@ public class VoltageInitParametersControllerTest {
             .voltageLimitsDefault(List.of())
             .voltageLimitsModification(List.of())
             .constantQGenerators(List.of(FilterEquipments.builder()
-                .filterId(UUID.randomUUID())
-                .filterName("qgenFilter1")
-                .build(), FilterEquipments.builder()
-                .filterId(UUID.randomUUID())
-                .filterName("qgenFilter2")
-                .build()))
+                    .filterId(UUID.randomUUID())
+                    .filterName("qgenFilter1")
+                    .build(), FilterEquipments.builder()
+                    .filterId(UUID.randomUUID())
+                    .filterName("qgenFilter2")
+                    .build()))
             .variableTwoWindingsTransformers(List.of(FilterEquipments.builder()
-                .filterId(UUID.randomUUID())
-                .filterName("vtwFilter1")
-                .build(), FilterEquipments.builder()
-                .filterId(UUID.randomUUID())
-                .filterName("vtwFilter2")
-                .build()))
+                    .filterId(UUID.randomUUID())
+                    .filterName("vtwFilter1")
+                    .build(), FilterEquipments.builder()
+                    .filterId(UUID.randomUUID())
+                    .filterName("vtwFilter2")
+                    .build()))
             .build();
     }
 
@@ -208,12 +208,12 @@ public class VoltageInitParametersControllerTest {
                 .filterName("vscFilter1")
                 .build()))
             .variableTwoWindingsTransformers(List.of(FilterEquipments.builder()
-                .filterId(UUID.randomUUID())
-                .filterName("vtwFilter1Modified")
-                .build(), FilterEquipments.builder()
-                .filterId(UUID.randomUUID())
-                .filterName("vtwFilter2Modified")
-                .build()))
+                    .filterId(UUID.randomUUID())
+                    .filterName("vtwFilter1Modified")
+                    .build(), FilterEquipments.builder()
+                    .filterId(UUID.randomUUID())
+                    .filterName("vtwFilter2Modified")
+                    .build()))
             .build();
     }
 }

@@ -64,7 +64,7 @@ import static org.mockito.BDDMockito.given;
 @AutoConfigureTestEntityManager
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 @Slf4j
-class VoltageInitParametersTest {
+class ParametersTest {
     private static final UUID NETWORK_UUID = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
     private static final String VARIANT_ID_1 = "variant_1";
     private static final UUID FILTER_UUID_1 = UUID.fromString("1a3d23a6-7a4c-11ee-b962-0242ac120002");
