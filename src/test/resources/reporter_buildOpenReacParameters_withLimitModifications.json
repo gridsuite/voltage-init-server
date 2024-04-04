@@ -148,7 +148,7 @@
                 "type": "SEVERITY"
               },
               "nbVoltageLimitModifications": {
-                "value": 4
+                "value": 8
               }
             }
           }
