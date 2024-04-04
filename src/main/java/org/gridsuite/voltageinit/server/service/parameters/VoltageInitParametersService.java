@@ -151,17 +151,12 @@ public class VoltageInitParametersService {
     @Transactional(readOnly = true)
     public OpenReacParameters buildOpenReacParameters(VoltageInitRunContext context, Network network) {
         final long startTime = System.nanoTime();
+        OpenReacParameters parameters = new OpenReacParameters();
 
         Optional<VoltageInitParametersEntity> voltageInitParametersEntity = Optional.empty();
         if (context.getParametersUuid() != null) {
             voltageInitParametersEntity = voltageInitParametersRepository.findById(context.getParametersUuid());
         }
-
-        OpenReacParameters parameters = new OpenReacParameters();
-        List<VoltageLimitOverride> specificVoltageLimits = new ArrayList<>();
-        List<String> constantQGenerators = new ArrayList<>();
-        List<String> variableTwoWindingsTransformers = new ArrayList<>();
-        List<String> variableShuntCompensators = new ArrayList<>();
 
         voltageInitParametersEntity.ifPresent(voltageInitParameters -> {
             if (voltageInitParameters.getVoltageLimits() != null) {
@@ -173,19 +168,17 @@ public class VoltageInitParametersService {
                     .filter(voltageLimit -> VoltageLimitParameterType.MODIFICATION.equals(voltageLimit.getVoltageLimitParameterType()))
                     .toList());
 
+                List<VoltageLimitOverride> specificVoltageLimits = new LinkedList<>();
                 network.getVoltageLevelStream()
-                    .filter(voltageLevel -> voltageLevelDefaultLimits.keySet().contains(voltageLevel.getId()) || voltageLevelModificationLimits.keySet().contains(voltageLevel.getId()))
+                    .filter(voltageLevel -> voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) || voltageLevelModificationLimits.containsKey(voltageLevel.getId()))
                     .forEach(voltageLevel -> fillSpecificVoltageLimits(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, voltageLevel, context.getVoltageLevelsIdsRestricted()));
+                parameters.addSpecificVoltageLimits(specificVoltageLimits);
             }
 
-            constantQGenerators.addAll(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getConstantQGenerators()));
-            variableTwoWindingsTransformers.addAll(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableTwoWindingsTransformers()));
-            variableShuntCompensators.addAll(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableShuntCompensators()));
+            parameters.addConstantQGenerators(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getConstantQGenerators()))
+                    .addVariableTwoWindingsTransformers(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableTwoWindingsTransformers()))
+                    .addVariableShuntCompensators(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableShuntCompensators()));
         });
-        parameters.addSpecificVoltageLimits(specificVoltageLimits)
-            .addConstantQGenerators(constantQGenerators)
-            .addVariableTwoWindingsTransformers(variableTwoWindingsTransformers)
-            .addVariableShuntCompensators(variableShuntCompensators);
 
         //The optimizer will attach reactive slack variables to all buses
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
