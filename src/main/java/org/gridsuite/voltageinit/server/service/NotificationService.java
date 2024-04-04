@@ -58,11 +58,12 @@ public class NotificationService {
     }
 
     @PostCompletion
-    public void sendResultMessage(UUID resultUuid, String receiver) {
+    public void sendResultMessage(UUID resultUuid, String receiver, String userId) {
         Message<String> message = MessageBuilder
             .withPayload("")
             .setHeader(HEADER_RESULT_UUID, resultUuid.toString())
             .setHeader(HEADER_RECEIVER, receiver)
+            .setHeader(HEADER_USER_ID, userId)
             .build();
         RESULT_MESSAGE_LOGGER.debug(SENDING_MESSAGE, message);
         publisher.send("publishResult-out-0", message);

@@ -220,7 +220,7 @@ public class VoltageInitWorkerService {
                     LOGGER.info("Reactive slacks : {}", openReacResult.getReactiveSlacks());
                     LOGGER.info("Indicators : {}", openReacResult.getIndicators());
 
-                    notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver());
+                    notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), resultContext.getRunContext().getUserId());
                     LOGGER.info("Voltage initialization complete (resultUuid='{}')", resultContext.getResultUuid());
                 } else {  // result not available : stop computation request
                     if (cancelComputationRequests.get(resultContext.getResultUuid()) != null) {
