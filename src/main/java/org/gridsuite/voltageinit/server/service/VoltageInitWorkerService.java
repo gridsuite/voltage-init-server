@@ -185,7 +185,7 @@ public class VoltageInitWorkerService {
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
                 if (openReacResult != null) {  // result available
-                    UUID modificationsGroupUuid = networkModificationService.createVoltageInitModificationGroup(network, openReacResult);
+                    UUID modificationsGroupUuid = createModificationGroup(openReacResult, network);
                     Map<String, Bus> networkBuses = network.getBusView().getBusStream().collect(Collectors.toMap(Bus::getId, Function.identity()));
                     voltageInitObserver.observe("results.save", () ->
                         resultRepository.insert(resultContext.getResultUuid(), openReacResult, networkBuses, modificationsGroupUuid, openReacResult.getStatus().name()));
@@ -193,7 +193,7 @@ public class VoltageInitWorkerService {
                     LOGGER.info("Reactive slacks : {}", openReacResult.getReactiveSlacks());
                     LOGGER.info("Indicators : {}", openReacResult.getIndicators());
 
-                    notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver());
+                    notificationService.sendResultMessage(resultContext.getResultUuid(), resultContext.getRunContext().getReceiver(), resultContext.getRunContext().getUserId());
                     LOGGER.info("Voltage initialization complete (resultUuid='{}')", resultContext.getResultUuid());
                 } else {  // result not available : stop computation request
                     if (cancelComputationRequests.get(resultContext.getResultUuid()) != null) {
@@ -218,6 +218,12 @@ public class VoltageInitWorkerService {
                 runRequests.remove(resultContext.getResultUuid());
             }
         };
+    }
+
+    private UUID createModificationGroup(OpenReacResult openReacResult, Network network) {
+        return openReacResult.getStatus() == OpenReacStatus.OK ?
+            networkModificationService.createVoltageInitModificationGroup(network, openReacResult) :
+            null;
     }
 
     @Bean
