@@ -81,12 +81,14 @@ public class VoltageInitParametersService {
     private Map<String, VoltageLimitEntity> resolveVoltageLevelLimits(VoltageInitRunContext context, List<VoltageLimitEntity> voltageLimits) {
         Map<String, VoltageLimitEntity> voltageLevelLimits = new HashMap<>();
         //each voltage level is associated to a voltage limit setting
-        //if a voltage level is resolved by multiple filters the highest priority setting will be kept
-        voltageLimits.stream().forEach(voltageLimit ->
+        //if a voltage level is resolved by multiple filters, the highest priority setting will be kept
+        voltageLimits.forEach(voltageLimit ->
             filterService.exportFilters(voltageLimit.getFilters().stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), context.getNetworkUuid(), context.getVariantId())
-                .forEach(filterEquipment -> filterEquipment.getIdentifiableAttributes().stream().map(IdentifiableAttributes::getId)
-                    .forEach(voltageLevelsId -> voltageLevelLimits.put(voltageLevelsId, voltageLimit))
-                )
+                         .stream()
+                         .map(FilterEquipments::getIdentifiableAttributes)
+                         .flatMap(List::stream)
+                         .map(IdentifiableAttributes::getId)
+                         .forEach(voltageLevelsId -> voltageLevelLimits.put(voltageLevelsId, voltageLimit))
         );
         return voltageLevelLimits;
     }
@@ -195,16 +197,15 @@ public class VoltageInitParametersService {
     }
 
     private List<String> toEquipmentIdsList(UUID networkUuid, String variantId, List<FilterEquipmentsEmbeddable> filters) {
-        if (filters == null || filters.isEmpty()) {
+        if (filters == null) {
             return List.of();
         }
-        List<FilterEquipments> equipments = filterService.exportFilters(filters.stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, variantId);
-        Set<String> ids = new HashSet<>();
-        equipments.forEach(filterEquipment ->
-            filterEquipment.getIdentifiableAttributes().forEach(identifiableAttribute ->
-                ids.add(identifiableAttribute.getId())
-            )
-        );
-        return new ArrayList<>(ids);
+        return filterService.exportFilters(filters.stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, variantId)
+                            .stream()
+                            .map(FilterEquipments::getIdentifiableAttributes)
+                            .flatMap(List::stream)
+                            .map(IdentifiableAttributes::getId)
+                            .distinct()
+                            .toList();
     }
 }
