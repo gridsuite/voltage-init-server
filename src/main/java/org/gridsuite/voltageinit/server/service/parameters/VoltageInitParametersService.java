@@ -29,6 +29,7 @@ import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -213,32 +214,38 @@ public class VoltageInitParametersService {
         final MutablePair<Integer, Integer> nbVoltages = MutablePair.ofNonNull(0, 0);
         parameters.getSpecificVoltageLimits()
             .stream()
-            .collect(Collectors.groupingBy(VoltageLimitOverride::getVoltageLevelId))
+            .collect(HashMap<String, EnumMap<VoltageLimitType, VoltageLimitOverride>>::new,
+                (map, voltageLimitOverride) -> map
+                    .computeIfAbsent(voltageLimitOverride.getVoltageLevelId(), key -> new EnumMap<>(VoltageLimitType.class))
+                    .put(voltageLimitOverride.getVoltageLimitType(), voltageLimitOverride),
+                (map, map2) -> map2.forEach((id, newLimits) -> map.merge(id, newLimits, (nl1, nl2) -> {
+                    nl1.putAll(nl2);
+                    return nl1;
+                })
+            ))
             .forEach((id, voltageLimits) -> {
-                final Map<VoltageLimitType, Double> newLimits = voltageLimits.stream()
-                        .collect(Collectors.groupingBy(VoltageLimitOverride::getVoltageLimitType,
-                                                       () -> new EnumMap<>(VoltageLimitType.class),
-                                                       Collectors.summingDouble(VoltageLimitOverride::getLimit)));
                 final VoltageLevel voltageLevel = network.getVoltageLevel(id);
+                final double initialLowVoltageLimit = voltageLevel.getLowVoltageLimit();
+                final double initialHighVoltage = voltageLevel.getHighVoltageLimit();
                 reporter.report(Report.builder()
                         .withKey("voltageLimitModified")
                         .withDefaultMessage("One or two voltage limits of voltage level ${voltageLevelId} have been replaced and/or modified: low voltage limit = ${newLowVoltageLimit}\u202FkV, high voltage limit = ${newHighVoltageLimit}\u202FkV (initial values: low voltage limit = ${initialLowVoltageLimit}\u202FkV, high voltage limit = ${initialHighVoltage}\u202FkV).")
                         .withTypedValue("voltageLevelId", voltageLevel.getId(), TypedValue.VOLTAGE_LEVEL)
-                        .withTypedValue("newLowVoltageLimit", newLimits.getOrDefault(VoltageLimitType.LOW_VOLTAGE_LIMIT, voltageLevel.getLowVoltageLimit()), TypedValue.VOLTAGE)
-                        .withTypedValue("newHighVoltageLimit", newLimits.getOrDefault(VoltageLimitType.HIGH_VOLTAGE_LIMIT, voltageLevel.getHighVoltageLimit()), TypedValue.VOLTAGE)
-                        .withTypedValue("initialLowVoltageLimit", voltageLevel.getLowVoltageLimit(), TypedValue.VOLTAGE)
-                        .withTypedValue("initialHighVoltage", voltageLevel.getHighVoltageLimit(), TypedValue.VOLTAGE)
+                        .withTypedValue("newLowVoltageLimit", computeRelativeVoltageLevel(initialLowVoltageLimit, voltageLimits.get(VoltageLimitType.LOW_VOLTAGE_LIMIT)), TypedValue.VOLTAGE)
+                        .withTypedValue("newHighVoltageLimit", computeRelativeVoltageLevel(initialHighVoltage, voltageLimits.get(VoltageLimitType.HIGH_VOLTAGE_LIMIT)), TypedValue.VOLTAGE)
+                        .withTypedValue("initialLowVoltageLimit", initialLowVoltageLimit, TypedValue.VOLTAGE)
+                        .withTypedValue("initialHighVoltage", initialHighVoltage, TypedValue.VOLTAGE)
                         .withSeverity(TypedValue.TRACE_SEVERITY)
                         .build());
                 // update counters for resume logs
-                if (newLimits.containsKey(VoltageLimitType.LOW_VOLTAGE_LIMIT)) {
+                if (voltageLimits.containsKey(VoltageLimitType.LOW_VOLTAGE_LIMIT)) {
                     if (Double.isNaN(voltageLevel.getLowVoltageLimit())) {
                         nbVoltages.left++;
                     } else {
                         nbVoltages.right++;
                     }
                 }
-                if (newLimits.containsKey(VoltageLimitType.HIGH_VOLTAGE_LIMIT)) {
+                if (voltageLimits.containsKey(VoltageLimitType.HIGH_VOLTAGE_LIMIT)) {
                     if (Double.isNaN(voltageLevel.getHighVoltageLimit())) {
                         nbVoltages.left++;
                     } else {
@@ -278,5 +285,13 @@ public class VoltageInitParametersService {
             )
         );
         return new ArrayList<>(ids);
+    }
+
+    private double computeRelativeVoltageLevel(final double initialVoltageLimit, @Nullable final VoltageLimitOverride override) {
+        if (override == null) {
+            return initialVoltageLimit;
+        } else {
+            return (override.isRelative() ? initialVoltageLimit : 0.0) + override.getLimit();
+        }
     }
 }

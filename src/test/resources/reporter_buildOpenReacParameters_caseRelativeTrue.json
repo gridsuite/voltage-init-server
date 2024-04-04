@@ -48,7 +48,7 @@
                 "type": "VOLTAGE"
               },
               "newLowVoltageLimit": {
-                "value": -10.0,
+                "value": 0.0,
                 "type": "VOLTAGE"
               }
             }
@@ -69,7 +69,7 @@
                 "type": "SEVERITY"
               },
               "newHighVoltageLimit": {
-                "value": 10.0,
+                "value": 30.0,
                 "type": "VOLTAGE"
               },
               "initialHighVoltage": {
@@ -98,7 +98,7 @@
                 "type": "SEVERITY"
               },
               "newHighVoltageLimit": {
-                "value": 10.0,
+                "value": 30.0,
                 "type": "VOLTAGE"
               },
               "initialHighVoltage": {
@@ -106,7 +106,7 @@
                 "type": "VOLTAGE"
               },
               "newLowVoltageLimit": {
-                "value": -10.0,
+                "value": 0.0,
                 "type": "VOLTAGE"
               }
             }
@@ -143,8 +143,8 @@
     "default": {
       "restrictedVoltageLevels": "The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: ${joinedVoltageLevelsIds}",
       "voltageLimitModifications": "Voltage limits of ${nbVoltageLimitModifications} voltage levels have been modified according to user input.",
-      "VoltageInit": "VoltageInit",
       "OpenReacParameters": "OpenReac parameters",
+      "VoltageInit": "VoltageInit",
       "missingVoltageLimits": "Missing voltage limits of ${nbMissingVoltageLimits} voltage levels have been replaced with user-defined default values.",
       "voltageLimitModified": "One or two voltage limits of voltage level ${voltageLevelId} have been replaced and/or modified: low voltage limit = ${newLowVoltageLimit} kV, high voltage limit = ${newHighVoltageLimit} kV (initial values: low voltage limit = ${initialLowVoltageLimit} kV, high voltage limit = ${initialHighVoltage} kV)."
     }
