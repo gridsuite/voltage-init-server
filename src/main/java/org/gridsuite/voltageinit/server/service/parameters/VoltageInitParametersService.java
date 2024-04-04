@@ -153,12 +153,7 @@ public class VoltageInitParametersService {
         final long startTime = System.nanoTime();
         OpenReacParameters parameters = new OpenReacParameters();
 
-        Optional<VoltageInitParametersEntity> voltageInitParametersEntity = Optional.empty();
-        if (context.getParametersUuid() != null) {
-            voltageInitParametersEntity = voltageInitParametersRepository.findById(context.getParametersUuid());
-        }
-
-        voltageInitParametersEntity.ifPresent(voltageInitParameters -> {
+        Optional.ofNullable(context.getParametersUuid()).flatMap(voltageInitParametersRepository::findById).ifPresent(voltageInitParameters -> {
             if (voltageInitParameters.getVoltageLimits() != null) {
                 Map<String, VoltageLimitEntity> voltageLevelDefaultLimits = resolveVoltageLevelLimits(context, voltageInitParameters.getVoltageLimits().stream()
                     .filter(voltageLimit -> VoltageLimitParameterType.DEFAULT.equals(voltageLimit.getVoltageLimitParameterType()))
