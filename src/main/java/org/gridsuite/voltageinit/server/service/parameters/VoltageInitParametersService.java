@@ -10,6 +10,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
+import com.powsybl.openreac.parameters.input.VoltageLimitOverride.VoltageLimitType;
 import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.gridsuite.voltageinit.server.dto.parameters.IdentifiableAttributes;
@@ -91,58 +92,59 @@ public class VoltageInitParametersService {
         return voltageLevelLimits;
     }
 
-    private void fillSpecificVoltageLimits(List<VoltageLimitOverride> specificVoltageLimits, Map<String, VoltageLimitEntity> voltageLevelModificationLimits, Map<String, VoltageLimitEntity> voltageLevelDefaultLimits, VoltageLevel voltageLevel, Map<String, Double> voltageLevelsIdsRestricted) {
-        boolean isLowVoltageLimitModificationSet = voltageLevelModificationLimits.containsKey(voltageLevel.getId()) && voltageLevelModificationLimits.get(voltageLevel.getId()).getLowVoltageLimit() != null;
-        boolean isHighVoltageLimitModificationSet = voltageLevelModificationLimits.containsKey(voltageLevel.getId()) && voltageLevelModificationLimits.get(voltageLevel.getId()).getHighVoltageLimit() != null;
-        boolean isLowVoltageLimitDefaultSet = voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) && voltageLevelDefaultLimits.get(voltageLevel.getId()).getLowVoltageLimit() != null;
-        boolean isHighVoltageLimitDefaultSet = voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) && voltageLevelDefaultLimits.get(voltageLevel.getId()).getHighVoltageLimit() != null;
-
-        setLowVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isLowVoltageLimitModificationSet, isLowVoltageLimitDefaultSet, voltageLevel, voltageLevelsIdsRestricted);
-        setHighVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isHighVoltageLimitModificationSet, isHighVoltageLimitDefaultSet, voltageLevel);
+    private static void fillSpecificVoltageLimits(List<VoltageLimitOverride> specificVoltageLimits,
+                                                  Map<String, VoltageLimitEntity> voltageLevelModificationLimits,
+                                                  Map<String, VoltageLimitEntity> voltageLevelDefaultLimits,
+                                                  VoltageLevel voltageLevel,
+                                                  Map<String, Double> voltageLevelsIdsRestricted) {
+        setLowVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, voltageLevel, voltageLevelsIdsRestricted);
+        setHighVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, voltageLevel);
     }
 
-    private void setLowVoltageLimit(List<VoltageLimitOverride> specificVoltageLimits,
-                                    Map<String, VoltageLimitEntity> voltageLevelModificationLimits,
-                                    Map<String, VoltageLimitEntity> voltageLevelDefaultLimits,
-                                    boolean isLowVoltageLimitModificationSet,
-                                    boolean isLowVoltageLimitDefaultSet,
-                                    VoltageLevel voltageLevel,
-                                    Map<String, Double> voltageLevelsIdsRestricted) {
+    private static void setLowVoltageLimit(List<VoltageLimitOverride> specificVoltageLimits,
+                                           Map<String, VoltageLimitEntity> voltageLevelModificationLimits,
+                                           Map<String, VoltageLimitEntity> voltageLevelDefaultLimits,
+                                           VoltageLevel voltageLevel,
+                                           Map<String, Double> voltageLevelsIdsRestricted) {
+        final String voltageLevelId = voltageLevel.getId();
+        final Double lowVoltageModificationLimit = voltageLevelModificationLimits.containsKey(voltageLevelId) ? voltageLevelModificationLimits.get(voltageLevelId).getLowVoltageLimit() : null;
+        final Double lowVoltageDefaultLimit = voltageLevelDefaultLimits.containsKey(voltageLevelId) ? voltageLevelDefaultLimits.get(voltageLevelId).getLowVoltageLimit() : null;
+        final double lowVoltageLimit = voltageLevel.getLowVoltageLimit();
         double newLowVoltageLimit;
-        double lowVoltageLimit = voltageLevel.getLowVoltageLimit();
-        if (!Double.isNaN(lowVoltageLimit) && isLowVoltageLimitModificationSet) {
-            double lowVoltageLimitModification = voltageLevelModificationLimits.get(voltageLevel.getId()).getLowVoltageLimit();
 
-            if (lowVoltageLimit + lowVoltageLimitModification < 0) {
+        if (!Double.isNaN(lowVoltageLimit) && lowVoltageModificationLimit != null) {
+            if (lowVoltageLimit + lowVoltageModificationLimit < 0) {
                 newLowVoltageLimit = lowVoltageLimit * -1;
-                voltageLevelsIdsRestricted.put(voltageLevel.getId(), newLowVoltageLimit);
+                voltageLevelsIdsRestricted.put(voltageLevelId, newLowVoltageLimit);
             } else {
-                newLowVoltageLimit = lowVoltageLimitModification;
+                newLowVoltageLimit = lowVoltageModificationLimit;
             }
-            specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, newLowVoltageLimit));
+            specificVoltageLimits.add(new VoltageLimitOverride(voltageLevelId, VoltageLimitType.LOW_VOLTAGE_LIMIT, true, newLowVoltageLimit));
 
-        } else if (Double.isNaN(lowVoltageLimit) && isLowVoltageLimitDefaultSet) {
-            double voltageLimit = voltageLevelDefaultLimits.get(voltageLevel.getId()).getLowVoltageLimit() + (isLowVoltageLimitModificationSet ? voltageLevelModificationLimits.get(voltageLevel.getId()).getLowVoltageLimit() : 0.);
+        } else if (Double.isNaN(lowVoltageLimit) && lowVoltageDefaultLimit != null) {
+            double voltageLimit = lowVoltageDefaultLimit + (lowVoltageModificationLimit != null ? lowVoltageModificationLimit : 0.0);
             if (voltageLimit < 0) {
                 newLowVoltageLimit = 0.0;
-                voltageLevelsIdsRestricted.put(voltageLevel.getId(), newLowVoltageLimit);
+                voltageLevelsIdsRestricted.put(voltageLevelId, newLowVoltageLimit);
             } else {
                 newLowVoltageLimit = voltageLimit;
             }
-            specificVoltageLimits.add(
-                new VoltageLimitOverride(voltageLevel.getId(),
-                    VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT,
-                    false,
-                    newLowVoltageLimit
-                ));
+            specificVoltageLimits.add(new VoltageLimitOverride(voltageLevelId, VoltageLimitType.LOW_VOLTAGE_LIMIT, false, newLowVoltageLimit));
         }
     }
 
-    private void setHighVoltageLimit(List<VoltageLimitOverride> specificVoltageLimits, Map<String, VoltageLimitEntity> voltageLevelModificationLimits, Map<String, VoltageLimitEntity> voltageLevelDefaultLimits, boolean isHighVoltageLimitModificationSet, boolean isHighVoltageLimitDefaultSet, VoltageLevel voltageLevel) {
-        if (!Double.isNaN(voltageLevel.getHighVoltageLimit()) && isHighVoltageLimitModificationSet) {
-            specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, voltageLevelModificationLimits.get(voltageLevel.getId()).getHighVoltageLimit()));
-        } else if (Double.isNaN(voltageLevel.getHighVoltageLimit()) && isHighVoltageLimitDefaultSet) {
-            specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, voltageLevelDefaultLimits.get(voltageLevel.getId()).getHighVoltageLimit() + (isHighVoltageLimitModificationSet ? voltageLevelModificationLimits.get(voltageLevel.getId()).getHighVoltageLimit() : 0.)));
+    private static void setHighVoltageLimit(List<VoltageLimitOverride> specificVoltageLimits,
+                                            Map<String, VoltageLimitEntity> voltageLevelModificationLimits,
+                                            Map<String, VoltageLimitEntity> voltageLevelDefaultLimits,
+                                            VoltageLevel voltageLevel) {
+        final String voltageLevelId = voltageLevel.getId();
+        final double highVoltageLimit = voltageLevel.getHighVoltageLimit();
+        final Double highVoltageModificationLimit = voltageLevelModificationLimits.containsKey(voltageLevelId) ? voltageLevelModificationLimits.get(voltageLevelId).getHighVoltageLimit() : null;
+        final Double highVoltageDefaultLimit = voltageLevelDefaultLimits.containsKey(voltageLevelId) ? voltageLevelDefaultLimits.get(voltageLevelId).getHighVoltageLimit() : null;
+        if (!Double.isNaN(highVoltageLimit) && highVoltageModificationLimit != null) {
+            specificVoltageLimits.add(new VoltageLimitOverride(voltageLevelId, VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, highVoltageModificationLimit));
+        } else if (Double.isNaN(highVoltageLimit) && highVoltageDefaultLimit != null) {
+            specificVoltageLimits.add(new VoltageLimitOverride(voltageLevelId, VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, highVoltageDefaultLimit + (highVoltageModificationLimit != null ? highVoltageModificationLimit : 0.0)));
         }
     }
 
