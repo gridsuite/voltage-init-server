@@ -6,10 +6,6 @@
  */
 package org.gridsuite.voltageinit.server.service.parameters;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
@@ -29,10 +25,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
  */
-
 @Service
 public class VoltageInitParametersService {
 
@@ -150,8 +148,7 @@ public class VoltageInitParametersService {
 
     @Transactional(readOnly = true)
     public OpenReacParameters buildOpenReacParameters(VoltageInitRunContext context, Network network) {
-        AtomicReference<Long> startTime = new AtomicReference<>();
-        startTime.set(System.nanoTime());
+        final long startTime = System.nanoTime();
 
         Optional<VoltageInitParametersEntity> voltageInitParametersEntity = Optional.empty();
         if (context.getParametersUuid() != null) {
@@ -191,8 +188,7 @@ public class VoltageInitParametersService {
         //The optimizer will attach reactive slack variables to all buses
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
 
-        long nanoTime = System.nanoTime();
-        LOGGER.info("Parameters built in {}s", TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startTime.getAndSet(nanoTime)));
+        LOGGER.info("Parameters built in {}s", TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startTime));
         return parameters;
     }
 
