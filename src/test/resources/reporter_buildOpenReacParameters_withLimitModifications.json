@@ -15,10 +15,6 @@
           {
             "reportKey": "voltageLimitModified",
             "values": {
-              "initialLowVoltageLimit": {
-                "value": 10.0,
-                "type": "VOLTAGE"
-              },
               "voltageLevelId": {
                 "value": "VLHV2",
                 "type": "VOLTAGE_LEVEL"
@@ -27,16 +23,12 @@
                 "value": "TRACE",
                 "type": "SEVERITY"
               },
-              "newHighVoltageLimit": {
-                "value": 8.0,
+              "highVoltageLimit": {
+                "value": "NaN kV → 0.08.0 kV",
                 "type": "VOLTAGE"
               },
-              "initialHighVoltage": {
-                "value": "NaN",
-                "type": "VOLTAGE"
-              },
-              "newLowVoltageLimit": {
-                "value": 9.0,
+              "lowVoltageLimit": {
+                "value": "10.0 kV → 10.0-1.0 kV",
                 "type": "VOLTAGE"
               }
             }
@@ -44,10 +36,6 @@
           {
             "reportKey": "voltageLimitModified",
             "values": {
-              "initialLowVoltageLimit": {
-                "value": "NaN",
-                "type": "VOLTAGE"
-              },
               "voltageLevelId": {
                 "value": "VLHV1",
                 "type": "VOLTAGE_LEVEL"
@@ -56,16 +44,12 @@
                 "value": "TRACE",
                 "type": "SEVERITY"
               },
-              "newHighVoltageLimit": {
-                "value": 18.0,
+              "highVoltageLimit": {
+                "value": "20.0 kV → 20.0-2.0 kV",
                 "type": "VOLTAGE"
               },
-              "initialHighVoltage": {
-                "value": 20.0,
-                "type": "VOLTAGE"
-              },
-              "newLowVoltageLimit": {
-                "value": 4.0,
+              "lowVoltageLimit": {
+                "value": "NaN kV → 0.04.0 kV",
                 "type": "VOLTAGE"
               }
             }
@@ -73,10 +57,6 @@
           {
             "reportKey": "voltageLimitModified",
             "values": {
-              "initialLowVoltageLimit": {
-                "value": 10.0,
-                "type": "VOLTAGE"
-              },
               "voltageLevelId": {
                 "value": "VLGEN",
                 "type": "VOLTAGE_LEVEL"
@@ -85,16 +65,12 @@
                 "value": "TRACE",
                 "type": "SEVERITY"
               },
-              "newHighVoltageLimit": {
-                "value": 18.0,
+              "highVoltageLimit": {
+                "value": "20.0 kV → 20.0-2.0 kV",
                 "type": "VOLTAGE"
               },
-              "initialHighVoltage": {
-                "value": 20.0,
-                "type": "VOLTAGE"
-              },
-              "newLowVoltageLimit": {
-                "value": 9.0,
+              "lowVoltageLimit": {
+                "value": "10.0 kV → 10.0-1.0 kV",
                 "type": "VOLTAGE"
               }
             }
@@ -102,10 +78,6 @@
           {
             "reportKey": "voltageLimitModified",
             "values": {
-              "initialLowVoltageLimit": {
-                "value": "NaN",
-                "type": "VOLTAGE"
-              },
               "voltageLevelId": {
                 "value": "VLLOAD",
                 "type": "VOLTAGE_LEVEL"
@@ -114,16 +86,12 @@
                 "value": "TRACE",
                 "type": "SEVERITY"
               },
-              "newHighVoltageLimit": {
-                "value": 86.0,
+              "highVoltageLimit": {
+                "value": "NaN kV → 0.086.0 kV",
                 "type": "VOLTAGE"
               },
-              "initialHighVoltage": {
-                "value": "NaN",
-                "type": "VOLTAGE"
-              },
-              "newLowVoltageLimit": {
-                "value": 43.0,
+              "lowVoltageLimit": {
+                "value": "NaN kV → 0.043.0 kV",
                 "type": "VOLTAGE"
               }
             }
@@ -162,7 +130,7 @@
       "OpenReacParameters": "OpenReac parameters",
       "VoltageInit": "VoltageInit",
       "missingVoltageLimits": "Missing voltage limits of ${nbMissingVoltageLimits} voltage levels have been replaced with user-defined default values.",
-      "voltageLimitModified": "One or two voltage limits of voltage level ${voltageLevelId} have been replaced and/or modified: low voltage limit = ${newLowVoltageLimit} kV, high voltage limit = ${newHighVoltageLimit} kV (initial values: low voltage limit = ${initialLowVoltageLimit} kV, high voltage limit = ${initialHighVoltage} kV)."
+      "voltageLimitModified": "Voltage limits of ${voltageLevelId} modified: low voltage limit = ${initialLowVoltageLimit} kV → ${newLowVoltageLimit} kV, high voltage limit = ${initialHighVoltage} kV → ${newHighVoltageLimit} kV"
     }
   }
 }

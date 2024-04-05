@@ -258,12 +258,10 @@ public class VoltageInitParametersService {
                 final double initialHighVoltage = voltageLevel.getHighVoltageLimit();
                 reporter.report(Report.builder()
                         .withKey("voltageLimitModified")
-                        .withDefaultMessage("One or two voltage limits of voltage level ${voltageLevelId} have been replaced and/or modified: low voltage limit = ${newLowVoltageLimit}\u202FkV, high voltage limit = ${newHighVoltageLimit}\u202FkV (initial values: low voltage limit = ${initialLowVoltageLimit}\u202FkV, high voltage limit = ${initialHighVoltage}\u202FkV).")
+                        .withDefaultMessage("Voltage limits of ${voltageLevelId} modified: low voltage limit = ${initialLowVoltageLimit}\u202FkV → ${newLowVoltageLimit}\u202FkV, high voltage limit = ${initialHighVoltage}\u202FkV → ${newHighVoltageLimit}\u202FkV")
                         .withTypedValue("voltageLevelId", voltageLevel.getId(), TypedValue.VOLTAGE_LEVEL)
-                        .withTypedValue("newLowVoltageLimit", computeRelativeVoltageLevel(initialLowVoltageLimit, voltageLimits.get(VoltageLimitType.LOW_VOLTAGE_LIMIT)), TypedValue.VOLTAGE)
-                        .withTypedValue("newHighVoltageLimit", computeRelativeVoltageLevel(initialHighVoltage, voltageLimits.get(VoltageLimitType.HIGH_VOLTAGE_LIMIT)), TypedValue.VOLTAGE)
-                        .withTypedValue("initialLowVoltageLimit", initialLowVoltageLimit, TypedValue.VOLTAGE)
-                        .withTypedValue("initialHighVoltage", initialHighVoltage, TypedValue.VOLTAGE)
+                        .withTypedValue("lowVoltageLimit", computeRelativeVoltageLevel(initialLowVoltageLimit, voltageLimits.get(VoltageLimitType.LOW_VOLTAGE_LIMIT)), TypedValue.VOLTAGE)
+                        .withTypedValue("highVoltageLimit", computeRelativeVoltageLevel(initialHighVoltage, voltageLimits.get(VoltageLimitType.HIGH_VOLTAGE_LIMIT)), TypedValue.VOLTAGE)
                         .withSeverity(TypedValue.TRACE_SEVERITY)
                         .build());
             });
@@ -301,11 +299,11 @@ public class VoltageInitParametersService {
         return new ArrayList<>(ids);
     }
 
-    private double computeRelativeVoltageLevel(final double initialVoltageLimit, @Nullable final VoltageLimitOverride override) {
+    private String computeRelativeVoltageLevel(final double initialVoltageLimit, @Nullable final VoltageLimitOverride override) {
         if (override == null) {
-            return initialVoltageLimit;
+            return initialVoltageLimit + "\u202FkV";
         } else {
-            return (override.isRelative() ? initialVoltageLimit : 0.0) + override.getLimit();
+            return initialVoltageLimit + "\u202FkV → " + (override.isRelative() ? initialVoltageLimit : 0.0) + override.getLimit() + "\u202FkV";
         }
     }
 
