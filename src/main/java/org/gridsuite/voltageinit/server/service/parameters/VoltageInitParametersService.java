@@ -215,7 +215,7 @@ public class VoltageInitParametersService {
                         .withValue("joinedVoltageLevelsIds", context.getVoltageLevelsIdsRestricted()
                             .entrySet()
                             .stream()
-                            .map(entry -> entry.getKey() + ":" + entry.getValue())
+                            .map(entry -> entry.getKey() + " : " + entry.getValue())
                             .collect(Collectors.joining(", ")))
                         .withSeverity(TypedValue.WARN_SEVERITY)
                         .build());
