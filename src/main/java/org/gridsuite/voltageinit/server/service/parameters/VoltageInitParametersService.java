@@ -19,6 +19,7 @@ import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride.VoltageLimitType;
 import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
+import lombok.NonNull;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.gridsuite.voltageinit.server.dto.parameters.IdentifiableAttributes;
@@ -109,19 +110,24 @@ public class VoltageInitParametersService {
         boolean isLowVoltageLimitDefaultSet = voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) && voltageLevelDefaultLimits.get(voltageLevel.getId()).getLowVoltageLimit() != null;
         boolean isHighVoltageLimitDefaultSet = voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) && voltageLevelDefaultLimits.get(voltageLevel.getId()).getHighVoltageLimit() != null;
 
-        setLowVoltageLimit(specificVoltageLimits, counterMissingVoltageLimits, counterVoltageLimitModifications, voltageLevelModificationLimits, voltageLevelDefaultLimits, isLowVoltageLimitModificationSet, isLowVoltageLimitDefaultSet, voltageLevel, voltageLevelsIdsRestricted);
-        setHighVoltageLimit(specificVoltageLimits, counterMissingVoltageLimits, counterVoltageLimitModifications, voltageLevelModificationLimits, voltageLevelDefaultLimits, isHighVoltageLimitModificationSet, isHighVoltageLimitDefaultSet, voltageLevel);
+        switch (generateLowVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isLowVoltageLimitModificationSet, isLowVoltageLimitDefaultSet, voltageLevel, voltageLevelsIdsRestricted)
+            .merge(generateHighVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isHighVoltageLimitModificationSet, isHighVoltageLimitDefaultSet, voltageLevel))) {
+            case DEFAULT -> counterMissingVoltageLimits.increment();
+            case MODIFICATION -> counterVoltageLimitModifications.increment();
+            case BOTH -> {
+                counterMissingVoltageLimits.increment();
+                counterVoltageLimitModifications.increment();
+            }
+        }
     }
 
-    private static void setLowVoltageLimit(List<VoltageLimitOverride> specificVoltageLimits,
-                                           final MutableInt counterMissingVoltageLimits,
-                                           final MutableInt counterVoltageLimitModifications,
-                                           Map<String, VoltageLimitEntity> voltageLevelModificationLimits,
-                                           Map<String, VoltageLimitEntity> voltageLevelDefaultLimits,
-                                           boolean isLowVoltageLimitModificationSet,
-                                           boolean isLowVoltageLimitDefaultSet,
-                                           VoltageLevel voltageLevel,
-                                           Map<String, Double> voltageLevelsIdsRestricted) {
+    private static CountVoltageLimit generateLowVoltageLimit(List<VoltageLimitOverride> specificVoltageLimits,
+                                                             Map<String, VoltageLimitEntity> voltageLevelModificationLimits,
+                                                             Map<String, VoltageLimitEntity> voltageLevelDefaultLimits,
+                                                             boolean isLowVoltageLimitModificationSet,
+                                                             boolean isLowVoltageLimitDefaultSet,
+                                                             VoltageLevel voltageLevel,
+                                                             Map<String, Double> voltageLevelsIdsRestricted) {
         double newLowVoltageLimit;
         double lowVoltageLimit = voltageLevel.getLowVoltageLimit();
         if (!Double.isNaN(lowVoltageLimit) && isLowVoltageLimitModificationSet) {
@@ -133,7 +139,7 @@ public class VoltageInitParametersService {
                 newLowVoltageLimit = lowVoltageLimitModification;
             }
             specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitType.LOW_VOLTAGE_LIMIT, true, newLowVoltageLimit));
-            counterVoltageLimitModifications.increment();
+            return CountVoltageLimit.MODIFICATION;
 
         } else if (Double.isNaN(lowVoltageLimit) && isLowVoltageLimitDefaultSet) {
             double voltageLimit = voltageLevelDefaultLimits.get(voltageLevel.getId()).getLowVoltageLimit() + (isLowVoltageLimitModificationSet ? voltageLevelModificationLimits.get(voltageLevel.getId()).getLowVoltageLimit() : 0.);
@@ -144,30 +150,34 @@ public class VoltageInitParametersService {
                 newLowVoltageLimit = voltageLimit;
             }
             specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitType.LOW_VOLTAGE_LIMIT, false, newLowVoltageLimit));
-            counterMissingVoltageLimits.increment();
             if (isLowVoltageLimitModificationSet) {
-                counterVoltageLimitModifications.increment();
+                return CountVoltageLimit.DEFAULT;
+            } else {
+                return CountVoltageLimit.BOTH;
             }
+        } else {
+            return CountVoltageLimit.NONE;
         }
     }
 
-    private static void setHighVoltageLimit(List<VoltageLimitOverride> specificVoltageLimits,
-                                            final MutableInt counterMissingVoltageLimits,
-                                            final MutableInt counterVoltageLimitModifications,
-                                            Map<String, VoltageLimitEntity> voltageLevelModificationLimits,
-                                            Map<String, VoltageLimitEntity> voltageLevelDefaultLimits,
-                                            boolean isHighVoltageLimitModificationSet,
-                                            boolean isHighVoltageLimitDefaultSet,
-                                            VoltageLevel voltageLevel) {
+    private static CountVoltageLimit generateHighVoltageLimit(List<VoltageLimitOverride> specificVoltageLimits,
+                                                              Map<String, VoltageLimitEntity> voltageLevelModificationLimits,
+                                                              Map<String, VoltageLimitEntity> voltageLevelDefaultLimits,
+                                                              boolean isHighVoltageLimitModificationSet,
+                                                              boolean isHighVoltageLimitDefaultSet,
+                                                              VoltageLevel voltageLevel) {
         if (!Double.isNaN(voltageLevel.getHighVoltageLimit()) && isHighVoltageLimitModificationSet) {
             specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, voltageLevelModificationLimits.get(voltageLevel.getId()).getHighVoltageLimit()));
-            counterVoltageLimitModifications.increment();
+            return CountVoltageLimit.MODIFICATION;
         } else if (Double.isNaN(voltageLevel.getHighVoltageLimit()) && isHighVoltageLimitDefaultSet) {
             specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, voltageLevelDefaultLimits.get(voltageLevel.getId()).getHighVoltageLimit() + (isHighVoltageLimitModificationSet ? voltageLevelModificationLimits.get(voltageLevel.getId()).getHighVoltageLimit() : 0.)));
-            counterMissingVoltageLimits.increment();
             if (isHighVoltageLimitModificationSet) {
-                counterVoltageLimitModifications.increment();
+                return CountVoltageLimit.BOTH;
+            } else {
+                return CountVoltageLimit.DEFAULT;
             }
+        } else {
+            return CountVoltageLimit.NONE;
         }
     }
 
@@ -296,6 +306,15 @@ public class VoltageInitParametersService {
             return initialVoltageLimit;
         } else {
             return (override.isRelative() ? initialVoltageLimit : 0.0) + override.getLimit();
+        }
+    }
+
+    private enum CountVoltageLimit {
+        NONE, DEFAULT, MODIFICATION, BOTH;
+
+        public CountVoltageLimit merge(@NonNull CountVoltageLimit other) {
+            final int merge = this.ordinal() | other.ordinal();
+            return Arrays.stream(CountVoltageLimit.values()).filter(cvl -> cvl.ordinal() == merge).findAny().orElseThrow();
         }
     }
 }

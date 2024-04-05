@@ -132,7 +132,7 @@
             "reportKey": "missingVoltageLimits",
             "values": {
               "nbMissingVoltageLimits": {
-                "value": 4
+                "value": 3
               },
               "reportSeverity": {
                 "value": "INFO",
@@ -148,7 +148,7 @@
                 "type": "SEVERITY"
               },
               "nbVoltageLimitModifications": {
-                "value": 8
+                "value": 4
               }
             }
           }

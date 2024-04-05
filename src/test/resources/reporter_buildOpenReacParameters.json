@@ -103,7 +103,7 @@
             "reportKey": "missingVoltageLimits",
             "values": {
               "nbMissingVoltageLimits": {
-                "value": 4
+                "value": 3
               },
               "reportSeverity": {
                 "value": "INFO",
@@ -119,7 +119,7 @@
                 "type": "SEVERITY"
               },
               "nbVoltageLimitModifications": {
-                "value": 0
+                "value": 2
               }
             }
           }
@@ -130,8 +130,8 @@
   "dics": {
     "default": {
       "voltageLimitModifications": "Voltage limits of ${nbVoltageLimitModifications} voltage levels have been modified according to user input.",
-      "VoltageInit": "VoltageInit",
       "OpenReacParameters": "OpenReac parameters",
+      "VoltageInit": "VoltageInit",
       "missingVoltageLimits": "Missing voltage limits of ${nbMissingVoltageLimits} voltage levels have been replaced with user-defined default values.",
       "voltageLimitModified": "One or two voltage limits of voltage level ${voltageLevelId} have been replaced and/or modified: low voltage limit = ${newLowVoltageLimit} kV, high voltage limit = ${newHighVoltageLimit} kV (initial values: low voltage limit = ${initialLowVoltageLimit} kV, high voltage limit = ${initialHighVoltage} kV)."
     }
