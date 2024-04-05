@@ -18,14 +18,18 @@ import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride.VoltageLimitType;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Triple;
 import org.assertj.core.api.Condition;
 import org.assertj.core.api.ListAssert;
+import org.assertj.core.api.SoftAssertions;
+import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.gridsuite.voltageinit.server.dto.parameters.IdentifiableAttributes;
 import org.gridsuite.voltageinit.server.entities.parameters.FilterEquipmentsEmbeddable;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
+import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService.CountVoltageLimit;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
 import org.gridsuite.voltageinit.utils.TestUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,7 +62,7 @@ import static org.assertj.core.condition.NestableCondition.nestable;
 import static org.assertj.core.condition.VerboseCondition.verboseCondition;
 import static org.mockito.BDDMockito.given;
 
-@ExtendWith({ MockitoExtension.class })
+@ExtendWith({ MockitoExtension.class, SoftAssertionsExtension.class })
 @SpringBootTest
 @DirtiesContext
 @AutoConfigureTestEntityManager
@@ -212,5 +216,31 @@ class ParametersTest {
             // isRelative: There should have relative false overrides since voltage limit modification are applied for VLHV1
             // getLimit: The low voltage limit must be impacted by the modification of the value
             .containsOnlyOnce(new VoltageLimitOverride("VLHV1", VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 0.0));
+    }
+
+    @DisplayName("CountVoltageLimit.merge()")
+    @Test
+    void testCountVoltageLimitMerge(final SoftAssertions softly) {
+        List.of(
+            Triple.ofNonNull(CountVoltageLimit.NONE, CountVoltageLimit.NONE, CountVoltageLimit.NONE),
+            Triple.ofNonNull(CountVoltageLimit.NONE, CountVoltageLimit.DEFAULT, CountVoltageLimit.DEFAULT),
+            Triple.ofNonNull(CountVoltageLimit.NONE, CountVoltageLimit.MODIFICATION, CountVoltageLimit.MODIFICATION),
+            Triple.ofNonNull(CountVoltageLimit.NONE, CountVoltageLimit.BOTH, CountVoltageLimit.BOTH),
+
+            Triple.ofNonNull(CountVoltageLimit.DEFAULT, CountVoltageLimit.NONE, CountVoltageLimit.DEFAULT),
+            Triple.ofNonNull(CountVoltageLimit.DEFAULT, CountVoltageLimit.DEFAULT, CountVoltageLimit.DEFAULT),
+            Triple.ofNonNull(CountVoltageLimit.DEFAULT, CountVoltageLimit.MODIFICATION, CountVoltageLimit.BOTH),
+            Triple.ofNonNull(CountVoltageLimit.DEFAULT, CountVoltageLimit.BOTH, CountVoltageLimit.BOTH),
+
+            Triple.ofNonNull(CountVoltageLimit.MODIFICATION, CountVoltageLimit.NONE, CountVoltageLimit.MODIFICATION),
+            Triple.ofNonNull(CountVoltageLimit.MODIFICATION, CountVoltageLimit.DEFAULT, CountVoltageLimit.BOTH),
+            Triple.ofNonNull(CountVoltageLimit.MODIFICATION, CountVoltageLimit.MODIFICATION, CountVoltageLimit.MODIFICATION),
+            Triple.ofNonNull(CountVoltageLimit.MODIFICATION, CountVoltageLimit.BOTH, CountVoltageLimit.BOTH),
+
+            Triple.ofNonNull(CountVoltageLimit.BOTH, CountVoltageLimit.NONE, CountVoltageLimit.BOTH),
+            Triple.ofNonNull(CountVoltageLimit.BOTH, CountVoltageLimit.DEFAULT, CountVoltageLimit.BOTH),
+            Triple.ofNonNull(CountVoltageLimit.BOTH, CountVoltageLimit.MODIFICATION, CountVoltageLimit.BOTH),
+            Triple.ofNonNull(CountVoltageLimit.BOTH, CountVoltageLimit.BOTH, CountVoltageLimit.BOTH)
+        ).forEach(tpl -> softly.assertThat(tpl.getLeft().merge(tpl.getMiddle())).as(tpl.getLeft() + " + " + tpl.getMiddle()).isSameAs(tpl.getRight()));
     }
 }

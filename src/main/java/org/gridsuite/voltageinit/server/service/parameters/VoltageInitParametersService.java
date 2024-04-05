@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.powsybl.commons.reporter.Report;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.TypedValue;
@@ -307,12 +308,18 @@ public class VoltageInitParametersService {
         }
     }
 
-    private enum CountVoltageLimit {
+    @VisibleForTesting
+    enum CountVoltageLimit {
         NONE, DEFAULT, MODIFICATION, BOTH;
 
-        public CountVoltageLimit merge(@NonNull CountVoltageLimit other) {
-            final int merge = this.ordinal() | other.ordinal();
-            return Arrays.stream(CountVoltageLimit.values()).filter(cvl -> cvl.ordinal() == merge).findAny().orElseThrow();
+        public CountVoltageLimit merge(@NonNull final CountVoltageLimit other) {
+            if (this == BOTH || other == BOTH || this == DEFAULT && other == MODIFICATION || this == MODIFICATION && other == DEFAULT) {
+                return BOTH;
+            } else if (this == NONE) {
+                return other;
+            } else { // other == NONE
+                return this;
+            }
         }
     }
 }
