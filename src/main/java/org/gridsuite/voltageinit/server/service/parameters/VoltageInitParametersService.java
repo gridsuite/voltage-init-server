@@ -303,11 +303,14 @@ public class VoltageInitParametersService {
         return new ArrayList<>(ids);
     }
 
-    private String computeRelativeVoltageLevel(final double initialVoltageLimit, @Nullable final VoltageLimitOverride override) {
+    private static String voltageToString(double voltage) {
+        return Double.isNaN(voltage) ? Double.toString(voltage) : voltage + "\u202FkV";
+    }
+    private static String computeRelativeVoltageLevel(final double initialVoltageLimit, @Nullable final VoltageLimitOverride override) {
         if (override == null) {
-            return initialVoltageLimit + "\u202FkV";
+            return voltageToString(initialVoltageLimit);
         } else {
-            return initialVoltageLimit + "\u202FkV → " + (override.isRelative() ? initialVoltageLimit : 0.0) + override.getLimit() + "\u202FkV";
+            return voltageToString(initialVoltageLimit) + " → " + voltageToString((override.isRelative() ? initialVoltageLimit : 0.0) + override.getLimit());
         }
     }
 

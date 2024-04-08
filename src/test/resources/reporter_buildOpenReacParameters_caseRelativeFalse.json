@@ -36,11 +36,11 @@
                 "type": "SEVERITY"
               },
               "highVoltageLimit": {
-                "value": "NaN kV → 0.020.0 kV",
+                "value": "NaN → 20.0 kV",
                 "type": "VOLTAGE"
               },
               "lowVoltageLimit": {
-                "value": "10.0 kV → 10.0-10.0 kV",
+                "value": "10.0 kV → 0.0 kV",
                 "type": "VOLTAGE"
               }
             }
@@ -57,11 +57,11 @@
                 "type": "SEVERITY"
               },
               "highVoltageLimit": {
-                "value": "20.0 kV → 20.010.0 kV",
+                "value": "20.0 kV → 30.0 kV",
                 "type": "VOLTAGE"
               },
               "lowVoltageLimit": {
-                "value": "NaN kV → 0.00.0 kV",
+                "value": "NaN → 0.0 kV",
                 "type": "VOLTAGE"
               }
             }
@@ -78,11 +78,11 @@
                 "type": "SEVERITY"
               },
               "highVoltageLimit": {
-                "value": "20.0 kV → 20.010.0 kV",
+                "value": "20.0 kV → 30.0 kV",
                 "type": "VOLTAGE"
               },
               "lowVoltageLimit": {
-                "value": "10.0 kV → 10.0-10.0 kV",
+                "value": "10.0 kV → 0.0 kV",
                 "type": "VOLTAGE"
               }
             }
@@ -99,11 +99,11 @@
                 "type": "SEVERITY"
               },
               "highVoltageLimit": {
-                "value": "NaN kV → 0.020.0 kV",
+                "value": "NaN → 20.0 kV",
                 "type": "VOLTAGE"
               },
               "lowVoltageLimit": {
-                "value": "NaN kV → 0.00.0 kV",
+                "value": "NaN → 0.0 kV",
                 "type": "VOLTAGE"
               }
             }

@@ -24,7 +24,7 @@
                 "type": "SEVERITY"
               },
               "highVoltageLimit": {
-                "value": "NaN kV → 0.010.0 kV",
+                "value": "NaN → 10.0 kV",
                 "type": "VOLTAGE"
               },
               "lowVoltageLimit": {
@@ -49,7 +49,7 @@
                 "type": "VOLTAGE"
               },
               "lowVoltageLimit": {
-                "value": "NaN kV → 0.05.0 kV",
+                "value": "NaN → 5.0 kV",
                 "type": "VOLTAGE"
               }
             }
@@ -66,11 +66,11 @@
                 "type": "SEVERITY"
               },
               "highVoltageLimit": {
-                "value": "NaN kV → 0.088.0 kV",
+                "value": "NaN → 88.0 kV",
                 "type": "VOLTAGE"
               },
               "lowVoltageLimit": {
-                "value": "NaN kV → 0.044.0 kV",
+                "value": "NaN → 44.0 kV",
                 "type": "VOLTAGE"
               }
             }
