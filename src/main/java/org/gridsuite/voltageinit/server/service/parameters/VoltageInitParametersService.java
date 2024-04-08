@@ -115,12 +115,12 @@ public class VoltageInitParametersService {
 
         final CountVoltageLimit counterToIncrement1 = generateLowVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isLowVoltageLimitModificationSet, isLowVoltageLimitDefaultSet, voltageLevel, voltageLevelsIdsRestricted);
         final CountVoltageLimit counterToIncrement2 = generateHighVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isHighVoltageLimitModificationSet, isHighVoltageLimitDefaultSet, voltageLevel);
-        if ((counterToIncrement1 == CountVoltageLimit.DEFAULT || counterToIncrement1 == CountVoltageLimit.BOTH) ||
-            (counterToIncrement2 == CountVoltageLimit.DEFAULT || counterToIncrement2 == CountVoltageLimit.BOTH)) {
+        if (counterToIncrement1 == CountVoltageLimit.DEFAULT || counterToIncrement1 == CountVoltageLimit.BOTH ||
+            counterToIncrement2 == CountVoltageLimit.DEFAULT || counterToIncrement2 == CountVoltageLimit.BOTH) {
             counterMissingVoltageLimits.increment();
         }
-        if ((counterToIncrement1 == CountVoltageLimit.MODIFICATION || counterToIncrement1 == CountVoltageLimit.BOTH) ||
-            (counterToIncrement2 == CountVoltageLimit.MODIFICATION || counterToIncrement2 == CountVoltageLimit.BOTH)) {
+        if (counterToIncrement1 == CountVoltageLimit.MODIFICATION || counterToIncrement1 == CountVoltageLimit.BOTH ||
+            counterToIncrement2 == CountVoltageLimit.MODIFICATION || counterToIncrement2 == CountVoltageLimit.BOTH) {
             counterVoltageLimitModifications.increment();
         }
     }
