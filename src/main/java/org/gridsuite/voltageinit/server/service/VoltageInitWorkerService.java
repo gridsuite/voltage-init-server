@@ -130,9 +130,8 @@ public class VoltageInitWorkerService {
         }
     }
 
-    private Pair<String, Double> checkReactiveSlacksOverThreshold(OpenReacResult openReacResult, UUID parametersUuid, Reporter reporter) {
+    private Pair<String, Double> checkReactiveSlacksOverThreshold(OpenReacResult openReacResult, VoltageInitParametersInfos param, Reporter reporter) {
         Pair<String, Double> result = null;
-        VoltageInitParametersInfos param = parametersUuid != null ? voltageInitParametersService.getParameters(parametersUuid) : null;
         if (param != null) {
             long count = openReacResult.getReactiveSlacks().stream().filter(r -> Math.abs(r.slack) > param.getReactiveSlacksThreshold()).count();
             if (count > 0) {
@@ -230,7 +229,10 @@ public class VoltageInitWorkerService {
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
                 if (openReacResult != null) {  // result available
-                    UUID modificationsGroupUuid = createModificationGroup(openReacResult, network);
+                    UUID parametersUuid = context.getParametersUuid();
+                    VoltageInitParametersInfos param = parametersUuid != null ? voltageInitParametersService.getParameters(parametersUuid) : null;
+                    boolean updateBusVoltage = param == null || param.isUpdateBusVoltage();
+                    UUID modificationsGroupUuid = createModificationGroup(openReacResult, network, updateBusVoltage);
                     Map<String, Bus> networkBuses = network.getBusView().getBusStream().collect(Collectors.toMap(Bus::getId, Function.identity()));
                     voltageInitObserver.observe("results.save", () ->
                         resultRepository.insert(resultContext.getResultUuid(), openReacResult, networkBuses, modificationsGroupUuid, openReacResult.getStatus().name()));
@@ -239,7 +241,7 @@ public class VoltageInitWorkerService {
                     LOGGER.info("Indicators : {}", openReacResult.getIndicators());
 
                     // check if at least one reactive slack over the threshold value
-                    Pair<String, Double> resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(openReacResult, context.getParametersUuid(), reporter);
+                    Pair<String, Double> resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(openReacResult, param, reporter);
 
                     notificationService.sendResultMessage(resultContext.getResultUuid(),
                         resultContext.getRunContext().getReceiver(),
@@ -277,9 +279,9 @@ public class VoltageInitWorkerService {
         };
     }
 
-    private UUID createModificationGroup(OpenReacResult openReacResult, Network network) {
+    private UUID createModificationGroup(OpenReacResult openReacResult, Network network, boolean updateBusVoltage) {
         return openReacResult.getStatus() == OpenReacStatus.OK ?
-            networkModificationService.createVoltageInitModificationGroup(network, openReacResult) :
+            networkModificationService.createVoltageInitModificationGroup(network, openReacResult, updateBusVoltage) :
             null;
     }
 

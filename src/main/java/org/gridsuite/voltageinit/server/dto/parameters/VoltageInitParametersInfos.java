@@ -47,6 +47,8 @@ public class VoltageInitParametersInfos {
 
     double reactiveSlacksThreshold;
 
+    boolean updateBusVoltage;
+
     public VoltageInitParametersEntity toEntity() {
         return new VoltageInitParametersEntity(this);
     }

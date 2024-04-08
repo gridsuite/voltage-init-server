@@ -78,6 +78,9 @@ public class VoltageInitParametersEntity {
     @Column(name = "reactiveSlacksThreshold")
     private double reactiveSlacksThreshold;
 
+    @Column(name = "updateBusVoltage")
+    private boolean updateBusVoltage;
+
     public VoltageInitParametersEntity(@NonNull VoltageInitParametersInfos voltageInitParametersInfos) {
         this.date = ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS);
         assignAttributes(voltageInitParametersInfos);
@@ -108,6 +111,7 @@ public class VoltageInitParametersEntity {
         variableShuntCompensators = FilterEquipmentsEmbeddable.toEmbeddableFilterEquipments(voltageInitParametersInfos.getVariableShuntCompensators());
         name = voltageInitParametersInfos.getName();
         reactiveSlacksThreshold = voltageInitParametersInfos.getReactiveSlacksThreshold();
+        updateBusVoltage = voltageInitParametersInfos.isUpdateBusVoltage();
     }
 
     private List<VoltageLimitInfos> toVoltageLimits(List<VoltageLimitEntity> voltageLimits, VoltageLimitParameterType voltageLimitParameterType) {
@@ -138,6 +142,7 @@ public class VoltageInitParametersEntity {
                 .variableTwoWindingsTransformers(FilterEquipmentsEmbeddable.fromEmbeddableFilterEquipments(this.getVariableTwoWindingsTransformers()))
                 .variableShuntCompensators(FilterEquipmentsEmbeddable.fromEmbeddableFilterEquipments(this.getVariableShuntCompensators()))
                 .reactiveSlacksThreshold(this.getReactiveSlacksThreshold())
+                .updateBusVoltage(this.isUpdateBusVoltage())
             .build();
     }
 }
