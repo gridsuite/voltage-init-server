@@ -113,15 +113,15 @@ public class VoltageInitParametersService {
         boolean isLowVoltageLimitDefaultSet = voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) && voltageLevelDefaultLimits.get(voltageLevel.getId()).getLowVoltageLimit() != null;
         boolean isHighVoltageLimitDefaultSet = voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) && voltageLevelDefaultLimits.get(voltageLevel.getId()).getHighVoltageLimit() != null;
 
-        final CountVoltageLimit counterToIncrement = generateLowVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isLowVoltageLimitModificationSet, isLowVoltageLimitDefaultSet, voltageLevel, voltageLevelsIdsRestricted)
-                .merge(generateHighVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isHighVoltageLimitModificationSet, isHighVoltageLimitDefaultSet, voltageLevel));
-        switch (counterToIncrement) {
-            case DEFAULT -> counterMissingVoltageLimits.increment();
-            case MODIFICATION -> counterVoltageLimitModifications.increment();
-            case BOTH -> {
-                counterMissingVoltageLimits.increment();
-                counterVoltageLimitModifications.increment();
-            }
+        final CountVoltageLimit counterToIncrement1 = generateLowVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isLowVoltageLimitModificationSet, isLowVoltageLimitDefaultSet, voltageLevel, voltageLevelsIdsRestricted);
+        final CountVoltageLimit counterToIncrement2 = generateHighVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isHighVoltageLimitModificationSet, isHighVoltageLimitDefaultSet, voltageLevel);
+        if ((counterToIncrement1 == CountVoltageLimit.DEFAULT || counterToIncrement1 == CountVoltageLimit.BOTH) ||
+            (counterToIncrement2 == CountVoltageLimit.DEFAULT || counterToIncrement2 == CountVoltageLimit.BOTH)) {
+            counterMissingVoltageLimits.increment();
+        }
+        if ((counterToIncrement1 == CountVoltageLimit.MODIFICATION || counterToIncrement1 == CountVoltageLimit.BOTH) ||
+            (counterToIncrement2 == CountVoltageLimit.MODIFICATION || counterToIncrement2 == CountVoltageLimit.BOTH)) {
+            counterVoltageLimitModifications.increment();
         }
     }
 
@@ -311,6 +311,9 @@ public class VoltageInitParametersService {
         }
     }
 
+    /**
+     * We count modifications per substation only once in {@link #filterService}, not twice
+     */
     @VisibleForTesting
     enum CountVoltageLimit {
         NONE, DEFAULT, MODIFICATION, BOTH;

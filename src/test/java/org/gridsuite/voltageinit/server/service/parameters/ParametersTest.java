@@ -7,6 +7,7 @@
 package org.gridsuite.voltageinit.server.service.parameters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.commons.reporter.ReporterModel;
 import com.powsybl.iidm.network.IdentifiableType;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
@@ -36,6 +37,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.skyscreamer.jsonassert.Customization;
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -47,10 +49,12 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEnti
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -64,7 +68,6 @@ import static org.mockito.BDDMockito.given;
 
 @ExtendWith({ MockitoExtension.class, SoftAssertionsExtension.class })
 @SpringBootTest
-@DirtiesContext
 @AutoConfigureTestEntityManager
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 @Slf4j
@@ -216,6 +219,55 @@ class ParametersTest {
             // isRelative: There should have relative false overrides since voltage limit modification are applied for VLHV1
             // getLimit: The low voltage limit must be impacted by the modification of the value
             .containsOnlyOnce(new VoltageLimitOverride("VLHV1", VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 0.0));
+    }
+
+    @DisplayName("buildSpecificVoltageLimits: fourSubstations study")
+    @Test
+    void testsBuildSpecificVoltageLimitsWithFourSubstationStudy() throws Exception {
+        Mockito.reset(networkStoreService, filterService); //don't use @BeforeEach setup() situation
+
+        try (final InputStream data = this.getClass().getClassLoader().getResourceAsStream("fourSubstations_no_voltage_levels_for_S3VL1_S4VL1_S4VL2.xiidm")) {
+            network = Network.read("fourSubstations.xiidm", data);
+        }
+        final UUID networkUuid = UUID.randomUUID();
+        final String variantId = UUID.randomUUID().toString();
+        network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, variantId);
+        network.getVariantManager().setWorkingVariant(variantId);
+        given(networkStoreService.getNetwork(networkUuid, PreloadingStrategy.COLLECTION)).willReturn(network);
+
+        final UUID filterUuidS3VL1 = UUID.randomUUID();
+        final String filterIdS3VL1 = "FILTER_S3VL1";
+        final UUID filterUuidS4VL1 = UUID.randomUUID();
+        final String filterIdS4VL1 = "FILTER_S4VL1";
+        final UUID filterUuidS4VL2 = UUID.randomUUID();
+        final String filterIdS4VL2 = "FILTER_S4VL2";
+        given(filterService.exportFilters(List.of(filterUuidS3VL1), networkUuid, variantId)).willReturn(List.of(
+            new FilterEquipments(filterUuidS3VL1, filterIdS3VL1, List.of(new IdentifiableAttributes("S3VL1", IdentifiableType.VOLTAGE_LEVEL, null)), List.of())
+        ));
+        given(filterService.exportFilters(List.of(filterUuidS4VL1), networkUuid, variantId)).willReturn(List.of(
+            new FilterEquipments(filterUuidS4VL1, filterIdS4VL1, List.of(new IdentifiableAttributes("S4VL1", IdentifiableType.VOLTAGE_LEVEL, null)), List.of())
+        ));
+        given(filterService.exportFilters(List.of(filterUuidS4VL2), networkUuid, variantId)).willReturn(List.of(
+            new FilterEquipments(filterUuidS4VL2, filterIdS4VL2, List.of(new IdentifiableAttributes("S4VL2", IdentifiableType.VOLTAGE_LEVEL, null)), List.of())
+        ));
+
+        final VoltageLimitEntity vl1 = new VoltageLimitEntity(null, 50.0, 500.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(filterUuidS3VL1, filterIdS3VL1)));
+        final VoltageLimitEntity vl2 = new VoltageLimitEntity(null, 60.0, 600.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(filterUuidS4VL1, filterIdS4VL1)));
+        final VoltageLimitEntity vl3 = new VoltageLimitEntity(null, 70.0, 700.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(filterUuidS4VL2, filterIdS4VL2)));
+        final VoltageLimitEntity vl4 = new VoltageLimitEntity(null, -20.0, 10.0, 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(filterUuidS3VL1, filterIdS3VL1)));
+        final VoltageInitParametersEntity voltageInitParameters = entityManager.persistFlushFind(
+            new VoltageInitParametersEntity(null, null, "", List.of(vl1, vl2, vl3, vl4), null, null, null)
+        );
+
+        final VoltageInitRunContext context = new VoltageInitRunContext(networkUuid, variantId, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
+        final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
+        if (log.isDebugEnabled()) {
+            log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getRootReporter()));
+            final Writer writer = new StringWriter();
+            ((ReporterModel) context.getRootReporter()).export(writer);
+            log.debug("openReac report: {}", writer.toString());
+        }
+        JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString("reporter_fourSubstations_noVoltageLimits.json"), mapper.writeValueAsString(context.getRootReporter()), REPORTER_COMPARATOR);
     }
 
     @DisplayName("CountVoltageLimit.merge()")
