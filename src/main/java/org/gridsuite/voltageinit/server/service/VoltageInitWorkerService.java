@@ -7,6 +7,7 @@
 package org.gridsuite.voltageinit.server.service;
 
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.AtomicDouble;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.reporter.Report;
 import com.powsybl.commons.reporter.Reporter;
@@ -48,6 +49,7 @@ import java.util.stream.Collectors;
 import static org.gridsuite.voltageinit.server.service.NotificationService.CANCEL_MESSAGE;
 import static org.gridsuite.voltageinit.server.service.NotificationService.FAIL_MESSAGE;
 import static org.gridsuite.voltageinit.server.service.NotificationService.REACTIVE_SLACKS_OVER_THRESHOLD;
+import static org.gridsuite.voltageinit.server.service.VoltageInitService.DEFAULT_REACTIVE_SLACKS_THRESHOLD;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -133,17 +135,16 @@ public class VoltageInitWorkerService {
     private Pair<String, Double> checkReactiveSlacksOverThreshold(OpenReacResult openReacResult, UUID parametersUuid, Reporter reporter) {
         Pair<String, Double> result = null;
         VoltageInitParametersInfos param = parametersUuid != null ? voltageInitParametersService.getParameters(parametersUuid) : null;
-        if (param != null) {
-            long count = openReacResult.getReactiveSlacks().stream().filter(r -> Math.abs(r.slack) > param.getReactiveSlacksThreshold()).count();
-            if (count > 0) {
-                reporter.report(Report.builder()
-                    .withKey("reactiveSlacksOverThreshold")
-                    .withDefaultMessage("Reactive slack exceeds ${threshold} MVar for at least one bus")
-                    .withValue("threshold", param.getReactiveSlacksThreshold())
-                    .withSeverity(TypedValue.WARN_SEVERITY)
-                    .build());
-                result = Pair.of(REACTIVE_SLACKS_OVER_THRESHOLD, param.getReactiveSlacksThreshold());
-            }
+        AtomicDouble reactiveSlacksThreshold = new AtomicDouble(param != null ? param.getReactiveSlacksThreshold() : DEFAULT_REACTIVE_SLACKS_THRESHOLD);
+        long count = openReacResult.getReactiveSlacks().stream().filter(r -> Math.abs(r.slack) > reactiveSlacksThreshold.get()).count();
+        if (count > 0) {
+            reporter.report(Report.builder()
+                .withKey("reactiveSlacksOverThreshold")
+                .withDefaultMessage("Reactive slack exceeds ${threshold} MVar for at least one bus")
+                .withValue("threshold", reactiveSlacksThreshold.get())
+                .withSeverity(TypedValue.WARN_SEVERITY)
+                .build());
+            result = Pair.of(REACTIVE_SLACKS_OVER_THRESHOLD, reactiveSlacksThreshold.get());
         }
         return result;
     }
