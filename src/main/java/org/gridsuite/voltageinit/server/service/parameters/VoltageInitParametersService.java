@@ -262,7 +262,7 @@ public class VoltageInitParametersService {
                 final double initialHighVoltage = voltageLevel.getHighVoltageLimit();
                 reporter.report(Report.builder()
                         .withKey("voltageLimitModified")
-                        .withDefaultMessage("Voltage limits of ${voltageLevelId} modified: low voltage limit = ${initialLowVoltageLimit}\u202FkV → ${newLowVoltageLimit}\u202FkV, high voltage limit = ${initialHighVoltage}\u202FkV → ${newHighVoltageLimit}\u202FkV")
+                        .withDefaultMessage("Voltage limits of ${voltageLevelId} modified: low voltage limit = ${lowVoltageLimit}, high voltage limit = ${highVoltageLimit}")
                         .withTypedValue("voltageLevelId", voltageLevel.getId(), TypedValue.VOLTAGE_LEVEL)
                         .withTypedValue("lowVoltageLimit", computeRelativeVoltageLevel(initialLowVoltageLimit, voltageLimits.get(VoltageLimitType.LOW_VOLTAGE_LIMIT)), TypedValue.VOLTAGE)
                         .withTypedValue("highVoltageLimit", computeRelativeVoltageLevel(initialHighVoltage, voltageLimits.get(VoltageLimitType.HIGH_VOLTAGE_LIMIT)), TypedValue.VOLTAGE)

@@ -109,7 +109,7 @@
       "OpenReacParameters": "OpenReac parameters",
       "VoltageInit": "VoltageInit",
       "missingVoltageLimits": "Missing voltage limits of ${nbMissingVoltageLimits} voltage levels have been replaced with user-defined default values.",
-      "voltageLimitModified": "Voltage limits of ${voltageLevelId} modified: low voltage limit = ${initialLowVoltageLimit} kV → ${newLowVoltageLimit} kV, high voltage limit = ${initialHighVoltage} kV → ${newHighVoltageLimit} kV"
+      "voltageLimitModified": "Voltage limits of ${voltageLevelId} modified: low voltage limit = ${lowVoltageLimit}, high voltage limit = ${highVoltageLimit}"
     }
   }
 }
