@@ -99,8 +99,6 @@ public class VoltageInitParametersService {
         return voltageLevelLimits;
     }
 
-    @SuppressWarnings({"EnumSwitchStatementWhichMissesCases", "java:S131"})
-    // it's wanted to not have a case for NONE in switch, as we do nothing in this case
     private static void fillSpecificVoltageLimits(List<VoltageLimitOverride> specificVoltageLimits,
                                                   final MutableInt counterMissingVoltageLimits,
                                                   final MutableInt counterVoltageLimitModifications,
@@ -113,14 +111,14 @@ public class VoltageInitParametersService {
         boolean isLowVoltageLimitDefaultSet = voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) && voltageLevelDefaultLimits.get(voltageLevel.getId()).getLowVoltageLimit() != null;
         boolean isHighVoltageLimitDefaultSet = voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) && voltageLevelDefaultLimits.get(voltageLevel.getId()).getHighVoltageLimit() != null;
 
-        final CountVoltageLimit counterToIncrement1 = generateLowVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isLowVoltageLimitModificationSet, isLowVoltageLimitDefaultSet, voltageLevel, voltageLevelsIdsRestricted);
-        final CountVoltageLimit counterToIncrement2 = generateHighVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isHighVoltageLimitModificationSet, isHighVoltageLimitDefaultSet, voltageLevel);
-        if (counterToIncrement1 == CountVoltageLimit.DEFAULT || counterToIncrement1 == CountVoltageLimit.BOTH ||
-            counterToIncrement2 == CountVoltageLimit.DEFAULT || counterToIncrement2 == CountVoltageLimit.BOTH) {
+        final CountVoltageLimit counterToIncrementLow = generateLowVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isLowVoltageLimitModificationSet, isLowVoltageLimitDefaultSet, voltageLevel, voltageLevelsIdsRestricted);
+        final CountVoltageLimit counterToIncrementHigh = generateHighVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isHighVoltageLimitModificationSet, isHighVoltageLimitDefaultSet, voltageLevel);
+        if (counterToIncrementLow == CountVoltageLimit.DEFAULT || counterToIncrementLow == CountVoltageLimit.BOTH ||
+            counterToIncrementHigh == CountVoltageLimit.DEFAULT || counterToIncrementHigh == CountVoltageLimit.BOTH) {
             counterMissingVoltageLimits.increment();
         }
-        if (counterToIncrement1 == CountVoltageLimit.MODIFICATION || counterToIncrement1 == CountVoltageLimit.BOTH ||
-            counterToIncrement2 == CountVoltageLimit.MODIFICATION || counterToIncrement2 == CountVoltageLimit.BOTH) {
+        if (counterToIncrementLow == CountVoltageLimit.MODIFICATION || counterToIncrementLow == CountVoltageLimit.BOTH ||
+            counterToIncrementHigh == CountVoltageLimit.MODIFICATION || counterToIncrementHigh == CountVoltageLimit.BOTH) {
             counterVoltageLimitModifications.increment();
         }
     }
@@ -251,9 +249,9 @@ public class VoltageInitParametersService {
                 (map, voltageLimitOverride) -> map
                     .computeIfAbsent(voltageLimitOverride.getVoltageLevelId(), key -> new EnumMap<>(VoltageLimitType.class))
                     .put(voltageLimitOverride.getVoltageLimitType(), voltageLimitOverride),
-                (map, map2) -> map2.forEach((id, newLimits) -> map.merge(id, newLimits, (nl1, nl2) -> {
-                    nl1.putAll(nl2);
-                    return nl1;
+                (map, map2) -> map2.forEach((id, newLimits) -> map.merge(id, newLimits, (newLimit1, newLimit2) -> {
+                    newLimit1.putAll(newLimit2);
+                    return newLimit1;
                 })
             ))
             .forEach((id, voltageLimits) -> {
