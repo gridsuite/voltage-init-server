@@ -155,9 +155,9 @@ public class VoltageInitParametersService {
             }
             specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitType.LOW_VOLTAGE_LIMIT, false, newLowVoltageLimit));
             if (isLowVoltageLimitModificationSet) {
-                return CountVoltageLimit.DEFAULT;
-            } else {
                 return CountVoltageLimit.BOTH;
+            } else {
+                return CountVoltageLimit.DEFAULT;
             }
         } else {
             return CountVoltageLimit.NONE;
@@ -306,6 +306,7 @@ public class VoltageInitParametersService {
     private static String voltageToString(double voltage) {
         return Double.isNaN(voltage) ? Double.toString(voltage) : voltage + "\u202FkV";
     }
+
     private static String computeRelativeVoltageLevel(final double initialVoltageLimit, @Nullable final VoltageLimitOverride override) {
         if (override == null) {
             return voltageToString(initialVoltageLimit);
