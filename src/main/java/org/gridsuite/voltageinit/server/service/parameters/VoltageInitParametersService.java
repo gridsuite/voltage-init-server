@@ -99,6 +99,8 @@ public class VoltageInitParametersService {
         return voltageLevelLimits;
     }
 
+    @SuppressWarnings({"EnumSwitchStatementWhichMissesCases", "java:S131"})
+    // it's wanted to not have a case for NONE in switch, as we do nothing in this case
     private static void fillSpecificVoltageLimits(List<VoltageLimitOverride> specificVoltageLimits,
                                                   final MutableInt counterMissingVoltageLimits,
                                                   final MutableInt counterVoltageLimitModifications,
@@ -111,8 +113,9 @@ public class VoltageInitParametersService {
         boolean isLowVoltageLimitDefaultSet = voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) && voltageLevelDefaultLimits.get(voltageLevel.getId()).getLowVoltageLimit() != null;
         boolean isHighVoltageLimitDefaultSet = voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) && voltageLevelDefaultLimits.get(voltageLevel.getId()).getHighVoltageLimit() != null;
 
-        switch (generateLowVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isLowVoltageLimitModificationSet, isLowVoltageLimitDefaultSet, voltageLevel, voltageLevelsIdsRestricted)
-            .merge(generateHighVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isHighVoltageLimitModificationSet, isHighVoltageLimitDefaultSet, voltageLevel))) {
+        final CountVoltageLimit counterToIncrement = generateLowVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isLowVoltageLimitModificationSet, isLowVoltageLimitDefaultSet, voltageLevel, voltageLevelsIdsRestricted)
+                .merge(generateHighVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isHighVoltageLimitModificationSet, isHighVoltageLimitDefaultSet, voltageLevel));
+        switch (counterToIncrement) {
             case DEFAULT -> counterMissingVoltageLimits.increment();
             case MODIFICATION -> counterVoltageLimitModifications.increment();
             case BOTH -> {
