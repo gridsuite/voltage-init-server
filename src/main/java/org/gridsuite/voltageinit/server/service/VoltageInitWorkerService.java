@@ -8,6 +8,8 @@ package org.gridsuite.voltageinit.server.service;
 
 import com.google.common.collect.Sets;
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.commons.reporter.Reporter;
+import com.powsybl.commons.reporter.ReporterModel;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
@@ -53,6 +55,8 @@ public class VoltageInitWorkerService {
 
     private static final String ERROR = "error";
     private static final String ERROR_DURING_VOLTAGE_PROFILE_INITIALISATION = "Error during voltage profile initialization";
+
+    private static final String VOLTAGE_INIT_TYPE_REPORT = "VoltageInit";
 
     private final NetworkStoreService networkStoreService;
 
@@ -115,6 +119,9 @@ public class VoltageInitWorkerService {
                 getNetwork(context.getNetworkUuid(), context.getVariantId()));
 
         if (context.getReportUuid() != null) {
+            String rootReporterId = context.getReporterId() == null ? VOLTAGE_INIT_TYPE_REPORT : context.getReporterId() + "@" + context.getReportType();
+            Reporter rootReporter = new ReporterModel(rootReporterId, rootReporterId);
+            context.setRootReporter(rootReporter.createSubReporter(context.getReportType(), VOLTAGE_INIT_TYPE_REPORT, VOLTAGE_INIT_TYPE_REPORT, context.getReportUuid().toString()));
             // Delete any previous VoltageInit computation logs
             voltageInitObserver.observe("report.delete", () ->
                     reportService.deleteReport(context.getReportUuid(), context.getReportType()));

@@ -7,8 +7,9 @@
 package org.gridsuite.voltageinit.server.service;
 
 import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.commons.reporter.ReporterModel;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,9 +19,9 @@ import java.util.UUID;
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
-@Data
+@AllArgsConstructor
+@Getter
 public class VoltageInitRunContext {
-    private static final String VOLTAGE_INIT_TYPE_REPORT = "VoltageInit";
 
     private final UUID networkUuid;
 
@@ -39,24 +40,10 @@ public class VoltageInitRunContext {
     private final UUID parametersUuid;
 
     private final Map<String, Double> voltageLevelsIdsRestricted;
-    private final Reporter rootReporter;
+    @Setter private Reporter rootReporter;
 
     public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid, Map<String, Double> voltageLevelsIdsRestricted) {
-        this.networkUuid = Objects.requireNonNull(networkUuid);
-        this.variantId = variantId;
-        this.receiver = receiver;
-        this.reportUuid = reportUuid;
-        this.reporterId = reporterId;
-        this.reportType = reportType;
-        this.userId = userId;
-        this.parametersUuid = parametersUuid;
-        this.voltageLevelsIdsRestricted = voltageLevelsIdsRestricted;
-        if (this.reportUuid == null) {
-            this.rootReporter = Reporter.NO_OP;
-        } else {
-            final String rootReporterId = reporterId == null ? VOLTAGE_INIT_TYPE_REPORT : reporterId + "@" + reportType;
-            this.rootReporter = new ReporterModel(rootReporterId, rootReporterId);
-        }
+        this(Objects.requireNonNull(networkUuid), variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, voltageLevelsIdsRestricted, Reporter.NO_OP);
     }
 
     public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid) {

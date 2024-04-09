@@ -19,10 +19,8 @@ import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride.VoltageLimitType;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Triple;
 import org.assertj.core.api.Condition;
 import org.assertj.core.api.ListAssert;
-import org.assertj.core.api.SoftAssertions;
 import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.gridsuite.voltageinit.server.dto.parameters.IdentifiableAttributes;
@@ -30,7 +28,6 @@ import org.gridsuite.voltageinit.server.entities.parameters.FilterEquipmentsEmbe
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
-import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService.CountVoltageLimit;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
 import org.gridsuite.voltageinit.utils.TestUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -150,6 +147,7 @@ class ParametersTest {
             new VoltageInitParametersEntity(null, null, "", voltageLimits, null, null, null)
         );
         final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
+        context.setRootReporter(new ReporterModel("VoltageInit", "VoltageInit"));
         final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getRootReporter()));
         JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString(reportFilename), mapper.writeValueAsString(context.getRootReporter()), REPORTER_COMPARATOR);
@@ -260,6 +258,7 @@ class ParametersTest {
         );
 
         final VoltageInitRunContext context = new VoltageInitRunContext(networkUuid, variantId, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
+        context.setRootReporter(new ReporterModel("VoltageInit", "VoltageInit"));
         final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         if (log.isDebugEnabled()) {
             log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getRootReporter()));
@@ -268,31 +267,5 @@ class ParametersTest {
             log.debug("openReac report: {}", writer.toString());
         }
         JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString("reporter_fourSubstations_noVoltageLimits.json"), mapper.writeValueAsString(context.getRootReporter()), REPORTER_COMPARATOR);
-    }
-
-    @DisplayName("CountVoltageLimit.merge()")
-    @Test
-    void testCountVoltageLimitMerge(final SoftAssertions softly) {
-        List.of(
-            Triple.ofNonNull(CountVoltageLimit.NONE, CountVoltageLimit.NONE, CountVoltageLimit.NONE),
-            Triple.ofNonNull(CountVoltageLimit.NONE, CountVoltageLimit.DEFAULT, CountVoltageLimit.DEFAULT),
-            Triple.ofNonNull(CountVoltageLimit.NONE, CountVoltageLimit.MODIFICATION, CountVoltageLimit.MODIFICATION),
-            Triple.ofNonNull(CountVoltageLimit.NONE, CountVoltageLimit.BOTH, CountVoltageLimit.BOTH),
-
-            Triple.ofNonNull(CountVoltageLimit.DEFAULT, CountVoltageLimit.NONE, CountVoltageLimit.DEFAULT),
-            Triple.ofNonNull(CountVoltageLimit.DEFAULT, CountVoltageLimit.DEFAULT, CountVoltageLimit.DEFAULT),
-            Triple.ofNonNull(CountVoltageLimit.DEFAULT, CountVoltageLimit.MODIFICATION, CountVoltageLimit.BOTH),
-            Triple.ofNonNull(CountVoltageLimit.DEFAULT, CountVoltageLimit.BOTH, CountVoltageLimit.BOTH),
-
-            Triple.ofNonNull(CountVoltageLimit.MODIFICATION, CountVoltageLimit.NONE, CountVoltageLimit.MODIFICATION),
-            Triple.ofNonNull(CountVoltageLimit.MODIFICATION, CountVoltageLimit.DEFAULT, CountVoltageLimit.BOTH),
-            Triple.ofNonNull(CountVoltageLimit.MODIFICATION, CountVoltageLimit.MODIFICATION, CountVoltageLimit.MODIFICATION),
-            Triple.ofNonNull(CountVoltageLimit.MODIFICATION, CountVoltageLimit.BOTH, CountVoltageLimit.BOTH),
-
-            Triple.ofNonNull(CountVoltageLimit.BOTH, CountVoltageLimit.NONE, CountVoltageLimit.BOTH),
-            Triple.ofNonNull(CountVoltageLimit.BOTH, CountVoltageLimit.DEFAULT, CountVoltageLimit.BOTH),
-            Triple.ofNonNull(CountVoltageLimit.BOTH, CountVoltageLimit.MODIFICATION, CountVoltageLimit.BOTH),
-            Triple.ofNonNull(CountVoltageLimit.BOTH, CountVoltageLimit.BOTH, CountVoltageLimit.BOTH)
-        ).forEach(tpl -> softly.assertThat(tpl.getLeft().merge(tpl.getMiddle())).as(tpl.getLeft() + " + " + tpl.getMiddle()).isSameAs(tpl.getRight()));
     }
 }
