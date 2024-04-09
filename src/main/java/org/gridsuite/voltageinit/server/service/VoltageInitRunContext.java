@@ -38,10 +38,10 @@ public class VoltageInitRunContext {
 
     private final UUID parametersUuid;
 
-    private final Map<String, Double> voltageLevelsIdsRestricted = new HashMap<>();
+    private final Map<String, Double> voltageLevelsIdsRestricted;
     private final Reporter rootReporter;
 
-    public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid) {
+    public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid, Map<String, Double> voltageLevelsIdsRestricted) {
         this.networkUuid = Objects.requireNonNull(networkUuid);
         this.variantId = variantId;
         this.receiver = receiver;
@@ -50,11 +50,16 @@ public class VoltageInitRunContext {
         this.reportType = reportType;
         this.userId = userId;
         this.parametersUuid = parametersUuid;
+        this.voltageLevelsIdsRestricted = voltageLevelsIdsRestricted;
         if (this.reportUuid == null) {
             this.rootReporter = Reporter.NO_OP;
         } else {
             final String rootReporterId = reporterId == null ? VOLTAGE_INIT_TYPE_REPORT : reporterId + "@" + reportType;
             this.rootReporter = new ReporterModel(rootReporterId, rootReporterId);
         }
+    }
+
+    public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid) {
+        this(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, new HashMap<>());
     }
 }
