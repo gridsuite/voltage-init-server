@@ -20,7 +20,7 @@
                 "type": "SEVERITY"
               },
               "joinedVoltageLevelsIds": {
-                "value": "VLHV2 : -10.0, VLGEN : -10.0"
+                "value": "VLHV2 : -10.0 kV, VLGEN : -10.0 kV"
               }
             }
           },

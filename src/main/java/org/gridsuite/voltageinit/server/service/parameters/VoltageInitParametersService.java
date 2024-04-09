@@ -222,18 +222,7 @@ public class VoltageInitParametersService {
                         voltageLevelModificationLimits, voltageLevelDefaultLimits,
                         voltageLevel, context.getVoltageLevelsIdsRestricted()));
 
-                if (!context.getVoltageLevelsIdsRestricted().isEmpty()) {
-                    reporter.report(Report.builder()
-                        .withKey("restrictedVoltageLevels")
-                        .withDefaultMessage("The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: ${joinedVoltageLevelsIds}")
-                        .withValue("joinedVoltageLevelsIds", context.getVoltageLevelsIdsRestricted()
-                            .entrySet()
-                            .stream()
-                            .map(entry -> entry.getKey() + " : " + entry.getValue())
-                            .collect(Collectors.joining(", ")))
-                        .withSeverity(TypedValue.WARN_SEVERITY)
-                        .build());
-                }
+                logRestrictedVoltageLevels(reporter, context.getVoltageLevelsIdsRestricted());
             }
 
             constantQGenerators.addAll(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getConstantQGenerators()));
@@ -245,7 +234,62 @@ public class VoltageInitParametersService {
             .addVariableTwoWindingsTransformers(variableTwoWindingsTransformers)
             .addVariableShuntCompensators(variableShuntCompensators);
 
-        parameters.getSpecificVoltageLimits()
+        logVoltageLimitsModified(reporter, network, parameters.getSpecificVoltageLimits());
+        logFiltersCounters(reporter, counterMissingVoltageLimits, counterVoltageLimitModifications);
+
+        //The optimizer will attach reactive slack variables to all buses
+        parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
+
+        LOGGER.info("Parameters built in {}s", TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startTime.get()));
+        return parameters;
+    }
+
+    private List<String> toEquipmentIdsList(UUID networkUuid, String variantId, List<FilterEquipmentsEmbeddable> filters) {
+        if (filters == null || filters.isEmpty()) {
+            return List.of();
+        }
+        List<FilterEquipments> equipments = filterService.exportFilters(filters.stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, variantId);
+        Set<String> ids = new HashSet<>();
+        equipments.forEach(filterEquipment ->
+            filterEquipment.getIdentifiableAttributes().forEach(identifiableAttribute ->
+                ids.add(identifiableAttribute.getId())
+            )
+        );
+        return new ArrayList<>(ids);
+    }
+
+    private static void logRestrictedVoltageLevels(final Reporter reporter, final Map<String, Double> voltageLevelsIdsRestricted) {
+        if (!voltageLevelsIdsRestricted.isEmpty()) {
+            reporter.report(Report.builder()
+                    .withKey("restrictedVoltageLevels")
+                    .withDefaultMessage("The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: ${joinedVoltageLevelsIds}")
+                    .withValue("joinedVoltageLevelsIds", voltageLevelsIdsRestricted
+                            .entrySet()
+                            .stream()
+                            .map(entry -> entry.getKey() + " : " + voltageToString(entry.getValue()))
+                            .collect(Collectors.joining(", ")))
+                    .withSeverity(TypedValue.WARN_SEVERITY)
+                    .build());
+        }
+    }
+
+    private static void logFiltersCounters(final Reporter reporter, final MutableInt counterMissingVoltageLimits, final MutableInt counterVoltageLimitModifications) {
+        reporter.report(Report.builder()
+                .withKey("missingVoltageLimits")
+                .withDefaultMessage("Missing voltage limits of ${nbMissingVoltageLimits} voltage levels have been replaced with user-defined default values.")
+                .withValue("nbMissingVoltageLimits", counterMissingVoltageLimits.longValue())
+                .withSeverity(TypedValue.INFO_SEVERITY)
+                .build());
+        reporter.report(Report.builder()
+                .withKey("voltageLimitModifications")
+                .withDefaultMessage("Voltage limits of ${nbVoltageLimitModifications} voltage levels have been modified according to user input.")
+                .withValue("nbVoltageLimitModifications", counterVoltageLimitModifications.longValue())
+                .withSeverity(TypedValue.INFO_SEVERITY)
+                .build());
+    }
+
+    private static void logVoltageLimitsModified(final Reporter reporter, final Network network, final List<VoltageLimitOverride> specificVoltageLimits) {
+        specificVoltageLimits
             .stream()
             .collect(HashMap<String, EnumMap<VoltageLimitType, VoltageLimitOverride>>::new,
                 (map, voltageLimitOverride) -> map
@@ -269,38 +313,6 @@ public class VoltageInitParametersService {
                         .withSeverity(TypedValue.TRACE_SEVERITY)
                         .build());
             });
-        reporter.report(Report.builder()
-                              .withKey("missingVoltageLimits")
-                              .withDefaultMessage("Missing voltage limits of ${nbMissingVoltageLimits} voltage levels have been replaced with user-defined default values.")
-                              .withValue("nbMissingVoltageLimits", counterMissingVoltageLimits.longValue())
-                              .withSeverity(TypedValue.INFO_SEVERITY)
-                              .build());
-        reporter.report(Report.builder()
-                              .withKey("voltageLimitModifications")
-                              .withDefaultMessage("Voltage limits of ${nbVoltageLimitModifications} voltage levels have been modified according to user input.")
-                              .withValue("nbVoltageLimitModifications", counterVoltageLimitModifications.longValue())
-                              .withSeverity(TypedValue.INFO_SEVERITY)
-                              .build());
-
-        //The optimizer will attach reactive slack variables to all buses
-        parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
-
-        LOGGER.info("Parameters built in {}s", TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startTime.get()));
-        return parameters;
-    }
-
-    private List<String> toEquipmentIdsList(UUID networkUuid, String variantId, List<FilterEquipmentsEmbeddable> filters) {
-        if (filters == null || filters.isEmpty()) {
-            return List.of();
-        }
-        List<FilterEquipments> equipments = filterService.exportFilters(filters.stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, variantId);
-        Set<String> ids = new HashSet<>();
-        equipments.forEach(filterEquipment ->
-            filterEquipment.getIdentifiableAttributes().forEach(identifiableAttribute ->
-                ids.add(identifiableAttribute.getId())
-            )
-        );
-        return new ArrayList<>(ids);
     }
 
     private static String voltageToString(double voltage) {
