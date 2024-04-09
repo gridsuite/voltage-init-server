@@ -6,6 +6,7 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
+import com.google.common.util.concurrent.AtomicDouble;
 import com.powsybl.network.store.client.NetworkStoreService;
 
 import org.gridsuite.voltageinit.server.dto.BusVoltage;
@@ -45,6 +46,8 @@ public class VoltageInitService {
 
     private final VoltageInitResultRepository resultRepository;
 
+    public static final double DEFAULT_REACTIVE_SLACKS_THRESHOLD = 500.;
+
     public VoltageInitService(NotificationService notificationService,
                               NetworkModificationService networkModificationService,
                               UuidGeneratorService uuidGeneratorService,
@@ -72,14 +75,18 @@ public class VoltageInitService {
     public VoltageInitResult getResult(UUID resultUuid, UUID parametersUuid) {
         Optional<VoltageInitResultEntity> result = resultRepository.find(resultUuid);
         VoltageInitResult voltageInitResult = result.map(VoltageInitService::fromEntity).orElse(null);
-        if (voltageInitResult != null && parametersUuid != null) {
-            VoltageInitParametersInfos param = voltageInitParametersService.getParameters(parametersUuid);
-            if (param != null) {
-                long count = voltageInitResult.getReactiveSlacks().stream().filter(r -> Math.abs(r.getSlack()) > param.getReactiveSlacksThreshold()).count();
-                if (count > 0) {
-                    voltageInitResult.setReactiveSlacksThreshold(param.getReactiveSlacksThreshold());
-                    voltageInitResult.setReactiveSlacksOverThresholdLabel(REACTIVE_SLACKS_OVER_THRESHOLD);
+        if (voltageInitResult != null) {
+            AtomicDouble reactiveSlacksThreshold = new AtomicDouble(DEFAULT_REACTIVE_SLACKS_THRESHOLD);
+            if (parametersUuid != null) {
+                VoltageInitParametersInfos param = voltageInitParametersService.getParameters(parametersUuid);
+                if (param != null) {
+                    reactiveSlacksThreshold.set(param.getReactiveSlacksThreshold());
                 }
+            }
+            long count = voltageInitResult.getReactiveSlacks().stream().filter(r -> Math.abs(r.getSlack()) > reactiveSlacksThreshold.get()).count();
+            if (count > 0) {
+                voltageInitResult.setReactiveSlacksThreshold(reactiveSlacksThreshold.get());
+                voltageInitResult.setReactiveSlacksOverThresholdLabel(REACTIVE_SLACKS_OVER_THRESHOLD);
             }
         }
         return voltageInitResult;
