@@ -118,10 +118,11 @@ public class VoltageInitWorkerService {
         Network network = voltageInitObserver.observe("network.load", () ->
                 getNetwork(context.getNetworkUuid(), context.getVariantId()));
 
+        AtomicReference<Reporter> rootReporter = new AtomicReference<>(Reporter.NO_OP);
         if (context.getReportUuid() != null) {
             String rootReporterId = context.getReporterId() == null ? VOLTAGE_INIT_TYPE_REPORT : context.getReporterId() + "@" + context.getReportType();
-            Reporter rootReporter = new ReporterModel(rootReporterId, rootReporterId);
-            context.setRootReporter(rootReporter.createSubReporter(context.getReportType(), VOLTAGE_INIT_TYPE_REPORT, VOLTAGE_INIT_TYPE_REPORT, context.getReportUuid().toString()));
+            rootReporter.set(new ReporterModel(rootReporterId, rootReporterId));
+            context.setRootReporter(rootReporter.get().createSubReporter(context.getReportType(), VOLTAGE_INIT_TYPE_REPORT, VOLTAGE_INIT_TYPE_REPORT, context.getReportUuid().toString()));
             // Delete any previous VoltageInit computation logs
             voltageInitObserver.observe("report.delete", () ->
                     reportService.deleteReport(context.getReportUuid(), context.getReportType()));
@@ -129,7 +130,7 @@ public class VoltageInitWorkerService {
         CompletableFuture<OpenReacResult> future = runVoltageInitAsync(context, network, resultUuid);
         if (context.getReportUuid() != null) {
             voltageInitObserver.observe("report.send", () ->
-                    reportService.sendReport(context.getReportUuid(), context.getRootReporter()));
+                    reportService.sendReport(context.getReportUuid(), rootReporter.get()));
         }
 
         return future == null ? Pair.of(network, null) : Pair.of(network, voltageInitObserver.observeRun("run", future::get));
