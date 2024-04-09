@@ -19,8 +19,10 @@ import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride.VoltageLimitType;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Triple;
 import org.assertj.core.api.Condition;
 import org.assertj.core.api.ListAssert;
+import org.assertj.core.api.SoftAssertions;
 import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.gridsuite.voltageinit.server.dto.parameters.IdentifiableAttributes;
@@ -28,6 +30,7 @@ import org.gridsuite.voltageinit.server.entities.parameters.FilterEquipmentsEmbe
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
+import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService.CounterToIncrement;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
 import org.gridsuite.voltageinit.utils.TestUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -77,7 +80,7 @@ class ParametersTest {
     private static final String FILTER_2 = "FILTER_2";
     private static final UUID REPORT_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
-    private static final JSONComparator REPORTER_COMPARATOR = new CustomComparator(JSONCompareMode.STRICT,
+    private static final JSONComparator REPORTER_COMPARATOR = new CustomComparator(JSONCompareMode.NON_EXTENSIBLE,
         // ignore field having uuid changing each run
         new Customization("reportTree.subReporters[*].taskValues.parameters_id.value", (o1, o2) -> (o1 == null) == (o2 == null))
     );
@@ -267,5 +270,31 @@ class ParametersTest {
             log.debug("openReac report: {}", writer.toString());
         }
         JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString("reporter_fourSubstations_noVoltageLimits.json"), mapper.writeValueAsString(context.getRootReporter()), REPORTER_COMPARATOR);
+    }
+
+    @DisplayName("CounterToIncrement.merge()")
+    @Test
+    void testCounterToIncrementMerge(final SoftAssertions softly) {
+        List.of(
+                Triple.ofNonNull(CounterToIncrement.NONE, CounterToIncrement.NONE, CounterToIncrement.NONE),
+                Triple.ofNonNull(CounterToIncrement.NONE, CounterToIncrement.DEFAULT, CounterToIncrement.DEFAULT),
+                Triple.ofNonNull(CounterToIncrement.NONE, CounterToIncrement.MODIFICATION, CounterToIncrement.MODIFICATION),
+                Triple.ofNonNull(CounterToIncrement.NONE, CounterToIncrement.BOTH, CounterToIncrement.BOTH),
+
+                Triple.ofNonNull(CounterToIncrement.DEFAULT, CounterToIncrement.NONE, CounterToIncrement.DEFAULT),
+                Triple.ofNonNull(CounterToIncrement.DEFAULT, CounterToIncrement.DEFAULT, CounterToIncrement.DEFAULT),
+                Triple.ofNonNull(CounterToIncrement.DEFAULT, CounterToIncrement.MODIFICATION, CounterToIncrement.BOTH),
+                Triple.ofNonNull(CounterToIncrement.DEFAULT, CounterToIncrement.BOTH, CounterToIncrement.BOTH),
+
+                Triple.ofNonNull(CounterToIncrement.MODIFICATION, CounterToIncrement.NONE, CounterToIncrement.MODIFICATION),
+                Triple.ofNonNull(CounterToIncrement.MODIFICATION, CounterToIncrement.DEFAULT, CounterToIncrement.BOTH),
+                Triple.ofNonNull(CounterToIncrement.MODIFICATION, CounterToIncrement.MODIFICATION, CounterToIncrement.MODIFICATION),
+                Triple.ofNonNull(CounterToIncrement.MODIFICATION, CounterToIncrement.BOTH, CounterToIncrement.BOTH),
+
+                Triple.ofNonNull(CounterToIncrement.BOTH, CounterToIncrement.NONE, CounterToIncrement.BOTH),
+                Triple.ofNonNull(CounterToIncrement.BOTH, CounterToIncrement.DEFAULT, CounterToIncrement.BOTH),
+                Triple.ofNonNull(CounterToIncrement.BOTH, CounterToIncrement.MODIFICATION, CounterToIncrement.BOTH),
+                Triple.ofNonNull(CounterToIncrement.BOTH, CounterToIncrement.BOTH, CounterToIncrement.BOTH)
+        ).forEach(tpl -> softly.assertThat(tpl.getLeft().merge(tpl.getMiddle())).as(tpl.getLeft() + " + " + tpl.getMiddle()).isSameAs(tpl.getRight()));
     }
 }
