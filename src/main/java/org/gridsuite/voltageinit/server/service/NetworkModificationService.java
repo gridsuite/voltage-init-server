@@ -17,7 +17,6 @@ import com.powsybl.iidm.network.ShuntCompensator;
 import com.powsybl.iidm.network.Terminal;
 import com.powsybl.iidm.network.TwoWindingsTransformer;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
-
 import org.gridsuite.voltageinit.server.dto.BusModificationInfos;
 import org.gridsuite.voltageinit.server.dto.GeneratorModificationInfos;
 import org.gridsuite.voltageinit.server.dto.ShuntCompensatorModificationInfos;
@@ -188,7 +187,8 @@ public class NetworkModificationService {
                     if (bus != null) {
                         BusModificationInfos.BusModificationInfosBuilder builder = BusModificationInfos.builder()
                             .busId(busId)
-                            .v(voltage.getFirst() * bus.getVoltageLevel().getNominalV());
+                            .v(voltage.getFirst() * bus.getVoltageLevel().getNominalV())
+                            .angle(Math.toDegrees(voltage.getSecond()));
                         voltageInitModificationInfos.addBusModification(builder.build());
                     }
                 });

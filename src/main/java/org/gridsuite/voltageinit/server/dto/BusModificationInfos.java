@@ -22,4 +22,7 @@ public class BusModificationInfos {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Double v;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Double angle;
 }
