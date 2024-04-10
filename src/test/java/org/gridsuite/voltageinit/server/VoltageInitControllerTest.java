@@ -76,11 +76,10 @@ import java.util.concurrent.ForkJoinPool;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
 import static org.gridsuite.voltageinit.server.service.NotificationService.CANCEL_MESSAGE;
-import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_REACTIVE_SLACKS_OVER_THRESHOLD_LABEL;
+import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_REACTIVE_SLACKS_OVER_THRESHOLD;
 import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_REACTIVE_SLACKS_THRESHOLD_VALUE;
 import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_USER_ID;
 import static org.junit.Assert.*;
-import static org.gridsuite.voltageinit.server.service.NotificationService.REACTIVE_SLACKS_OVER_THRESHOLD;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -377,12 +376,12 @@ public class VoltageInitControllerTest {
             assertEquals(INDICATORS, resultDto.getIndicators());
             assertEquals(MODIFICATIONS_GROUP_UUID, resultDto.getModificationsGroupUuid());
             assertEquals(100., resultDto.getReactiveSlacksThreshold(), 0.001);
-            assertEquals(REACTIVE_SLACKS_OVER_THRESHOLD, resultDto.getReactiveSlacksOverThresholdLabel());
+            assertTrue(resultDto.isReactiveSlacksOverThreshold());
 
             resultMessage = output.receive(TIMEOUT, "voltageinit.result");
             assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
-            assertEquals(REACTIVE_SLACKS_OVER_THRESHOLD, resultMessage.getHeaders().get(HEADER_REACTIVE_SLACKS_OVER_THRESHOLD_LABEL));
+            assertEquals(Boolean.TRUE, resultMessage.getHeaders().get(HEADER_REACTIVE_SLACKS_OVER_THRESHOLD));
             Double threshold = resultMessage.getHeaders().get(HEADER_REACTIVE_SLACKS_THRESHOLD_VALUE, Double.class);
             assertNotNull(threshold);
             assertEquals(100., threshold, 0.001);

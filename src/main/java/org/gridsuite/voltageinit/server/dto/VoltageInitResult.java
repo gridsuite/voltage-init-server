@@ -37,7 +37,7 @@ public class VoltageInitResult {
 
     private UUID modificationsGroupUuid;
 
-    private double reactiveSlacksThreshold;
+    private boolean reactiveSlacksOverThreshold;
 
-    private String reactiveSlacksOverThresholdLabel;
+    private Double reactiveSlacksThreshold;
 }

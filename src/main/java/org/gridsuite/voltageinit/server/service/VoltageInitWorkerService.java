@@ -48,7 +48,6 @@ import java.util.stream.Collectors;
 
 import static org.gridsuite.voltageinit.server.service.NotificationService.CANCEL_MESSAGE;
 import static org.gridsuite.voltageinit.server.service.NotificationService.FAIL_MESSAGE;
-import static org.gridsuite.voltageinit.server.service.NotificationService.REACTIVE_SLACKS_OVER_THRESHOLD;
 import static org.gridsuite.voltageinit.server.service.VoltageInitService.DEFAULT_REACTIVE_SLACKS_THRESHOLD;
 
 /**
@@ -132,8 +131,8 @@ public class VoltageInitWorkerService {
         }
     }
 
-    private Pair<String, Double> checkReactiveSlacksOverThreshold(OpenReacResult openReacResult, UUID parametersUuid, Reporter reporter) {
-        Pair<String, Double> result = null;
+    private Pair<Boolean, Double> checkReactiveSlacksOverThreshold(OpenReacResult openReacResult, UUID parametersUuid, Reporter reporter) {
+        Pair<Boolean, Double> result = null;
         VoltageInitParametersInfos param = parametersUuid != null ? voltageInitParametersService.getParameters(parametersUuid) : null;
         AtomicDouble reactiveSlacksThreshold = new AtomicDouble(param != null ? param.getReactiveSlacksThreshold() : DEFAULT_REACTIVE_SLACKS_THRESHOLD);
         long count = openReacResult.getReactiveSlacks().stream().filter(r -> Math.abs(r.slack) > reactiveSlacksThreshold.get()).count();
@@ -144,7 +143,7 @@ public class VoltageInitWorkerService {
                 .withValue("threshold", reactiveSlacksThreshold.get())
                 .withSeverity(TypedValue.WARN_SEVERITY)
                 .build());
-            result = Pair.of(REACTIVE_SLACKS_OVER_THRESHOLD, reactiveSlacksThreshold.get());
+            result = Pair.of(Boolean.TRUE, reactiveSlacksThreshold.get());
         }
         return result;
     }
@@ -233,20 +232,23 @@ public class VoltageInitWorkerService {
                 if (openReacResult != null) {  // result available
                     UUID modificationsGroupUuid = createModificationGroup(openReacResult, network);
                     Map<String, Bus> networkBuses = network.getBusView().getBusStream().collect(Collectors.toMap(Bus::getId, Function.identity()));
+                    // check if at least one reactive slack over the threshold value
+                    Pair<Boolean, Double> resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(openReacResult, context.getParametersUuid(), reporter);
+                    boolean isReactiveSlacksOverThreshold = resultCheckReactiveSlacks != null ? resultCheckReactiveSlacks.getLeft() : Boolean.FALSE;
+                    Double reactiveSlacksOverThreshold = resultCheckReactiveSlacks != null ? resultCheckReactiveSlacks.getRight() : null;
+
                     voltageInitObserver.observe("results.save", () ->
-                        resultRepository.insert(resultContext.getResultUuid(), openReacResult, networkBuses, modificationsGroupUuid, openReacResult.getStatus().name()));
+                        resultRepository.insert(resultContext.getResultUuid(), openReacResult, networkBuses, modificationsGroupUuid, openReacResult.getStatus().name(),
+                            isReactiveSlacksOverThreshold, reactiveSlacksOverThreshold));
                     LOGGER.info("Status : {}", openReacResult.getStatus());
                     LOGGER.info("Reactive slacks : {}", openReacResult.getReactiveSlacks());
                     LOGGER.info("Indicators : {}", openReacResult.getIndicators());
 
-                    // check if at least one reactive slack over the threshold value
-                    Pair<String, Double> resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(openReacResult, context.getParametersUuid(), reporter);
-
                     notificationService.sendResultMessage(resultContext.getResultUuid(),
                         resultContext.getRunContext().getReceiver(),
                         resultContext.getRunContext().getUserId(),
-                        resultCheckReactiveSlacks != null ? resultCheckReactiveSlacks.getLeft() : null,
-                        resultCheckReactiveSlacks != null ? resultCheckReactiveSlacks.getRight() : null);
+                        isReactiveSlacksOverThreshold,
+                        reactiveSlacksOverThreshold);
                     LOGGER.info("Voltage initialization complete (resultUuid='{}')", resultContext.getResultUuid());
                 } else {  // result not available : stop computation request
                     if (cancelComputationRequests.get(resultContext.getResultUuid()) != null) {
