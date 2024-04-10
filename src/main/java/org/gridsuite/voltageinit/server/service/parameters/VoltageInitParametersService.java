@@ -158,12 +158,10 @@ public class VoltageInitParametersService {
             specificVoltageLimits.add(new VoltageLimitOverride(voltageLevel.getId(), VoltageLimitType.LOW_VOLTAGE_LIMIT, false, newLowVoltageLimit));
             if (isLowVoltageLimitModificationSet) {
                 return CounterToIncrement.BOTH;
-            } else {
-                return CounterToIncrement.DEFAULT;
             }
-        } else {
-            return CounterToIncrement.NONE;
+            return CounterToIncrement.DEFAULT;
         }
+        return CounterToIncrement.NONE;
     }
 
     private static CounterToIncrement generateHighVoltageLimit(List<VoltageLimitOverride> specificVoltageLimits,
