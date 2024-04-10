@@ -8,10 +8,8 @@ package org.gridsuite.voltageinit.server.service;
 
 import com.google.common.collect.Sets;
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.commons.reporter.Report;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
-import com.powsybl.commons.reporter.TypedValue;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
@@ -113,21 +111,6 @@ public class VoltageInitWorkerService {
         return network;
     }
 
-    public static void addRestrictedVoltageLevelReport(Map<String, Double> voltageLevelsIdsRestricted, Reporter reporter) {
-        if (!voltageLevelsIdsRestricted.isEmpty()) {
-            String joinedVoltageLevelsIds = voltageLevelsIdsRestricted.entrySet()
-                    .stream()
-                    .map(entry -> entry.getKey() + " : " + entry.getValue())
-                    .collect(Collectors.joining(", "));
-
-            reporter.report(Report.builder()
-                    .withKey("restrictedVoltageLevels")
-                    .withDefaultMessage(String.format("The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: %s", joinedVoltageLevelsIds))
-                    .withSeverity(TypedValue.WARN_SEVERITY)
-                    .build());
-        }
-    }
-
     private Pair<Network, OpenReacResult> run(VoltageInitRunContext context, UUID resultUuid) throws Exception {
         Objects.requireNonNull(context);
 
@@ -136,18 +119,16 @@ public class VoltageInitWorkerService {
                 getNetwork(context.getNetworkUuid(), context.getVariantId()));
 
         AtomicReference<Reporter> rootReporter = new AtomicReference<>(Reporter.NO_OP);
-        Reporter reporter = Reporter.NO_OP;
         if (context.getReportUuid() != null) {
             String rootReporterId = context.getReporterId() == null ? VOLTAGE_INIT_TYPE_REPORT : context.getReporterId() + "@" + context.getReportType();
             rootReporter.set(new ReporterModel(rootReporterId, rootReporterId));
-            reporter = rootReporter.get().createSubReporter(context.getReportType(), VOLTAGE_INIT_TYPE_REPORT, VOLTAGE_INIT_TYPE_REPORT, context.getReportUuid().toString());
+            context.setRootReporter(rootReporter.get().createSubReporter(context.getReportType(), VOLTAGE_INIT_TYPE_REPORT, VOLTAGE_INIT_TYPE_REPORT, context.getReportUuid().toString()));
             // Delete any previous VoltageInit computation logs
             voltageInitObserver.observe("report.delete", () ->
                     reportService.deleteReport(context.getReportUuid(), context.getReportType()));
         }
         CompletableFuture<OpenReacResult> future = runVoltageInitAsync(context, network, resultUuid);
         if (context.getReportUuid() != null) {
-            addRestrictedVoltageLevelReport(context.getVoltageLevelsIdsRestricted(), reporter);
             voltageInitObserver.observe("report.send", () ->
                     reportService.sendReport(context.getReportUuid(), rootReporter.get()));
         }
