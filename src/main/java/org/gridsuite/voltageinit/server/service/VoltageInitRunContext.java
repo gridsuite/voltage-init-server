@@ -40,6 +40,7 @@ public class VoltageInitRunContext {
     private final UUID parametersUuid;
 
     private final Map<String, Double> voltageLevelsIdsRestricted;
+
     @Setter private Reporter rootReporter;
 
     public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid, Map<String, Double> voltageLevelsIdsRestricted) {

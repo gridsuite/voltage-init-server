@@ -104,8 +104,8 @@ public class VoltageInitParametersService {
     }
 
     private static void fillSpecificVoltageLimits(List<VoltageLimitOverride> specificVoltageLimits,
-                                                  final MutableInt counterMissingVoltageLimits,
-                                                  final MutableInt counterVoltageLimitModifications,
+                                                  final MutableInt missingVoltageLimitsCounter,
+                                                  final MutableInt voltageLimitModificationsCounter,
                                                   Map<String, VoltageLimitEntity> voltageLevelModificationLimits,
                                                   Map<String, VoltageLimitEntity> voltageLevelDefaultLimits,
                                                   VoltageLevel voltageLevel,
@@ -119,11 +119,11 @@ public class VoltageInitParametersService {
         final CounterToIncrement counterToIncrementHigh = generateHighVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, isHighVoltageLimitModificationSet, isHighVoltageLimitDefaultSet, voltageLevel);
         if (counterToIncrementLow == CounterToIncrement.DEFAULT || counterToIncrementLow == CounterToIncrement.BOTH ||
             counterToIncrementHigh == CounterToIncrement.DEFAULT || counterToIncrementHigh == CounterToIncrement.BOTH) {
-            counterMissingVoltageLimits.increment();
+            missingVoltageLimitsCounter.increment();
         }
         if (counterToIncrementLow == CounterToIncrement.MODIFICATION || counterToIncrementLow == CounterToIncrement.BOTH ||
             counterToIncrementHigh == CounterToIncrement.MODIFICATION || counterToIncrementHigh == CounterToIncrement.BOTH) {
-            counterVoltageLimitModifications.increment();
+            voltageLimitModificationsCounter.increment();
         }
     }
 
@@ -204,8 +204,8 @@ public class VoltageInitParametersService {
         List<String> constantQGenerators = new ArrayList<>();
         List<String> variableTwoWindingsTransformers = new ArrayList<>();
         List<String> variableShuntCompensators = new ArrayList<>();
-        final MutableInt counterMissingVoltageLimits = new MutableInt(0);
-        final MutableInt counterVoltageLimitModifications = new MutableInt(0);
+        final MutableInt missingVoltageLimitsCounter = new MutableInt(0);
+        final MutableInt voltageLimitModificationsCounter = new MutableInt(0);
 
         voltageInitParametersEntity.ifPresent(voltageInitParameters -> {
             if (voltageInitParameters.getVoltageLimits() != null) {
@@ -220,7 +220,7 @@ public class VoltageInitParametersService {
                 network.getVoltageLevelStream()
                     .filter(voltageLevel -> voltageLevelDefaultLimits.containsKey(voltageLevel.getId()) || voltageLevelModificationLimits.containsKey(voltageLevel.getId()))
                     .forEach(voltageLevel -> fillSpecificVoltageLimits(specificVoltageLimits,
-                        counterMissingVoltageLimits, counterVoltageLimitModifications,
+                        missingVoltageLimitsCounter, voltageLimitModificationsCounter,
                         voltageLevelModificationLimits, voltageLevelDefaultLimits,
                         voltageLevel, context.getVoltageLevelsIdsRestricted()));
 
@@ -236,8 +236,8 @@ public class VoltageInitParametersService {
             .addVariableTwoWindingsTransformers(variableTwoWindingsTransformers)
             .addVariableShuntCompensators(variableShuntCompensators);
 
-        logVoltageLimitsModified(reporter, network, parameters.getSpecificVoltageLimits());
-        logVoltageLimitsModificationCounters(reporter, counterMissingVoltageLimits, counterVoltageLimitModifications);
+        logVoltageLimitsModifications(reporter, network, parameters.getSpecificVoltageLimits());
+        logVoltageLimitsModificationCounters(reporter, missingVoltageLimitsCounter, voltageLimitModificationsCounter);
 
         //The optimizer will attach reactive slack variables to all buses
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
@@ -292,7 +292,9 @@ public class VoltageInitParametersService {
                 .build());
     }
 
-    private static void logVoltageLimitsModified(final Reporter reporter, final Network network, final List<VoltageLimitOverride> specificVoltageLimits) {
+    private static void logVoltageLimitsModifications(final Reporter reporter,
+                                                      final Network network,
+                                                      final List<VoltageLimitOverride> specificVoltageLimits) {
         specificVoltageLimits
             .stream()
             .collect(HashMap<String, EnumMap<VoltageLimitType, VoltageLimitOverride>>::new,
