@@ -7,16 +7,18 @@
 package org.gridsuite.voltageinit.server.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.SuperBuilder;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
  */
-@SuperBuilder
-@Getter
-@Setter
+@Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ShuntCompensatorModificationInfos {
     private String shuntCompensatorId;
 

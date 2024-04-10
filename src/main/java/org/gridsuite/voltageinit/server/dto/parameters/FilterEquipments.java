@@ -7,7 +7,10 @@
 package org.gridsuite.voltageinit.server.dto.parameters;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,8 +18,7 @@ import java.util.UUID;
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
  */
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

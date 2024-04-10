@@ -6,24 +6,24 @@
  */
 package org.gridsuite.voltageinit.server.dto.parameters;
 
-import lombok.*;
-import lombok.experimental.SuperBuilder;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
-
-import io.swagger.v3.oas.annotations.media.Schema;
-
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
  */
-@SuperBuilder
+@Data
+@Builder
 @NoArgsConstructor
-@Getter
-@Setter
+@AllArgsConstructor
 @Schema(description = "Voltage init parameters")
 public class VoltageInitParametersInfos {
     @Schema(description = "parameters id")
@@ -35,15 +35,15 @@ public class VoltageInitParametersInfos {
     @Schema(description = "parameters name")
     private String name;
 
-    List<VoltageLimitInfos> voltageLimitsModification;
+    private List<VoltageLimitInfos> voltageLimitsModification;
 
-    List<VoltageLimitInfos> voltageLimitsDefault;
+    private List<VoltageLimitInfos> voltageLimitsDefault;
 
-    List<FilterEquipments> constantQGenerators;
+    private List<FilterEquipments> constantQGenerators;
 
-    List<FilterEquipments> variableTwoWindingsTransformers;
+    private List<FilterEquipments> variableTwoWindingsTransformers;
 
-    List<FilterEquipments> variableShuntCompensators;
+    private List<FilterEquipments> variableShuntCompensators;
 
     public VoltageInitParametersEntity toEntity() {
         return new VoltageInitParametersEntity(this);
