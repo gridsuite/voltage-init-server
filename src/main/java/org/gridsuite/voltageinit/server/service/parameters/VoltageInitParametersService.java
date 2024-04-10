@@ -237,7 +237,7 @@ public class VoltageInitParametersService {
             .addVariableShuntCompensators(variableShuntCompensators);
 
         logVoltageLimitsModified(reporter, network, parameters.getSpecificVoltageLimits());
-        logFiltersCounters(reporter, counterMissingVoltageLimits, counterVoltageLimitModifications);
+        logVoltageLimitsModificationCounters(reporter, counterMissingVoltageLimits, counterVoltageLimitModifications);
 
         //The optimizer will attach reactive slack variables to all buses
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
@@ -275,7 +275,9 @@ public class VoltageInitParametersService {
         }
     }
 
-    private static void logFiltersCounters(final Reporter reporter, final MutableInt counterMissingVoltageLimits, final MutableInt counterVoltageLimitModifications) {
+    private static void logVoltageLimitsModificationCounters(final Reporter reporter,
+                                                             final MutableInt counterMissingVoltageLimits,
+                                                             final MutableInt counterVoltageLimitModifications) {
         reporter.report(Report.builder()
                 .withKey("missingVoltageLimits")
                 .withDefaultMessage("Missing voltage limits of ${nbMissingVoltageLimits} voltage levels have been replaced with user-defined default values.")
