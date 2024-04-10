@@ -48,7 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class VoltageInitParametersService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VoltageInitParametersService.class);
-    private static final DecimalFormat DF = new DecimalFormat("0.0\u202FkV", DecimalFormatSymbols.getInstance(Locale.ROOT));
+    private static final DecimalFormat VOLTAGE_FORMAT = new DecimalFormat("0.0\u202FkV", DecimalFormatSymbols.getInstance(Locale.ROOT));
 
     private final FilterService filterService;
 
@@ -268,7 +268,7 @@ public class VoltageInitParametersService {
                     .withValue("joinedVoltageLevelsIds", voltageLevelsIdsRestricted
                             .entrySet()
                             .stream()
-                            .map(entry -> entry.getKey() + " : " + DF.format(ObjectUtils.defaultIfNull(entry.getValue(), Double.NaN)))
+                            .map(entry -> entry.getKey() + " : " + VOLTAGE_FORMAT.format(ObjectUtils.defaultIfNull(entry.getValue(), Double.NaN)))
                             .collect(Collectors.joining(", ")))
                     .withSeverity(TypedValue.WARN_SEVERITY)
                     .build());
@@ -321,10 +321,10 @@ public class VoltageInitParametersService {
 
     private static String computeRelativeVoltageLevel(final double initialVoltageLimit, @Nullable final VoltageLimitOverride override) {
         if (override == null) {
-            return DF.format(initialVoltageLimit);
+            return VOLTAGE_FORMAT.format(initialVoltageLimit);
         } else {
             double voltage = (override.isRelative() ? initialVoltageLimit : 0.0) + override.getLimit();
-            return DF.format(initialVoltageLimit) + " → " + DF.format(voltage);
+            return VOLTAGE_FORMAT.format(initialVoltageLimit) + " → " + VOLTAGE_FORMAT.format(voltage);
         }
     }
 
