@@ -7,6 +7,7 @@
 package org.gridsuite.voltageinit.server.service.parameters;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -23,6 +24,7 @@ import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride.VoltageLimitType;
 import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
 import lombok.NonNull;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.gridsuite.voltageinit.server.dto.parameters.IdentifiableAttributes;
@@ -47,7 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class VoltageInitParametersService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VoltageInitParametersService.class);
-    private static final DecimalFormat DF = new DecimalFormat("0.0");
+    private static final DecimalFormat DF = new DecimalFormat("0.0\u202FkV", DecimalFormatSymbols.getInstance(Locale.ROOT));
 
     private final FilterService filterService;
 
@@ -271,7 +273,7 @@ public class VoltageInitParametersService {
                     .withValue("joinedVoltageLevelsIds", voltageLevelsIdsRestricted
                             .entrySet()
                             .stream()
-                            .map(entry -> entry.getKey() + " : " + voltageToString(entry.getValue()))
+                            .map(entry -> entry.getKey() + " : " + DF.format(ObjectUtils.defaultIfNull(entry.getValue(), Double.NaN)))
                             .collect(Collectors.joining(", ")))
                     .withSeverity(TypedValue.WARN_SEVERITY)
                     .build());
@@ -305,15 +307,12 @@ public class VoltageInitParametersService {
                 .build());
     }
 
-    private static String voltageToString(double voltage) {
-        return Double.isNaN(voltage) ? DF.format(voltage) : voltage + "\u202FkV";
-    }
-
     private static String computeRelativeVoltageLevel(final double initialVoltageLimit, @Nullable final VoltageLimitOverride override) {
         if (override == null) {
-            return voltageToString(initialVoltageLimit);
+            return DF.format(initialVoltageLimit);
         } else {
-            return voltageToString(initialVoltageLimit) + " → " + voltageToString((override.isRelative() ? initialVoltageLimit : 0.0) + override.getLimit());
+            double voltage = (override.isRelative() ? initialVoltageLimit : 0.0) + override.getLimit();
+            return DF.format(initialVoltageLimit) + " → " + DF.format(voltage);
         }
     }
 
