@@ -43,7 +43,6 @@ public class NotificationService {
     public static final String HEADER_USER_ID = "userId";
     public static final String HEADER_REACTIVE_SLACKS_OVER_THRESHOLD = "REACTIVE_SLACKS_OVER_THRESHOLD";
     public static final String HEADER_REACTIVE_SLACKS_THRESHOLD_VALUE = "reactiveSlacksThreshold";
-    public static final String REACTIVE_SLACKS_OVER_THRESHOLD = "REACTIVE_SLACKS_OVER_THRESHOLD";
 
     public static final String SENDING_MESSAGE = "Sending message : {}";
 
