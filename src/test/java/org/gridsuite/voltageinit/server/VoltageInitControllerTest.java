@@ -353,11 +353,19 @@ public class VoltageInitControllerTest {
                 .andExpect(status().isOk());
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                 .andExpect(status().isNotFound());
+        }
+    }
+
+    @Test
+    public void runWithReactiveSlacksOverThresholdTest() throws Exception {
+        try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
+            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class)))
+                .thenReturn(completableFutureResultsTask);
 
             // run with parameters and at least one reactive slack over the threshold value
             parametersRepository.save(buildVoltageInitParametersEntity());
             UUID parametersUuid = parametersRepository.findAll().get(0).getId();
-            result = mockMvc.perform(post(
+            MvcResult result = mockMvc.perform(post(
                     "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID + "&parametersUuid=" + parametersUuid, NETWORK_UUID)
                     .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
@@ -371,14 +379,14 @@ public class VoltageInitControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
-            resultDto = mapper.readValue(result.getResponse().getContentAsString(), VoltageInitResult.class);
+            VoltageInitResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), VoltageInitResult.class);
             assertEquals(RESULT_UUID, resultDto.getResultUuid());
             assertEquals(INDICATORS, resultDto.getIndicators());
             assertEquals(MODIFICATIONS_GROUP_UUID, resultDto.getModificationsGroupUuid());
             assertEquals(100., resultDto.getReactiveSlacksThreshold(), 0.001);
             assertTrue(resultDto.isReactiveSlacksOverThreshold());
 
-            resultMessage = output.receive(TIMEOUT, "voltageinit.result");
+            Message<byte[]> resultMessage = output.receive(TIMEOUT, "voltageinit.result");
             assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
             assertEquals(Boolean.TRUE, resultMessage.getHeaders().get(HEADER_REACTIVE_SLACKS_OVER_THRESHOLD));

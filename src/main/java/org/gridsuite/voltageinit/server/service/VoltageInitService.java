@@ -39,8 +39,6 @@ public class VoltageInitService {
 
     private final VoltageInitResultRepository resultRepository;
 
-    public static final double DEFAULT_REACTIVE_SLACKS_THRESHOLD = 500.;
-
     public VoltageInitService(NotificationService notificationService,
                               NetworkModificationService networkModificationService,
                               UuidGeneratorService uuidGeneratorService,
