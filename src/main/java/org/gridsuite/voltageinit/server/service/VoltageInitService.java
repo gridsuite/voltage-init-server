@@ -52,7 +52,7 @@ public class VoltageInitService {
     }
 
     public UUID runAndSaveResult(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String userId, String reportType, UUID parametersUuid) {
-        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, new HashMap<>());
+        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid);
         Objects.requireNonNull(runContext);
         var resultUuid = uuidGeneratorService.generate();
 

@@ -116,21 +116,6 @@ public class VoltageInitWorkerService {
         return network;
     }
 
-    public static void addRestrictedVoltageLevelReport(Map<String, Double> voltageLevelsIdsRestricted, Reporter reporter) {
-        if (!voltageLevelsIdsRestricted.isEmpty()) {
-            String joinedVoltageLevelsIds = voltageLevelsIdsRestricted.entrySet()
-                    .stream()
-                    .map(entry -> entry.getKey() + " : " + entry.getValue())
-                    .collect(Collectors.joining(", "));
-
-            reporter.report(Report.builder()
-                    .withKey("restrictedVoltageLevels")
-                    .withDefaultMessage(String.format("The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: %s", joinedVoltageLevelsIds))
-                    .withSeverity(TypedValue.WARN_SEVERITY)
-                    .build());
-        }
-    }
-
     private Pair<Boolean, Double> checkReactiveSlacksOverThreshold(OpenReacResult openReacResult, UUID parametersUuid, Reporter reporter) {
         Pair<Boolean, Double> result = null;
         VoltageInitParametersInfos param = parametersUuid != null ? voltageInitParametersService.getParameters(parametersUuid) : null;
@@ -156,6 +141,7 @@ public class VoltageInitWorkerService {
                 getNetwork(context.getNetworkUuid(), context.getVariantId()));
 
         CompletableFuture<OpenReacResult> future = runVoltageInitAsync(context, network, resultUuid);
+
         return future == null ? Pair.of(network, null) : Pair.of(network, voltageInitObserver.observeRun("run", future::get));
     }
 
@@ -210,17 +196,14 @@ public class VoltageInitWorkerService {
 
                 VoltageInitRunContext context = resultContext.getRunContext();
                 AtomicReference<Reporter> rootReporter = new AtomicReference<>(Reporter.NO_OP);
-                Reporter reporter = Reporter.NO_OP;
                 if (context.getReportUuid() != null) {
                     String rootReporterId = context.getReporterId() == null ? VOLTAGE_INIT_TYPE_REPORT : context.getReporterId() + "@" + context.getReportType();
                     rootReporter.set(new ReporterModel(rootReporterId, rootReporterId));
-                    reporter = rootReporter.get().createSubReporter(context.getReportType(), VOLTAGE_INIT_TYPE_REPORT, VOLTAGE_INIT_TYPE_REPORT, context.getReportUuid().toString());
+                    context.setRootReporter(rootReporter.get().createSubReporter(context.getReportType(), VOLTAGE_INIT_TYPE_REPORT, VOLTAGE_INIT_TYPE_REPORT, context.getReportUuid().toString()));
                     // Delete any previous VoltageInit computation logs
                     voltageInitObserver.observe("report.delete", () ->
                         reportService.deleteReport(context.getReportUuid(), context.getReportType()));
                 }
-
-                addRestrictedVoltageLevelReport(context.getVoltageLevelsIdsRestricted(), reporter);
 
                 startTime.set(System.nanoTime());
                 Pair<Network, OpenReacResult> res = run(context, resultContext.getResultUuid());
@@ -233,7 +216,7 @@ public class VoltageInitWorkerService {
                     UUID modificationsGroupUuid = createModificationGroup(openReacResult, network);
                     Map<String, Bus> networkBuses = network.getBusView().getBusStream().collect(Collectors.toMap(Bus::getId, Function.identity()));
                     // check if at least one reactive slack over the threshold value
-                    Pair<Boolean, Double> resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(openReacResult, context.getParametersUuid(), reporter);
+                    Pair<Boolean, Double> resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(openReacResult, context.getParametersUuid(), context.getRootReporter());
                     boolean isReactiveSlacksOverThreshold = resultCheckReactiveSlacks != null ? resultCheckReactiveSlacks.getLeft() : Boolean.FALSE;
                     Double reactiveSlacksOverThreshold = resultCheckReactiveSlacks != null ? resultCheckReactiveSlacks.getRight() : null;
 
