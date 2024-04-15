@@ -82,7 +82,9 @@ public class VoltageInitParametersService {
 
     @Transactional
     public double getReactiveSlacksThreshold(UUID parametersUuid) {
-        return Optional.ofNullable(parametersUuid != null ? voltageInitParametersRepository.findById(parametersUuid).map(VoltageInitParametersEntity::toVoltageInitParametersInfos).orElse(null) : null)
+        return Optional.ofNullable(parametersUuid)
+            .flatMap(voltageInitParametersRepository::findById)
+            .map(VoltageInitParametersEntity::toVoltageInitParametersInfos)
             .map(VoltageInitParametersInfos::getReactiveSlacksThreshold)
             .orElse(DEFAULT_REACTIVE_SLACKS_THRESHOLD);
     }
