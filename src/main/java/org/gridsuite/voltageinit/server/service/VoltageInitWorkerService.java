@@ -179,15 +179,17 @@ public class VoltageInitWorkerService {
         LOGGER.info(CANCEL_MESSAGE + " (resultUuid='{}')", resultUuid);
     }
 
-    private void createRootReporter(VoltageInitRunContext context) {
+    private Reporter createRootReporter(VoltageInitRunContext context) {
         if (context.getReportUuid() != null) {
             String rootReporterId = context.getReporterId() == null ? VOLTAGE_INIT_TYPE_REPORT : context.getReporterId() + "@" + context.getReportType();
             Reporter rootReporter = new ReporterModel(rootReporterId, rootReporterId);
-            context.setRootReporter(rootReporter.createSubReporter(context.getReportType(), VOLTAGE_INIT_TYPE_REPORT, VOLTAGE_INIT_TYPE_REPORT, context.getReportUuid().toString()));
+            context.setSubReporter(rootReporter.createSubReporter(context.getReportType(), VOLTAGE_INIT_TYPE_REPORT, VOLTAGE_INIT_TYPE_REPORT, context.getReportUuid().toString()));
             // Delete any previous VoltageInit computation logs
             voltageInitObserver.observe("report.delete", () ->
                 reportService.deleteReport(context.getReportUuid(), context.getReportType()));
+            return rootReporter;
         }
+        return null;
     }
 
     @Bean
@@ -199,7 +201,7 @@ public class VoltageInitWorkerService {
                 AtomicReference<Long> startTime = new AtomicReference<>();
 
                 VoltageInitRunContext context = resultContext.getRunContext();
-                createRootReporter(context);
+                Reporter rootReporter = createRootReporter(context);
 
                 startTime.set(System.nanoTime());
                 Pair<Network, OpenReacResult> res = run(context, resultContext.getResultUuid());
@@ -213,7 +215,7 @@ public class VoltageInitWorkerService {
                     Map<String, Bus> networkBuses = network.getBusView().getBusStream().collect(Collectors.toMap(Bus::getId, Function.identity()));
                     // check if at least one reactive slack over the threshold value
                     double reactiveSlacksThreshold = voltageInitParametersService.getReactiveSlacksThreshold(context.getParametersUuid());
-                    boolean resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(openReacResult, reactiveSlacksThreshold, context.getRootReporter());
+                    boolean resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(openReacResult, reactiveSlacksThreshold, context.getSubReporter());
 
                     voltageInitObserver.observe("results.save", () ->
                         resultRepository.insert(resultContext.getResultUuid(), openReacResult, networkBuses, modificationsGroupUuid, openReacResult.getStatus().name(),
@@ -236,7 +238,7 @@ public class VoltageInitWorkerService {
 
                 if (context.getReportUuid() != null) {
                     voltageInitObserver.observe("report.send", () ->
-                        reportService.sendReport(context.getReportUuid(), context.getRootReporter()));
+                        reportService.sendReport(context.getReportUuid(), rootReporter));
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

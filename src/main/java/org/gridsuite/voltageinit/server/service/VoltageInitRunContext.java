@@ -41,7 +41,7 @@ public class VoltageInitRunContext {
 
     private final Map<String, Double> voltageLevelsIdsRestricted;
 
-    @Setter private Reporter rootReporter;
+    @Setter private Reporter subReporter;
 
     public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid, Map<String, Double> voltageLevelsIdsRestricted) {
         this(Objects.requireNonNull(networkUuid), variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, voltageLevelsIdsRestricted, Reporter.NO_OP);
