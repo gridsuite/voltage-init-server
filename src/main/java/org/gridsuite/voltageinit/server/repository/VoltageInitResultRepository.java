@@ -40,7 +40,8 @@ public class VoltageInitResultRepository {
         this.resultRepository = resultRepository;
     }
 
-    private static VoltageInitResultEntity toVoltageInitResultEntity(UUID resultUuid, OpenReacResult result, Map<String, Bus> networkBuses, UUID modificationsGroupUuid) {
+    private static VoltageInitResultEntity toVoltageInitResultEntity(UUID resultUuid, OpenReacResult result, Map<String, Bus> networkBuses, UUID modificationsGroupUuid,
+                                                                     boolean isReactiveSlacksOverThreshold, Double reactiveSlacksThreshold) {
         Map<String, String> indicators = result.getIndicators();
         List<ReactiveSlackEmbeddable> reactiveSlacks = result.getReactiveSlacks().stream().map(rs ->
                 new ReactiveSlackEmbeddable(rs.getBusId(), rs.getSlack()))
@@ -58,7 +59,8 @@ public class VoltageInitResultRepository {
                 }
             }
         ).filter(Objects::nonNull).toList();
-        return new VoltageInitResultEntity(resultUuid, ZonedDateTime.now(), indicators, reactiveSlacks, busVoltages, modificationsGroupUuid);
+        return new VoltageInitResultEntity(resultUuid, ZonedDateTime.now(), indicators, reactiveSlacks, busVoltages, modificationsGroupUuid,
+                                           isReactiveSlacksOverThreshold, reactiveSlacksThreshold);
     }
 
     @Transactional
@@ -106,10 +108,11 @@ public class VoltageInitResultRepository {
     }
 
     @Transactional
-    public void insert(UUID resultUuid, OpenReacResult result, Map<String, Bus> networkBuses, UUID modificationsGroupUuid, String status) {
+    public void insert(UUID resultUuid, OpenReacResult result, Map<String, Bus> networkBuses, UUID modificationsGroupUuid,
+                       String status, boolean isReactiveSlacksOverThreshold, Double reactiveSlacksThreshold) {
         Objects.requireNonNull(resultUuid);
         if (result != null) {
-            resultRepository.save(toVoltageInitResultEntity(resultUuid, result, networkBuses, modificationsGroupUuid));
+            resultRepository.save(toVoltageInitResultEntity(resultUuid, result, networkBuses, modificationsGroupUuid, isReactiveSlacksOverThreshold, reactiveSlacksThreshold));
         }
         globalStatusRepository.save(toStatusEntity(resultUuid, status));
     }
@@ -117,6 +120,6 @@ public class VoltageInitResultRepository {
     @Transactional
     public void insertErrorResult(UUID resultUuid, Map<String, String> errorIndicators) {
         Objects.requireNonNull(resultUuid);
-        resultRepository.save(new VoltageInitResultEntity(resultUuid, ZonedDateTime.now(), errorIndicators, List.of(), List.of(), null));
+        resultRepository.save(new VoltageInitResultEntity(resultUuid, ZonedDateTime.now(), errorIndicators, List.of(), List.of(), null, false, null));
     }
 }

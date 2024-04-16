@@ -54,6 +54,8 @@ public class VoltageInitParametersService {
 
     private final VoltageInitParametersRepository voltageInitParametersRepository;
 
+    public static final double DEFAULT_REACTIVE_SLACKS_THRESHOLD = 500.;
+
     public VoltageInitParametersService(VoltageInitParametersRepository voltageInitParametersRepository, FilterService filterService) {
         this.voltageInitParametersRepository = voltageInitParametersRepository;
         this.filterService = filterService;
@@ -73,8 +75,18 @@ public class VoltageInitParametersService {
         return Optional.empty();
     }
 
+    @Transactional
     public VoltageInitParametersInfos getParameters(UUID parametersUuid) {
         return voltageInitParametersRepository.findById(parametersUuid).map(VoltageInitParametersEntity::toVoltageInitParametersInfos).orElse(null);
+    }
+
+    @Transactional
+    public double getReactiveSlacksThreshold(UUID parametersUuid) {
+        return Optional.ofNullable(parametersUuid)
+            .flatMap(voltageInitParametersRepository::findById)
+            .map(VoltageInitParametersEntity::toVoltageInitParametersInfos)
+            .map(VoltageInitParametersInfos::getReactiveSlacksThreshold)
+            .orElse(DEFAULT_REACTIVE_SLACKS_THRESHOLD);
     }
 
     public List<VoltageInitParametersInfos> getAllParameters() {
@@ -188,7 +200,7 @@ public class VoltageInitParametersService {
     @Transactional(readOnly = true)
     public OpenReacParameters buildOpenReacParameters(VoltageInitRunContext context, Network network) {
         AtomicReference<Long> startTime = new AtomicReference<>(System.nanoTime());
-        final Reporter reporter = context.getRootReporter().createSubReporter("VoltageInitParameters", "VoltageInit parameters", Map.of(
+        final Reporter reporter = context.getSubReporter().createSubReporter("VoltageInitParameters", "VoltageInit parameters", Map.of(
                 "parameters_id", new TypedValue(Objects.toString(context.getParametersUuid()), "ID")
         ));
 

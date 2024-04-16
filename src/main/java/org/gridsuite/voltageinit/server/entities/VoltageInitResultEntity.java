@@ -57,4 +57,10 @@ public class VoltageInitResultEntity {
 
     @Column
     private UUID modificationsGroupUuid;
+
+    @Column
+    private boolean reactiveSlacksOverThreshold;
+
+    @Column
+    private Double reactiveSlacksThreshold;
 }

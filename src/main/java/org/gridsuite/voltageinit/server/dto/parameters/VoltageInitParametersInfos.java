@@ -45,6 +45,8 @@ public class VoltageInitParametersInfos {
 
     List<FilterEquipments> variableShuntCompensators;
 
+    double reactiveSlacksThreshold;
+
     public VoltageInitParametersEntity toEntity() {
         return new VoltageInitParametersEntity(this);
     }
