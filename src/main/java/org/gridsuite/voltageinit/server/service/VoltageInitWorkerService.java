@@ -7,7 +7,6 @@
 package org.gridsuite.voltageinit.server.service;
 
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.AtomicDouble;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.reporter.Report;
 import com.powsybl.commons.reporter.Reporter;
@@ -48,8 +47,6 @@ import java.util.stream.Collectors;
 
 import static org.gridsuite.voltageinit.server.service.NotificationService.CANCEL_MESSAGE;
 import static org.gridsuite.voltageinit.server.service.NotificationService.FAIL_MESSAGE;
-import static org.gridsuite.voltageinit.server.service.NotificationService.REACTIVE_SLACKS_OVER_THRESHOLD;
-import static org.gridsuite.voltageinit.server.service.VoltageInitService.DEFAULT_REACTIVE_SLACKS_THRESHOLD;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -117,35 +114,17 @@ public class VoltageInitWorkerService {
         return network;
     }
 
-    public static void addRestrictedVoltageLevelReport(Map<String, Double> voltageLevelsIdsRestricted, Reporter reporter) {
-        if (!voltageLevelsIdsRestricted.isEmpty()) {
-            String joinedVoltageLevelsIds = voltageLevelsIdsRestricted.entrySet()
-                    .stream()
-                    .map(entry -> entry.getKey() + " : " + entry.getValue())
-                    .collect(Collectors.joining(", "));
-
-            reporter.report(Report.builder()
-                    .withKey("restrictedVoltageLevels")
-                    .withDefaultMessage(String.format("The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: %s", joinedVoltageLevelsIds))
-                    .withSeverity(TypedValue.WARN_SEVERITY)
-                    .build());
-        }
-    }
-
-    private Pair<String, Double> checkReactiveSlacksOverThreshold(OpenReacResult openReacResult, VoltageInitParametersInfos param, Reporter reporter) {
-        Pair<String, Double> result = null;
-        AtomicDouble reactiveSlacksThreshold = new AtomicDouble(param != null ? param.getReactiveSlacksThreshold() : DEFAULT_REACTIVE_SLACKS_THRESHOLD);
-        long count = openReacResult.getReactiveSlacks().stream().filter(r -> Math.abs(r.slack) > reactiveSlacksThreshold.get()).count();
-        if (count > 0) {
+    private boolean checkReactiveSlacksOverThreshold(OpenReacResult openReacResult, double reactiveSlacksThreshold, Reporter reporter) {
+        boolean isOverThreshold = openReacResult.getReactiveSlacks().stream().anyMatch(r -> Math.abs(r.slack) > reactiveSlacksThreshold);
+        if (isOverThreshold) {
             reporter.report(Report.builder()
                 .withKey("reactiveSlacksOverThreshold")
                 .withDefaultMessage("Reactive slack exceeds ${threshold} MVar for at least one bus")
-                .withValue("threshold", reactiveSlacksThreshold.get())
+                .withValue("threshold", reactiveSlacksThreshold)
                 .withSeverity(TypedValue.WARN_SEVERITY)
                 .build());
-            result = Pair.of(REACTIVE_SLACKS_OVER_THRESHOLD, reactiveSlacksThreshold.get());
         }
-        return result;
+        return isOverThreshold;
     }
 
     private Pair<Network, OpenReacResult> run(VoltageInitRunContext context, UUID resultUuid) throws Exception {
@@ -156,6 +135,7 @@ public class VoltageInitWorkerService {
                 getNetwork(context.getNetworkUuid(), context.getVariantId()));
 
         CompletableFuture<OpenReacResult> future = runVoltageInitAsync(context, network, resultUuid);
+
         return future == null ? Pair.of(network, null) : Pair.of(network, voltageInitObserver.observeRun("run", future::get));
     }
 
@@ -200,6 +180,19 @@ public class VoltageInitWorkerService {
         LOGGER.info(CANCEL_MESSAGE + " (resultUuid='{}')", resultUuid);
     }
 
+    private Reporter createRootReporter(VoltageInitRunContext context) {
+        if (context.getReportUuid() != null) {
+            String rootReporterId = context.getReporterId() == null ? VOLTAGE_INIT_TYPE_REPORT : context.getReporterId() + "@" + context.getReportType();
+            Reporter rootReporter = new ReporterModel(rootReporterId, rootReporterId);
+            context.setSubReporter(rootReporter.createSubReporter(context.getReportType(), VOLTAGE_INIT_TYPE_REPORT, VOLTAGE_INIT_TYPE_REPORT, context.getReportUuid().toString()));
+            // Delete any previous VoltageInit computation logs
+            voltageInitObserver.observe("report.delete", () ->
+                reportService.deleteReport(context.getReportUuid(), context.getReportType()));
+            return rootReporter;
+        }
+        return null;
+    }
+
     @Bean
     public Consumer<Message<String>> consumeRun() {
         return message -> {
@@ -209,18 +202,7 @@ public class VoltageInitWorkerService {
                 AtomicReference<Long> startTime = new AtomicReference<>();
 
                 VoltageInitRunContext context = resultContext.getRunContext();
-                AtomicReference<Reporter> rootReporter = new AtomicReference<>(Reporter.NO_OP);
-                Reporter reporter = Reporter.NO_OP;
-                if (context.getReportUuid() != null) {
-                    String rootReporterId = context.getReporterId() == null ? VOLTAGE_INIT_TYPE_REPORT : context.getReporterId() + "@" + context.getReportType();
-                    rootReporter.set(new ReporterModel(rootReporterId, rootReporterId));
-                    reporter = rootReporter.get().createSubReporter(context.getReportType(), VOLTAGE_INIT_TYPE_REPORT, VOLTAGE_INIT_TYPE_REPORT, context.getReportUuid().toString());
-                    // Delete any previous VoltageInit computation logs
-                    voltageInitObserver.observe("report.delete", () ->
-                        reportService.deleteReport(context.getReportUuid(), context.getReportType()));
-                }
-
-                addRestrictedVoltageLevelReport(context.getVoltageLevelsIdsRestricted(), reporter);
+                Reporter rootReporter = createRootReporter(context);
 
                 startTime.set(System.nanoTime());
                 Pair<Network, OpenReacResult> res = run(context, resultContext.getResultUuid());
@@ -235,20 +217,22 @@ public class VoltageInitWorkerService {
                     boolean updateBusVoltage = param == null || param.isUpdateBusVoltage();
                     UUID modificationsGroupUuid = createModificationGroup(openReacResult, network, updateBusVoltage);
                     Map<String, Bus> networkBuses = network.getBusView().getBusStream().collect(Collectors.toMap(Bus::getId, Function.identity()));
+                    // check if at least one reactive slack over the threshold value
+                    double reactiveSlacksThreshold = voltageInitParametersService.getReactiveSlacksThreshold(context.getParametersUuid());
+                    boolean resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(openReacResult, reactiveSlacksThreshold, context.getSubReporter());
+
                     voltageInitObserver.observe("results.save", () ->
-                        resultRepository.insert(resultContext.getResultUuid(), openReacResult, networkBuses, modificationsGroupUuid, openReacResult.getStatus().name()));
+                        resultRepository.insert(resultContext.getResultUuid(), openReacResult, networkBuses, modificationsGroupUuid, openReacResult.getStatus().name(),
+                            resultCheckReactiveSlacks, reactiveSlacksThreshold));
                     LOGGER.info("Status : {}", openReacResult.getStatus());
                     LOGGER.info("Reactive slacks : {}", openReacResult.getReactiveSlacks());
                     LOGGER.info("Indicators : {}", openReacResult.getIndicators());
 
-                    // check if at least one reactive slack over the threshold value
-                    Pair<String, Double> resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(openReacResult, param, reporter);
-
                     notificationService.sendResultMessage(resultContext.getResultUuid(),
                         resultContext.getRunContext().getReceiver(),
                         resultContext.getRunContext().getUserId(),
-                        resultCheckReactiveSlacks != null ? resultCheckReactiveSlacks.getLeft() : null,
-                        resultCheckReactiveSlacks != null ? resultCheckReactiveSlacks.getRight() : null);
+                        resultCheckReactiveSlacks,
+                        reactiveSlacksThreshold);
                     LOGGER.info("Voltage initialization complete (resultUuid='{}')", resultContext.getResultUuid());
                 } else {  // result not available : stop computation request
                     if (cancelComputationRequests.get(resultContext.getResultUuid()) != null) {
@@ -258,7 +242,7 @@ public class VoltageInitWorkerService {
 
                 if (context.getReportUuid() != null) {
                     voltageInitObserver.observe("report.send", () ->
-                        reportService.sendReport(context.getReportUuid(), rootReporter.get()));
+                        reportService.sendReport(context.getReportUuid(), rootReporter));
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

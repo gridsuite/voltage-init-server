@@ -76,11 +76,10 @@ import java.util.concurrent.ForkJoinPool;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
 import static org.gridsuite.voltageinit.server.service.NotificationService.CANCEL_MESSAGE;
-import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_REACTIVE_SLACKS_OVER_THRESHOLD_LABEL;
+import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_REACTIVE_SLACKS_OVER_THRESHOLD;
 import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_REACTIVE_SLACKS_THRESHOLD_VALUE;
 import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_USER_ID;
 import static org.junit.Assert.*;
-import static org.gridsuite.voltageinit.server.service.NotificationService.REACTIVE_SLACKS_OVER_THRESHOLD;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -354,11 +353,19 @@ public class VoltageInitControllerTest {
                 .andExpect(status().isOk());
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                 .andExpect(status().isNotFound());
+        }
+    }
+
+    @Test
+    public void runWithReactiveSlacksOverThresholdTest() throws Exception {
+        try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
+            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class)))
+                .thenReturn(completableFutureResultsTask);
 
             // run with parameters and at least one reactive slack over the threshold value
             parametersRepository.save(buildVoltageInitParametersEntity());
             UUID parametersUuid = parametersRepository.findAll().get(0).getId();
-            result = mockMvc.perform(post(
+            MvcResult result = mockMvc.perform(post(
                     "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID + "&parametersUuid=" + parametersUuid, NETWORK_UUID)
                     .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
@@ -372,17 +379,17 @@ public class VoltageInitControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
-            resultDto = mapper.readValue(result.getResponse().getContentAsString(), VoltageInitResult.class);
+            VoltageInitResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), VoltageInitResult.class);
             assertEquals(RESULT_UUID, resultDto.getResultUuid());
             assertEquals(INDICATORS, resultDto.getIndicators());
             assertEquals(MODIFICATIONS_GROUP_UUID, resultDto.getModificationsGroupUuid());
             assertEquals(100., resultDto.getReactiveSlacksThreshold(), 0.001);
-            assertEquals(REACTIVE_SLACKS_OVER_THRESHOLD, resultDto.getReactiveSlacksOverThresholdLabel());
+            assertTrue(resultDto.isReactiveSlacksOverThreshold());
 
-            resultMessage = output.receive(TIMEOUT, "voltageinit.result");
+            Message<byte[]> resultMessage = output.receive(TIMEOUT, "voltageinit.result");
             assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
-            assertEquals(REACTIVE_SLACKS_OVER_THRESHOLD, resultMessage.getHeaders().get(HEADER_REACTIVE_SLACKS_OVER_THRESHOLD_LABEL));
+            assertEquals(Boolean.TRUE, resultMessage.getHeaders().get(HEADER_REACTIVE_SLACKS_OVER_THRESHOLD));
             Double threshold = resultMessage.getHeaders().get(HEADER_REACTIVE_SLACKS_THRESHOLD_VALUE, Double.class);
             assertNotNull(threshold);
             assertEquals(100., threshold, 0.001);
@@ -512,3 +519,4 @@ public class VoltageInitControllerTest {
         TransactionSynchronizationManager.clearSynchronization();
     }
 }
+

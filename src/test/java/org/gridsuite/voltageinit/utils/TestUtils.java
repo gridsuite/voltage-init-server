@@ -7,11 +7,11 @@
 
 package org.gridsuite.voltageinit.utils;
 
-import com.google.common.io.ByteStreams;
-import org.junit.platform.commons.util.StringUtils;
-
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 /**
  * @author Anis Touri <anis.touri at rte-france.com>
@@ -19,10 +19,10 @@ import java.nio.charset.StandardCharsets;
 public final class TestUtils {
 
     private TestUtils() {
+        throw new RuntimeException("Utility class can't be instantiated");
     }
 
-    public static String resourceToString(String resource) throws IOException {
-        String content = new String(ByteStreams.toByteArray(TestUtils.class.getResourceAsStream(resource)), StandardCharsets.UTF_8);
-        return StringUtils.replaceWhitespaceCharacters(content, "");
+    public static String resourceToString(final String resource) throws IOException, URISyntaxException {
+        return Files.readString(Paths.get(ClassLoader.getSystemClassLoader().getResource(resource).toURI()), StandardCharsets.UTF_8).trim();
     }
 }
