@@ -519,4 +519,3 @@ public class VoltageInitControllerTest {
         TransactionSynchronizationManager.clearSynchronization();
     }
 }
-

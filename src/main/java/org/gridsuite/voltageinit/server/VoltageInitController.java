@@ -58,8 +58,7 @@ public class VoltageInitController {
     @Operation(summary = "Get a voltage init result from the database")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage init result"),
         @ApiResponse(responseCode = "404", description = "Voltage init result has not been found")})
-    public ResponseEntity<VoltageInitResult> getResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
-                                                       @Parameter(description = "parametersUuid") @RequestParam(name = "parametersUuid", required = false) UUID parametersUuid) {
+    public ResponseEntity<VoltageInitResult> getResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
         VoltageInitResult result = voltageInitService.getResult(resultUuid);
         return result != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(result)
                 : ResponseEntity.notFound().build();
