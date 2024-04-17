@@ -35,6 +35,8 @@ public class VoltageInitModificationInfos {
 
     private List<ShuntCompensatorModificationInfos> shuntCompensators = new ArrayList<>();
 
+    private List<BusModificationInfos> buses = new ArrayList<>();
+
     public void addGeneratorModification(GeneratorModificationInfos generatorModificationInfos) {
         generators.add(generatorModificationInfos);
     }
@@ -53,5 +55,9 @@ public class VoltageInitModificationInfos {
 
     public void addShuntCompensatorModification(ShuntCompensatorModificationInfos shuntCompensatorModificationInfos) {
         shuntCompensators.add(shuntCompensatorModificationInfos);
+    }
+
+    public void addBusModification(BusModificationInfos busModificationInfos) {
+        buses.add(busModificationInfos);
     }
 }

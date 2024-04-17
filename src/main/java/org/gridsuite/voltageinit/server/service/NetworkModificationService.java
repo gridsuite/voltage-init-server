@@ -17,6 +17,7 @@ import com.powsybl.iidm.network.ShuntCompensator;
 import com.powsybl.iidm.network.Terminal;
 import com.powsybl.iidm.network.TwoWindingsTransformer;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
+import org.gridsuite.voltageinit.server.dto.BusModificationInfos;
 import org.gridsuite.voltageinit.server.dto.GeneratorModificationInfos;
 import org.gridsuite.voltageinit.server.dto.ShuntCompensatorModificationInfos;
 import org.gridsuite.voltageinit.server.dto.StaticVarCompensatorModificationInfos;
@@ -92,7 +93,7 @@ public class NetworkModificationService {
         return terminal != null && terminal.getBusView().getBus() != null ? Optional.of(terminal.getBusView().getBus()) : Optional.empty();
     }
 
-    public UUID createVoltageInitModificationGroup(Network network, OpenReacResult result) {
+    public UUID createVoltageInitModificationGroup(Network network, OpenReacResult result, boolean isUpdateBusVoltage) {
         UUID modificationsGroupUuid;
 
         try {
@@ -179,6 +180,19 @@ public class NetworkModificationService {
                 voltageInitModificationInfos.addShuntCompensatorModification(builder.build());
             });
 
+            // update bus voltage
+            if (isUpdateBusVoltage) {
+                result.getVoltageProfile().forEach((busId, voltage) -> {
+                    Bus bus = network.getBusView().getBus(busId);
+                    if (bus != null) {
+                        BusModificationInfos.BusModificationInfosBuilder builder = BusModificationInfos.builder()
+                            .busId(busId)
+                            .v(voltage.getFirst() * bus.getVoltageLevel().getNominalV())
+                            .angle(Math.toDegrees(voltage.getSecond()));
+                        voltageInitModificationInfos.addBusModification(builder.build());
+                    }
+                });
+            }
             var uriComponentsBuilder = UriComponentsBuilder
                     .fromUriString(getNetworkModificationServerURI() + "groups" + DELIMITER + "modification");
             var path = uriComponentsBuilder

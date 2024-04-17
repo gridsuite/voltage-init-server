@@ -144,7 +144,7 @@ class ParametersTest {
 
     private ListAssert<VoltageLimitOverride> testsBuildSpecificVoltageLimitsCommon(List<VoltageLimitEntity> voltageLimits, String reportFilename) throws Exception {
         final VoltageInitParametersEntity voltageInitParameters = entityManager.persistFlushFind(
-            new VoltageInitParametersEntity(null, null, "", voltageLimits, null, null, null, 100.)
+            new VoltageInitParametersEntity(null, null, "", voltageLimits, null, null, null, 100., false)
         );
         final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
         context.setSubReporter(new ReporterModel("VoltageInit", "VoltageInit"));
@@ -254,7 +254,7 @@ class ParametersTest {
         final VoltageLimitEntity vl3 = new VoltageLimitEntity(null, 70.0, 700.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(filterUuidS4VL2, filterIdS4VL2)));
         final VoltageLimitEntity vl4 = new VoltageLimitEntity(null, -20.0, 10.0, 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(filterUuidS3VL1, filterIdS3VL1)));
         final VoltageInitParametersEntity voltageInitParameters = entityManager.persistFlushFind(
-            new VoltageInitParametersEntity(null, null, "", List.of(vl1, vl2, vl3, vl4), null, null, null, 100.)
+            new VoltageInitParametersEntity(null, null, "", List.of(vl1, vl2, vl3, vl4), null, null, null, 100., false)
         );
 
         final VoltageInitRunContext context = new VoltageInitRunContext(networkUuid, variantId, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
