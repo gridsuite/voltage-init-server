@@ -50,7 +50,7 @@ public class VoltageInitService {
     }
 
     public UUID runAndSaveResult(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String userId, String reportType, UUID parametersUuid) {
-        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, new HashMap<>());
+        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid);
         Objects.requireNonNull(runContext);
         var resultUuid = uuidGeneratorService.generate();
 
@@ -68,16 +68,18 @@ public class VoltageInitService {
 
     private static VoltageInitResult fromEntity(VoltageInitResultEntity resultEntity) {
         LinkedHashMap<String, String> sortedIndicators = resultEntity.getIndicators().entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (collisionValue1, collisionValue2) -> collisionValue1, LinkedHashMap::new));
+            .stream()
+            .sorted(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (collisionValue1, collisionValue2) -> collisionValue1, LinkedHashMap::new));
         List<ReactiveSlack> reactiveSlacks = resultEntity.getReactiveSlacks().stream()
-                .map(slack -> new ReactiveSlack(slack.getBusId(), slack.getSlack()))
-                .toList();
+            .map(slack -> new ReactiveSlack(slack.getBusId(), slack.getSlack()))
+            .toList();
         List<BusVoltage> busVoltages = resultEntity.getBusVoltages().stream()
             .map(bv -> new BusVoltage(bv.getBusId(), bv.getV(), bv.getAngle()))
             .toList();
-        return new VoltageInitResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), sortedIndicators, reactiveSlacks, busVoltages, resultEntity.getModificationsGroupUuid());
+        return new VoltageInitResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), sortedIndicators,
+            reactiveSlacks, busVoltages, resultEntity.getModificationsGroupUuid(), resultEntity.isReactiveSlacksOverThreshold(),
+            resultEntity.getReactiveSlacksThreshold());
     }
 
     public void deleteResult(UUID resultUuid) {

@@ -74,7 +74,7 @@ public class VoltageInitResultContext {
         return MessageBuilder.withPayload("")
                 .setHeader("resultUuid", resultUuid.toString())
                 .setHeader("networkUuid", runContext.getNetworkUuid().toString())
-                .setHeader(PARAMETERS_UUID_HEADER, runContext.getParametersUuid())
+                .setHeader(PARAMETERS_UUID_HEADER, runContext.getParametersUuid() != null ? runContext.getParametersUuid().toString() : null)
                 .setHeader(VARIANT_ID_HEADER, runContext.getVariantId())
                 .setHeader(HEADER_RECEIVER, runContext.getReceiver())
                 .setHeader(HEADER_USER_ID, runContext.getUserId())

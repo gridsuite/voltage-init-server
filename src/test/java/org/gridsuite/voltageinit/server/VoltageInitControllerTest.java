@@ -76,6 +76,8 @@ import java.util.concurrent.ForkJoinPool;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
 import static org.gridsuite.voltageinit.server.service.NotificationService.CANCEL_MESSAGE;
+import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_REACTIVE_SLACKS_OVER_THRESHOLD;
+import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_REACTIVE_SLACKS_THRESHOLD_VALUE;
 import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_USER_ID;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -166,7 +168,7 @@ public class VoltageInitControllerTest {
         voltageProfile.put("VLHV1_0", Pair.of(100., 100.));
         voltageProfile.put("VLGEN_0", Pair.of(100., 100.));
 
-        openReacAmplIOFiles.getReactiveSlackOutput().getSlacks().add(new ReactiveSlackOutput.ReactiveSlack("NGEN", "VLGEN", 10.));
+        openReacAmplIOFiles.getReactiveSlackOutput().getSlacks().add(new ReactiveSlackOutput.ReactiveSlack("NGEN", "VLGEN", 200.));
 
         openReacResult = new OpenReacResult(OpenReacStatus.OK, openReacAmplIOFiles, INDICATORS);
         return openReacResult;
@@ -210,6 +212,7 @@ public class VoltageInitControllerTest {
                     .filterId(UUID.randomUUID())
                     .filterName("vtwFilter2")
                     .build()))
+            .reactiveSlacksThreshold(100.)
             .build().toEntity();
     }
 
@@ -305,14 +308,14 @@ public class VoltageInitControllerTest {
     public void runTest() throws Exception {
         try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
             openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class)))
-                    .thenReturn(completableFutureResultsTask);
+                .thenReturn(completableFutureResultsTask);
 
             MvcResult result = mockMvc.perform(post(
-                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
-                            .header(HEADER_USER_ID, "userId"))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andReturn();
+                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                    .header(HEADER_USER_ID, "userId"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
 
             Message<byte[]> resultMessage = output.receive(TIMEOUT, "voltageinit.result");
@@ -320,10 +323,10 @@ public class VoltageInitControllerTest {
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
 
             result = mockMvc.perform(get(
-                            "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andReturn();
+                    "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
 
             VoltageInitResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), VoltageInitResult.class);
             assertEquals(RESULT_UUID, resultDto.getResultUuid());
@@ -344,24 +347,53 @@ public class VoltageInitControllerTest {
 
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
-                   .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound());
             // test one result deletion
             mockMvc.perform(delete("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
-                    .andExpect(status().isOk());
+                .andExpect(status().isOk());
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
-                    .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound());
         }
+    }
 
-        parametersRepository.save(buildVoltageInitParametersEntity());
-        UUID parametersUuid = parametersRepository.findAll().get(0).getId();
-        MvcResult result = mockMvc.perform(post(
-                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID + "&parametersUuid=" + parametersUuid, NETWORK_UUID)
-                        .header(HEADER_USER_ID, "userId"))
+    @Test
+    public void runWithReactiveSlacksOverThresholdTest() throws Exception {
+        try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
+            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class)))
+                .thenReturn(completableFutureResultsTask);
+
+            // run with parameters and at least one reactive slack over the threshold value
+            parametersRepository.save(buildVoltageInitParametersEntity());
+            UUID parametersUuid = parametersRepository.findAll().get(0).getId();
+            MvcResult result = mockMvc.perform(post(
+                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID + "&parametersUuid=" + parametersUuid, NETWORK_UUID)
+                    .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
-        assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
+            assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
 
+            result = mockMvc.perform(get(
+                    "/" + VERSION + "/results/{resultUuid}?parametersUuid=" + parametersUuid, RESULT_UUID))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+
+            VoltageInitResult resultDto = mapper.readValue(result.getResponse().getContentAsString(), VoltageInitResult.class);
+            assertEquals(RESULT_UUID, resultDto.getResultUuid());
+            assertEquals(INDICATORS, resultDto.getIndicators());
+            assertEquals(MODIFICATIONS_GROUP_UUID, resultDto.getModificationsGroupUuid());
+            assertEquals(100., resultDto.getReactiveSlacksThreshold(), 0.001);
+            assertTrue(resultDto.isReactiveSlacksOverThreshold());
+
+            Message<byte[]> resultMessage = output.receive(TIMEOUT, "voltageinit.result");
+            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
+            assertEquals("me", resultMessage.getHeaders().get("receiver"));
+            assertEquals(Boolean.TRUE, resultMessage.getHeaders().get(HEADER_REACTIVE_SLACKS_OVER_THRESHOLD));
+            Double threshold = resultMessage.getHeaders().get(HEADER_REACTIVE_SLACKS_THRESHOLD_VALUE, Double.class);
+            assertNotNull(threshold);
+            assertEquals(100., threshold, 0.001);
+        }
     }
 
     @Test

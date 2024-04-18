@@ -75,6 +75,12 @@ public class VoltageInitParametersEntity {
     )
     private List<FilterEquipmentsEmbeddable> variableShuntCompensators;
 
+    @Column(name = "reactiveSlacksThreshold")
+    private double reactiveSlacksThreshold;
+
+    @Column(name = "updateBusVoltage")
+    private boolean updateBusVoltage;
+
     public VoltageInitParametersEntity(@NonNull VoltageInitParametersInfos voltageInitParametersInfos) {
         this.date = ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS);
         assignAttributes(voltageInitParametersInfos);
@@ -104,6 +110,8 @@ public class VoltageInitParametersEntity {
         variableTwoWindingsTransformers = FilterEquipmentsEmbeddable.toEmbeddableFilterEquipments(voltageInitParametersInfos.getVariableTwoWindingsTransformers());
         variableShuntCompensators = FilterEquipmentsEmbeddable.toEmbeddableFilterEquipments(voltageInitParametersInfos.getVariableShuntCompensators());
         name = voltageInitParametersInfos.getName();
+        reactiveSlacksThreshold = voltageInitParametersInfos.getReactiveSlacksThreshold();
+        updateBusVoltage = voltageInitParametersInfos.isUpdateBusVoltage();
     }
 
     private List<VoltageLimitInfos> toVoltageLimits(List<VoltageLimitEntity> voltageLimits, VoltageLimitParameterType voltageLimitParameterType) {
@@ -132,9 +140,11 @@ public class VoltageInitParametersEntity {
                 .voltageLimitsDefault(toVoltageLimits(this.getVoltageLimits(), VoltageLimitParameterType.DEFAULT))
                 .constantQGenerators(FilterEquipmentsEmbeddable.fromEmbeddableFilterEquipments(this.getConstantQGenerators()))
                 .variableTwoWindingsTransformers(FilterEquipmentsEmbeddable.fromEmbeddableFilterEquipments(this.getVariableTwoWindingsTransformers()))
-                .variableShuntCompensators(FilterEquipmentsEmbeddable.fromEmbeddableFilterEquipments(this.getVariableShuntCompensators())).build();
+                .variableShuntCompensators(FilterEquipmentsEmbeddable.fromEmbeddableFilterEquipments(this.getVariableShuntCompensators()))
+                .reactiveSlacksThreshold(this.getReactiveSlacksThreshold())
+                .updateBusVoltage(this.isUpdateBusVoltage())
+            .build();
     }
-
 }
 
 
