@@ -242,7 +242,7 @@ public class VoltageInitParametersService {
     }
 
     private List<String> toEquipmentIdsList(UUID networkUuid, String variantId, List<FilterEquipmentsEmbeddable> filters) {
-        if (filters == null) {
+        if (filters == null || filters.isEmpty()) {
             return List.of();
         }
         return filterService.exportFilters(filters.stream().map(FilterEquipmentsEmbeddable::getFilterId).toList(), networkUuid, variantId)
