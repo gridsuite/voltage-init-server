@@ -153,12 +153,10 @@ public class VoltageInitParametersTest {
             .andExpect(status().isOk()).andReturn();
         VoltageInitParametersInfos createdParameters = parametersRepository.findAll().get(0).toVoltageInitParametersInfos();
 
-        mockMvc.perform(post(URI_PARAMETERS_BASE)
-                .param("duplicateFrom", UUID.randomUUID().toString()))
+        mockMvc.perform(post(URI_PARAMETERS_BASE + "/{sourceParameterId}", UUID.randomUUID()))
             .andExpect(status().isNotFound());
 
-        mockMvc.perform(post(URI_PARAMETERS_BASE)
-                .param("duplicateFrom", createdParameters.getUuid().toString()))
+        mockMvc.perform(post(URI_PARAMETERS_BASE + "/{sourceParameterId}", createdParameters.getUuid()))
             .andExpect(status().isOk());
 
         VoltageInitParametersInfos duplicatedParameters = parametersRepository.findAll().get(1).toVoltageInitParametersInfos();
