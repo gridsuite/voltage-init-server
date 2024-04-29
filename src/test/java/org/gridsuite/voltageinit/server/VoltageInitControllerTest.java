@@ -34,6 +34,8 @@ import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import org.gridsuite.voltageinit.server.computation.service.UuidGeneratorService;
+import org.gridsuite.voltageinit.server.computation.utils.annotations.PostCompletionAdapter;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
@@ -42,9 +44,10 @@ import org.gridsuite.voltageinit.server.dto.parameters.VoltageLimitInfos;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.gridsuite.voltageinit.server.service.NetworkModificationService;
-import org.gridsuite.voltageinit.server.service.UuidGeneratorService;
+import org.gridsuite.voltageinit.server.service.VoltageInitNotificationService;
+import org.gridsuite.voltageinit.server.service.VoltageInitResultContext;
+import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
-import org.gridsuite.voltageinit.server.util.annotations.PostCompletionAdapter;
 import org.jgrapht.alg.util.Pair;
 import org.junit.After;
 import org.junit.Before;
@@ -75,10 +78,8 @@ import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
-import static org.gridsuite.voltageinit.server.service.NotificationService.CANCEL_MESSAGE;
-import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_REACTIVE_SLACKS_OVER_THRESHOLD;
-import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_REACTIVE_SLACKS_THRESHOLD_VALUE;
-import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_USER_ID;
+import static org.gridsuite.voltageinit.server.service.VoltageInitNotificationService.*;
+import static org.gridsuite.voltageinit.server.service.VoltageInitWorkerService.COMPUTATION_TYPE;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -457,7 +458,6 @@ public class VoltageInitControllerTest {
                 .andReturn();
         assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
     }
-
     @Test
     public void stopTest() throws Exception {
         try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
@@ -468,9 +468,10 @@ public class VoltageInitControllerTest {
                             "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                             .header(HEADER_USER_ID, "userId"))
                     .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
 
+            Message<byte[]> resultMessage = output.receive(TIMEOUT, "voltageinit.result");
+            Message<byte[]> runMessage = output.receive(TIMEOUT, "voltageinit.run");
             // stop voltage init analysis
             assertNotNull(output.receive(TIMEOUT, "voltageinit.run"));
             mockMvc.perform(put("/" + VERSION + "/results/{resultUuid}/stop" + "?receiver=me", RESULT_UUID))
@@ -481,7 +482,7 @@ public class VoltageInitControllerTest {
             assertNotNull(message);
             assertEquals(RESULT_UUID.toString(), message.getHeaders().get("resultUuid"));
             assertEquals("me", message.getHeaders().get("receiver"));
-            assertEquals(CANCEL_MESSAGE, message.getHeaders().get("message"));
+            assertEquals(getCancelMessage(COMPUTATION_TYPE), message.getHeaders().get("message"));
         }
     }
 

@@ -6,6 +6,7 @@
  */
 package org.gridsuite.voltageinit.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -14,7 +15,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.ReporterModel;
-import org.gridsuite.voltageinit.server.service.ReportService;
+import org.gridsuite.voltageinit.server.computation.service.ReportService;
 import org.gridsuite.voltageinit.utils.ContextConfigurationWithTestChannel;
 import org.junit.After;
 import org.junit.Before;
@@ -58,6 +59,9 @@ public class ReportServiceTest {
     @MockBean
     private RestTemplate restTemplate;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     private void configureWireMockServer(String reportJson) {
         server.stubFor(get(urlEqualTo("/v1/reports/" + REPORT_UUID))
                 .willReturn(aResponse()
@@ -75,7 +79,7 @@ public class ReportServiceTest {
 
         configureWireMockServer(reportJson);
 
-        reportService.setReportServiceBaseUri("http://localhost:" + server.port());
+        reportService.setReportServerBaseUri("http://localhost:" + server.port());
     }
 
     @After
@@ -84,13 +88,16 @@ public class ReportServiceTest {
     }
 
     @Test
-    public void testSendReport() {
+    public void testSendReport() throws Exception {
         Reporter reporter = new ReporterModel("test", "test");
         URI expectedUri = UriComponentsBuilder
                 .fromPath(DELIMITER + REPORT_API_VERSION + "/reports/{reportUuid}")
                 .build(REPORT_UUID);
         reportService.sendReport(REPORT_UUID, reporter);
-        verify(restTemplate, times(1)).put(eq(BASE_URI + server.port() + expectedUri), eq(reporter));
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(reporter), headers);
+        verify(restTemplate, times(1)).exchange(BASE_URI + server.port() + expectedUri, HttpMethod.PUT, entity, Reporter.class);
     }
 
     @Test

@@ -198,7 +198,7 @@ public class VoltageInitParametersService {
     @Transactional(readOnly = true)
     public OpenReacParameters buildOpenReacParameters(VoltageInitRunContext context, Network network) {
         final long startTime = System.nanoTime();
-        final Reporter reporter = context.getSubReporter().createSubReporter("VoltageInitParameters", "VoltageInit parameters", Map.of(
+        final Reporter reporter = context.getReporter().createSubReporter("VoltageInitParameters", "VoltageInit parameters", Map.of(
                 "parameters_id", new TypedValue(Objects.toString(context.getParametersUuid()), "ID")
         ));
         OpenReacParameters parameters = new OpenReacParameters();

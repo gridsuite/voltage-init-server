@@ -8,12 +8,13 @@ package org.gridsuite.voltageinit.server.service;
 
 import com.powsybl.network.store.client.NetworkStoreService;
 
+import org.gridsuite.voltageinit.server.computation.service.AbstractComputationService;
+import org.gridsuite.voltageinit.server.computation.service.UuidGeneratorService;
 import org.gridsuite.voltageinit.server.dto.BusVoltage;
 import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.entities.VoltageInitResultEntity;
-import org.gridsuite.voltageinit.server.repository.VoltageInitResultRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Service;
@@ -28,41 +29,36 @@ import java.util.stream.Collectors;
  */
 @ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
-public class VoltageInitService {
-    @Autowired
-    NotificationService notificationService;
+public class VoltageInitService extends AbstractComputationService<VoltageInitRunContext, VoltageInitResultService, VoltageInitStatus> {
 
     @Autowired
     NetworkModificationService networkModificationService;
 
-    private final UuidGeneratorService uuidGeneratorService;
-
-    private final VoltageInitResultRepository resultRepository;
-
-    public VoltageInitService(NotificationService notificationService,
+    public VoltageInitService(VoltageInitNotificationService voltageInitNotificationService,
                               NetworkModificationService networkModificationService,
                               UuidGeneratorService uuidGeneratorService,
-                              VoltageInitResultRepository resultRepository) {
-        this.notificationService = Objects.requireNonNull(notificationService);
+                              VoltageInitResultService resultService) {
+        super(voltageInitNotificationService, resultService, null, uuidGeneratorService, null);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
-        this.uuidGeneratorService = Objects.requireNonNull(uuidGeneratorService);
-        this.resultRepository = Objects.requireNonNull(resultRepository);
     }
 
-    public UUID runAndSaveResult(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String userId, String reportType, UUID parametersUuid) {
-        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid);
+    public UUID runAndSaveResult(VoltageInitRunContext runContext) {
         Objects.requireNonNull(runContext);
         var resultUuid = uuidGeneratorService.generate();
 
         // update status to running status
-        setStatus(List.of(resultUuid), VoltageInitStatus.RUNNING.name());
+        setStatus(List.of(resultUuid), VoltageInitStatus.RUNNING);
         notificationService.sendRunMessage(new VoltageInitResultContext(resultUuid, runContext).toMessage());
         return resultUuid;
     }
 
+    public List<String> getProviders() {
+        return List.of();
+    }
+
     @Transactional(readOnly = true)
     public VoltageInitResult getResult(UUID resultUuid) {
-        Optional<VoltageInitResultEntity> result = resultRepository.find(resultUuid);
+        Optional<VoltageInitResultEntity> result = resultService.find(resultUuid);
         return result.map(VoltageInitService::fromEntity).orElse(null);
     }
 
@@ -82,46 +78,36 @@ public class VoltageInitService {
             resultEntity.getReactiveSlacksThreshold());
     }
 
+    @Override
     public void deleteResult(UUID resultUuid) {
-        Optional<VoltageInitResultEntity> result = resultRepository.find(resultUuid);
+        Optional<VoltageInitResultEntity> result = resultService.find(resultUuid);
         result.ifPresent(r -> {
             if (r.getModificationsGroupUuid() != null) {
                 CompletableFuture.runAsync(() -> networkModificationService.deleteModificationsGroup(r.getModificationsGroupUuid()));
             }
         });
-        resultRepository.delete(resultUuid);
+        super.deleteResult(resultUuid);
     }
 
+    @Override
     public void deleteResults() {
-        resultRepository.findAll().forEach(r -> {
+        resultService.findAll().forEach(r -> {
             if (r.getModificationsGroupUuid() != null) {
                 networkModificationService.deleteModificationsGroup(r.getModificationsGroupUuid());
             }
         });
-        resultRepository.deleteAll();
-    }
-
-    public String getStatus(UUID resultUuid) {
-        return resultRepository.findStatus(resultUuid);
-    }
-
-    public void setStatus(List<UUID> resultUuids, String status) {
-        resultRepository.insertStatus(resultUuids, status);
-    }
-
-    public void stop(UUID resultUuid, String receiver) {
-        notificationService.sendCancelMessage(new VoltageInitCancelContext(resultUuid, receiver).toMessage());
+        super.deleteResults();
     }
 
     @Transactional(readOnly = true)
     public UUID getModificationsGroupUuid(UUID resultUuid) {
-        Optional<VoltageInitResultEntity> result = resultRepository.find(resultUuid);
+        Optional<VoltageInitResultEntity> result = resultService.find(resultUuid);
         return result.map(VoltageInitResultEntity::getModificationsGroupUuid).orElse(null);
     }
 
     @Transactional
     public void resetModificationsGroupUuid(UUID resultUuid) {
-        Optional<VoltageInitResultEntity> result = resultRepository.find(resultUuid);
+        Optional<VoltageInitResultEntity> result = resultService.find(resultUuid);
         result.ifPresent(entity -> entity.setModificationsGroupUuid(null));
     }
 }

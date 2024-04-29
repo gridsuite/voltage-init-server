@@ -147,10 +147,10 @@ class ParametersTest {
             new VoltageInitParametersEntity(null, null, "", voltageLimits, null, null, null, 100., false)
         );
         final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
-        context.setSubReporter(new ReporterModel("VoltageInit", "VoltageInit"));
+        context.setReporter(new ReporterModel("VoltageInit", "VoltageInit"));
         final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
-        log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getSubReporter()));
-        JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString(reportFilename), mapper.writeValueAsString(context.getSubReporter()), REPORTER_COMPARATOR);
+        log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getReporter()));
+        JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString(reportFilename), mapper.writeValueAsString(context.getReporter()), REPORTER_COMPARATOR);
         return assertThat(openReacParameters.getSpecificVoltageLimits()).as("SpecificVoltageLimits");
     }
 
@@ -258,14 +258,14 @@ class ParametersTest {
         );
 
         final VoltageInitRunContext context = new VoltageInitRunContext(networkUuid, variantId, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
-        context.setSubReporter(new ReporterModel("VoltageInit", "VoltageInit"));
+        context.setReporter(new ReporterModel("VoltageInit", "VoltageInit"));
         final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         if (log.isDebugEnabled()) {
-            log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getSubReporter()));
+            log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getReporter()));
             final Writer writer = new StringWriter();
-            ((ReporterModel) context.getSubReporter()).export(writer);
+            ((ReporterModel) context.getReporter()).export(writer);
             log.debug("openReac report: {}", writer.toString());
         }
-        JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString("reporter_fourSubstations_noVoltageLimits.json"), mapper.writeValueAsString(context.getSubReporter()), REPORTER_COMPARATOR);
+        JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString("reporter_fourSubstations_noVoltageLimits.json"), mapper.writeValueAsString(context.getReporter()), REPORTER_COMPARATOR);
     }
 }

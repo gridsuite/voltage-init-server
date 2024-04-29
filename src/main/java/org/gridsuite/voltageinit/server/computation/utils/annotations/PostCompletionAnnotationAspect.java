@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.voltageinit.server.util.annotations;
+package org.gridsuite.voltageinit.server.computation.utils.annotations;
 
 import lombok.AllArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -13,15 +13,16 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 
 /**
- * @author Etienne Homer <etienne.homer at rte-france.com
+ * @author Anis Touri <anis.touri at rte-france.com
  */
 @Aspect
 @AllArgsConstructor
 @Component
 public class PostCompletionAnnotationAspect {
+
     private final PostCompletionAdapter postCompletionAdapter;
 
-    @Around("@annotation(org.gridsuite.voltageinit.server.util.annotations.PostCompletion)")
+    @Around("@annotation(org.gridsuite.voltageinit.server.computation.utils.annotations.PostCompletion)")
     public Object executePostCompletion(final ProceedingJoinPoint pjp) {
         postCompletionAdapter.execute(new PjpAfterCompletionRunnable(pjp));
         return null;
@@ -39,7 +40,7 @@ public class PostCompletionAnnotationAspect {
             try {
                 pjp.proceed(pjp.getArgs());
             } catch (Throwable e) {
-                throw new RuntimeException(e);
+                throw new PostCompletionException(e);
             }
         }
     }
