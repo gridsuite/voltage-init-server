@@ -77,14 +77,9 @@ public class VoltageInitResultService extends AbstractComputationResultService<V
     @Transactional
     @Override
     public void insertStatus(List<UUID> resultUuids, VoltageInitStatus status) {
-        insertStatus(resultUuids, status.name());
-    }
-
-    @Transactional
-    public void insertStatus(List<UUID> resultUuids, String status) {
         Objects.requireNonNull(resultUuids);
         globalStatusRepository.saveAll(resultUuids.stream()
-                .map(uuid -> toStatusEntity(uuid, status)).collect(Collectors.toList()));
+                .map(uuid -> toStatusEntity(uuid, status.name())).collect(Collectors.toList()));
     }
 
     private static GlobalStatusEntity toStatusEntity(UUID resultUuid, String status) {

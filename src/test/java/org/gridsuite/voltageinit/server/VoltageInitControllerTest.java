@@ -468,6 +468,7 @@ public class VoltageInitControllerTest {
                             "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                             .header(HEADER_USER_ID, "userId"))
                     .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
             // stop voltage init analysis
             assertNotNull(output.receive(TIMEOUT, "voltageinit.run"));

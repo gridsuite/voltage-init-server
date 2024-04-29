@@ -118,6 +118,12 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
         return super.consumeRun();
     }
 
+    @Bean
+    @Override
+    public Consumer<Message<String>> consumeCancel() {
+        return super.consumeCancel();
+    }
+
     @Override
     protected void saveResult(Network network, AbstractResultContext<VoltageInitRunContext> resultContext, OpenReacResult result) {
         VoltageInitRunContext context = resultContext.getRunContext();

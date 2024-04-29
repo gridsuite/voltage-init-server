@@ -52,6 +52,7 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
         return resultUuid;
     }
 
+    @Override
     public List<String> getProviders() {
         return List.of();
     }

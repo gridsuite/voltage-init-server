@@ -24,8 +24,6 @@ import static org.gridsuite.voltageinit.server.service.VoltageInitNotificationSe
 @Getter
 public class VoltageInitResultContext extends AbstractResultContext<VoltageInitRunContext> {
 
-    public static final String VARIANT_ID_HEADER = "variantId";
-
     public static final String PARAMETERS_UUID_HEADER = "parametersUuid";
 
     public static final String VOLTAGE_LEVELS_IDS_RESTRICTED = "voltageLevelsIdsRestricted";
