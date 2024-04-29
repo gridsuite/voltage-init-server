@@ -469,9 +469,6 @@ public class VoltageInitControllerTest {
                             .header(HEADER_USER_ID, "userId"))
                     .andExpect(status().isOk())
                     .andReturn();
-
-            Message<byte[]> resultMessage = output.receive(TIMEOUT, "voltageinit.result");
-            Message<byte[]> runMessage = output.receive(TIMEOUT, "voltageinit.run");
             // stop voltage init analysis
             assertNotNull(output.receive(TIMEOUT, "voltageinit.run"));
             mockMvc.perform(put("/" + VERSION + "/results/{resultUuid}/stop" + "?receiver=me", RESULT_UUID))

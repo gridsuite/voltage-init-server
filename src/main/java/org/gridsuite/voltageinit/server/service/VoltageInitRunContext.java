@@ -26,7 +26,7 @@ public class VoltageInitRunContext extends AbstractComputationRunContext<Void> {
     private final Map<String, Double> voltageLevelsIdsRestricted;
 
     public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid, Map<String, Double> voltageLevelsIdsRestricted) {
-        super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId, null, null, Reporter.NO_OP);
+        super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId, "", null, Reporter.NO_OP);
         this.parametersUuid = parametersUuid;
         this.voltageLevelsIdsRestricted = voltageLevelsIdsRestricted;
     }
