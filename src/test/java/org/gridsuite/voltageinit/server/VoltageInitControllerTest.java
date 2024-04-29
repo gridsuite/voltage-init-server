@@ -44,9 +44,6 @@ import org.gridsuite.voltageinit.server.dto.parameters.VoltageLimitInfos;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.gridsuite.voltageinit.server.service.NetworkModificationService;
-import org.gridsuite.voltageinit.server.service.VoltageInitNotificationService;
-import org.gridsuite.voltageinit.server.service.VoltageInitResultContext;
-import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.jgrapht.alg.util.Pair;
 import org.junit.After;
@@ -458,6 +455,7 @@ public class VoltageInitControllerTest {
                 .andReturn();
         assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
     }
+
     @Test
     public void stopTest() throws Exception {
         try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
