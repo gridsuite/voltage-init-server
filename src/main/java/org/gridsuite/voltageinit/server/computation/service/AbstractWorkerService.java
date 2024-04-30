@@ -113,6 +113,10 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
 
     protected abstract AbstractResultContext<R> fromMessage(Message<String> message);
 
+    protected boolean resultCanBeSaved(S result) {
+        return result != null;
+    }
+
     public Consumer<Message<String>> consumeRun() {
         return message -> {
             AbstractResultContext<R> resultContext = fromMessage(message);
@@ -127,13 +131,15 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
                 long nanoTime = System.nanoTime();
                 LOGGER.info("Just run in {}s", TimeUnit.NANOSECONDS.toSeconds(nanoTime - startTime.getAndSet(nanoTime)));
 
-                observer.observe("results.save", resultContext.getRunContext(), () -> saveResult(network, resultContext, result));
+                if (resultCanBeSaved(result)) {
+                    observer.observe("results.save", resultContext.getRunContext(), () -> saveResult(network, resultContext, result));
 
-                long finalNanoTime = System.nanoTime();
-                LOGGER.info("Stored in {}s", TimeUnit.NANOSECONDS.toSeconds(finalNanoTime - startTime.getAndSet(finalNanoTime)));
+                    long finalNanoTime = System.nanoTime();
+                    LOGGER.info("Stored in {}s", TimeUnit.NANOSECONDS.toSeconds(finalNanoTime - startTime.getAndSet(finalNanoTime)));
 
-                sendResultMessage(resultContext, result);
-                LOGGER.info("{} complete (resultUuid='{}')", getComputationType(), resultContext.getResultUuid());
+                    sendResultMessage(resultContext, result);
+                    LOGGER.info("{} complete (resultUuid='{}')", getComputationType(), resultContext.getResultUuid());
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             } catch (Exception e) {
