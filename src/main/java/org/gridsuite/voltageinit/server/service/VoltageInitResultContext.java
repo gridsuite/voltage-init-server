@@ -15,8 +15,8 @@ import org.springframework.messaging.support.MessageBuilder;
 
 import java.util.*;
 
-import static org.gridsuite.voltageinit.server.service.VoltageInitNotificationService.HEADER_RECEIVER;
-import static org.gridsuite.voltageinit.server.service.VoltageInitNotificationService.HEADER_USER_ID;
+import static org.gridsuite.voltageinit.server.computation.service.NotificationService.HEADER_RECEIVER;
+import static org.gridsuite.voltageinit.server.computation.service.NotificationService.HEADER_USER_ID;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>

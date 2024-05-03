@@ -75,8 +75,8 @@ import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
-import static org.gridsuite.voltageinit.server.service.VoltageInitNotificationService.*;
-import static org.gridsuite.voltageinit.server.service.VoltageInitWorkerService.COMPUTATION_TYPE;
+import static org.gridsuite.voltageinit.server.computation.service.NotificationService.*;
+import static org.gridsuite.voltageinit.server.service.VoltageInitWorkerService.*;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;

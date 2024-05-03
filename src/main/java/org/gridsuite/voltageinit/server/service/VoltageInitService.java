@@ -9,6 +9,7 @@ package org.gridsuite.voltageinit.server.service;
 import com.powsybl.network.store.client.NetworkStoreService;
 
 import org.gridsuite.voltageinit.server.computation.service.AbstractComputationService;
+import org.gridsuite.voltageinit.server.computation.service.NotificationService;
 import org.gridsuite.voltageinit.server.computation.service.UuidGeneratorService;
 import org.gridsuite.voltageinit.server.dto.BusVoltage;
 import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
@@ -34,11 +35,11 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
     @Autowired
     NetworkModificationService networkModificationService;
 
-    public VoltageInitService(VoltageInitNotificationService voltageInitNotificationService,
+    public VoltageInitService(NotificationService notificationService,
                               NetworkModificationService networkModificationService,
                               UuidGeneratorService uuidGeneratorService,
                               VoltageInitResultService resultService) {
-        super(voltageInitNotificationService, resultService, null, uuidGeneratorService, null);
+        super(notificationService, resultService, null, uuidGeneratorService, null);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
     }
 

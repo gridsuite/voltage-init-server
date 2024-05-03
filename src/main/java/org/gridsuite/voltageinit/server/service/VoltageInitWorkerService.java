@@ -18,10 +18,7 @@ import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
-import org.gridsuite.voltageinit.server.computation.service.AbstractResultContext;
-import org.gridsuite.voltageinit.server.computation.service.AbstractWorkerService;
-import org.gridsuite.voltageinit.server.computation.service.ExecutionService;
-import org.gridsuite.voltageinit.server.computation.service.ReportService;
+import org.gridsuite.voltageinit.server.computation.service.*;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
 import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
@@ -37,8 +34,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.gridsuite.voltageinit.server.service.VoltageInitNotificationService.HEADER_REACTIVE_SLACKS_OVER_THRESHOLD;
-import static org.gridsuite.voltageinit.server.service.VoltageInitNotificationService.HEADER_REACTIVE_SLACKS_THRESHOLD_VALUE;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -47,6 +42,8 @@ import static org.gridsuite.voltageinit.server.service.VoltageInitNotificationSe
 public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResult, VoltageInitRunContext, Void, VoltageInitResultService> {
 
     public static final String COMPUTATION_TYPE = "VoltageInit";
+    public static final String HEADER_REACTIVE_SLACKS_OVER_THRESHOLD = "REACTIVE_SLACKS_OVER_THRESHOLD";
+    public static final String HEADER_REACTIVE_SLACKS_THRESHOLD_VALUE = "reactiveSlacksThreshold";
     private static final Logger LOGGER = LoggerFactory.getLogger(VoltageInitWorkerService.class);
 
     private static final String ERROR = "error";
@@ -57,14 +54,14 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
     private final VoltageInitParametersService voltageInitParametersService;
 
     public VoltageInitWorkerService(NetworkStoreService networkStoreService,
-                                    VoltageInitNotificationService voltageInitNotificationService,
+                                    NotificationService notificationService,
                                     ExecutionService executionService,
                                     NetworkModificationService networkModificationService,
                                     VoltageInitParametersService voltageInitParametersService,
                                     VoltageInitResultService resultService,
                                     ReportService reportService,
                                     VoltageInitObserver voltageInitObserver) {
-        super(networkStoreService, voltageInitNotificationService, reportService, resultService, executionService, voltageInitObserver, null);
+        super(networkStoreService, notificationService, reportService, resultService, executionService, voltageInitObserver, null);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
         this.voltageInitParametersService = Objects.requireNonNull(voltageInitParametersService);
     }
