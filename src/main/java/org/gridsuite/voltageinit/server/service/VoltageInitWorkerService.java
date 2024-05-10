@@ -6,9 +6,8 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
-import com.powsybl.commons.reporter.Report;
-import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.commons.reporter.TypedValue;
+import com.powsybl.commons.report.ReportNode;
+import com.powsybl.commons.report.TypedValue;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -76,15 +75,14 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
         return VoltageInitResultContext.fromMessage(message);
     }
 
-    private boolean checkReactiveSlacksOverThreshold(OpenReacResult openReacResult, double reactiveSlacksThreshold, Reporter reporter) {
+    private boolean checkReactiveSlacksOverThreshold(OpenReacResult openReacResult, double reactiveSlacksThreshold, ReportNode reporter) {
         boolean isOverThreshold = openReacResult.getReactiveSlacks().stream().anyMatch(r -> Math.abs(r.slack) > reactiveSlacksThreshold);
         if (isOverThreshold) {
-            reporter.report(Report.builder()
-                    .withKey("reactiveSlacksOverThreshold")
-                    .withDefaultMessage("Reactive slack exceeds ${threshold} MVar for at least one bus")
-                    .withValue("threshold", reactiveSlacksThreshold)
+            reporter.newReportNode()
+                    .withMessageTemplate("reactiveSlacksOverThreshold", "Reactive slack exceeds ${threshold} MVar for at least one bus")
+                    .withUntypedValue("threshold", reactiveSlacksThreshold)
                     .withSeverity(TypedValue.WARN_SEVERITY)
-                    .build());
+                    .add();
         }
         return isOverThreshold;
     }
@@ -131,7 +129,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
         Map<String, Bus> networkBuses = network.getBusView().getBusStream().collect(Collectors.toMap(Bus::getId, Function.identity()));
         // check if at least one reactive slack over the threshold value
         double reactiveSlacksThreshold = voltageInitParametersService.getReactiveSlacksThreshold(context.getParametersUuid());
-        boolean resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(result, reactiveSlacksThreshold, context.getReporter());
+        boolean resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(result, reactiveSlacksThreshold, context.getReportNode());
         resultService.insert(resultContext.getResultUuid(), result, networkBuses, modificationsGroupUuid, result.getStatus().name(), resultCheckReactiveSlacks, reactiveSlacksThreshold);
         LOGGER.info("Status : {}", result.getStatus());
         LOGGER.info("Reactive slacks : {}", result.getReactiveSlacks());
@@ -142,7 +140,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
     protected void sendResultMessage(AbstractResultContext<VoltageInitRunContext> resultContext, OpenReacResult result) {
         VoltageInitRunContext context = resultContext.getRunContext();
         double reactiveSlacksThreshold = voltageInitParametersService.getReactiveSlacksThreshold(context.getParametersUuid());
-        boolean resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(result, reactiveSlacksThreshold, context.getReporter());
+        boolean resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(result, reactiveSlacksThreshold, context.getReportNode());
         Map<String, Object> additionalHeaders = new HashMap<>();
         additionalHeaders.put(HEADER_REACTIVE_SLACKS_OVER_THRESHOLD, resultCheckReactiveSlacks);
         additionalHeaders.put(HEADER_REACTIVE_SLACKS_THRESHOLD_VALUE, reactiveSlacksThreshold);

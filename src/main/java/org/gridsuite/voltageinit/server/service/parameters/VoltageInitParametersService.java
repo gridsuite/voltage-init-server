@@ -7,9 +7,8 @@
 package org.gridsuite.voltageinit.server.service.parameters;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.powsybl.commons.reporter.Report;
-import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.commons.reporter.TypedValue;
+import com.powsybl.commons.report.ReportNode;
+import com.powsybl.commons.report.TypedValue;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
@@ -198,9 +197,10 @@ public class VoltageInitParametersService {
     @Transactional(readOnly = true)
     public OpenReacParameters buildOpenReacParameters(VoltageInitRunContext context, Network network) {
         final long startTime = System.nanoTime();
-        final Reporter reporter = context.getReporter().createSubReporter("VoltageInitParameters", "VoltageInit parameters", Map.of(
-                "parameters_id", new TypedValue(Objects.toString(context.getParametersUuid()), "ID")
-        ));
+        final ReportNode reportNode = context.getReportNode().newReportNode()
+                                        .withMessageTemplate("VoltageInitParameters", "VoltageInit parameters")
+                                        .withTypedValue("parameters_id", Objects.toString(context.getParametersUuid()), "ID")
+                                        .add();
         OpenReacParameters parameters = new OpenReacParameters();
         final MutableInt missingVoltageLimitsCounter = new MutableInt(0);
         final MutableInt voltageLimitModificationsCounter = new MutableInt(0);
@@ -223,7 +223,7 @@ public class VoltageInitParametersService {
                         voltageLevelModificationLimits, voltageLevelDefaultLimits,
                         voltageLevel, context.getVoltageLevelsIdsRestricted()));
                 parameters.addSpecificVoltageLimits(specificVoltageLimits);
-                logRestrictedVoltageLevels(reporter, context.getVoltageLevelsIdsRestricted());
+                logRestrictedVoltageLevels(reportNode, context.getVoltageLevelsIdsRestricted());
             }
 
             parameters.addConstantQGenerators(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getConstantQGenerators()))
@@ -231,8 +231,8 @@ public class VoltageInitParametersService {
                     .addVariableShuntCompensators(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableShuntCompensators()));
         });
 
-        logVoltageLimitsModifications(reporter, network, parameters.getSpecificVoltageLimits());
-        logVoltageLimitsModificationCounters(reporter, missingVoltageLimitsCounter, voltageLimitModificationsCounter);
+        logVoltageLimitsModifications(reportNode, network, parameters.getSpecificVoltageLimits());
+        logVoltageLimitsModificationCounters(reportNode, missingVoltageLimitsCounter, voltageLimitModificationsCounter);
 
         //The optimizer will attach reactive slack variables to all buses
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
@@ -254,39 +254,36 @@ public class VoltageInitParametersService {
                             .toList();
     }
 
-    private static void logRestrictedVoltageLevels(final Reporter reporter, final Map<String, Double> voltageLevelsIdsRestricted) {
+    private static void logRestrictedVoltageLevels(final ReportNode reportNode, final Map<String, Double> voltageLevelsIdsRestricted) {
         if (!voltageLevelsIdsRestricted.isEmpty()) {
-            reporter.report(Report.builder()
-                    .withKey("restrictedVoltageLevels")
-                    .withDefaultMessage("The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: ${joinedVoltageLevelsIds}")
-                    .withValue("joinedVoltageLevelsIds", voltageLevelsIdsRestricted
+            reportNode.newReportNode()
+                    .withMessageTemplate("restrictedVoltageLevels", "The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: ${joinedVoltageLevelsIds}")
+                    .withUntypedValue("joinedVoltageLevelsIds", voltageLevelsIdsRestricted
                             .entrySet()
                             .stream()
                             .map(entry -> entry.getKey() + " : " + VOLTAGE_FORMAT.format(ObjectUtils.defaultIfNull(entry.getValue(), Double.NaN)))
                             .collect(Collectors.joining(", ")))
                     .withSeverity(TypedValue.WARN_SEVERITY)
-                    .build());
+                    .add();
         }
     }
 
-    private static void logVoltageLimitsModificationCounters(final Reporter reporter,
+    private static void logVoltageLimitsModificationCounters(final ReportNode reportNode,
                                                              final MutableInt counterMissingVoltageLimits,
                                                              final MutableInt counterVoltageLimitModifications) {
-        reporter.report(Report.builder()
-                .withKey("missingVoltageLimits")
-                .withDefaultMessage("Missing voltage limits of ${nbMissingVoltageLimits} voltage levels have been replaced with user-defined default values.")
-                .withValue("nbMissingVoltageLimits", counterMissingVoltageLimits.longValue())
+        reportNode.newReportNode()
+                .withMessageTemplate("missingVoltageLimits", "Missing voltage limits of ${nbMissingVoltageLimits} voltage levels have been replaced with user-defined default values.")
+                .withUntypedValue("nbMissingVoltageLimits", counterMissingVoltageLimits.longValue())
                 .withSeverity(TypedValue.INFO_SEVERITY)
-                .build());
-        reporter.report(Report.builder()
-                .withKey("voltageLimitModifications")
-                .withDefaultMessage("Voltage limits of ${nbVoltageLimitModifications} voltage levels have been modified according to user input.")
-                .withValue("nbVoltageLimitModifications", counterVoltageLimitModifications.longValue())
+                .add();
+        reportNode.newReportNode()
+                .withMessageTemplate("voltageLimitModifications", "Voltage limits of ${nbVoltageLimitModifications} voltage levels have been modified according to user input.")
+                .withUntypedValue("nbVoltageLimitModifications", counterVoltageLimitModifications.longValue())
                 .withSeverity(TypedValue.INFO_SEVERITY)
-                .build());
+                .add();
     }
 
-    private static void logVoltageLimitsModifications(final Reporter reporter,
+    private static void logVoltageLimitsModifications(final ReportNode reporter,
                                                       final Network network,
                                                       final List<VoltageLimitOverride> specificVoltageLimits) {
         specificVoltageLimits
@@ -304,14 +301,13 @@ public class VoltageInitParametersService {
                 final VoltageLevel voltageLevel = network.getVoltageLevel(id);
                 final double initialLowVoltageLimit = voltageLevel.getLowVoltageLimit();
                 final double initialHighVoltage = voltageLevel.getHighVoltageLimit();
-                reporter.report(Report.builder()
-                        .withKey("voltageLimitModified")
-                        .withDefaultMessage("Voltage limits of ${voltageLevelId} modified: low voltage limit = ${lowVoltageLimit}, high voltage limit = ${highVoltageLimit}")
+                reporter.newReportNode()
+                        .withMessageTemplate("voltageLimitModified", "Voltage limits of ${voltageLevelId} modified: low voltage limit = ${lowVoltageLimit}, high voltage limit = ${highVoltageLimit}")
                         .withTypedValue("voltageLevelId", voltageLevel.getId(), TypedValue.VOLTAGE_LEVEL)
                         .withTypedValue("lowVoltageLimit", computeRelativeVoltageLevel(initialLowVoltageLimit, voltageLimits.get(VoltageLimitType.LOW_VOLTAGE_LIMIT)), TypedValue.VOLTAGE)
                         .withTypedValue("highVoltageLimit", computeRelativeVoltageLevel(initialHighVoltage, voltageLimits.get(VoltageLimitType.HIGH_VOLTAGE_LIMIT)), TypedValue.VOLTAGE)
                         .withSeverity(TypedValue.TRACE_SEVERITY)
-                        .build());
+                        .add();
             });
     }
 
