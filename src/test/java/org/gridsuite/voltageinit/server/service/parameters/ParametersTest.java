@@ -63,6 +63,8 @@ import static org.assertj.core.condition.NestableCondition.nestable;
 import static org.assertj.core.condition.VerboseCondition.verboseCondition;
 import static org.mockito.BDDMockito.given;
 
+import static org.gridsuite.voltageinit.server.service.VoltageInitWorkerService.COMPUTATION_TYPE;
+
 @ExtendWith({ MockitoExtension.class, SoftAssertionsExtension.class })
 @SpringBootTest
 @AutoConfigureTestEntityManager
@@ -147,7 +149,7 @@ class ParametersTest {
             new VoltageInitParametersEntity(null, null, "", voltageLimits, null, null, null, 100., false)
         );
         final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
-        context.setReporter(new ReporterModel("VoltageInit", "VoltageInit"));
+        context.setReporter(new ReporterModel(COMPUTATION_TYPE, COMPUTATION_TYPE));
         final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getReporter()));
         JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString(reportFilename), mapper.writeValueAsString(context.getReporter()), REPORTER_COMPARATOR);
