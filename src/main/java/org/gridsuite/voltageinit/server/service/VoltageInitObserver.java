@@ -13,33 +13,22 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.NonNull;
+import org.gridsuite.voltageinit.server.computation.service.AbstractComputationObserver;
 import org.springframework.stereotype.Service;
 
 /**
  * @author AJELLAL Ali <ali.ajellal@rte-france.com>
  */
 @Service
-public class VoltageInitObserver {
-    private static final String OBSERVATION_PREFIX = "app.computation.";
-
-    private static final String TYPE_TAG_NAME = "type";
-
-    private static final String PROVIDER_TAG_NAME = "provider";
-    private static final String STATUS_TAG_NAME = "status";
+public class VoltageInitObserver extends AbstractComputationObserver<OpenReacResult, Void> {
 
     private static final String COMPUTATION_TYPE = "voltageinit";
-
-    private static final String COMPUTATION_COUNTER_NAME = OBSERVATION_PREFIX + "count";
     private static final String OK = "OK";
 
     private static final String NOK = "NOK";
-    private final ObservationRegistry observationRegistry;
-
-    private final MeterRegistry meterRegistry;
 
     public VoltageInitObserver(@NonNull ObservationRegistry observationRegistry, @NonNull MeterRegistry meterRegistry) {
-        this.observationRegistry = observationRegistry;
-        this.meterRegistry = meterRegistry;
+        super(observationRegistry, meterRegistry);
     }
 
     public <E extends Throwable> void observe(String name, Observation.CheckedRunnable<E> callable) throws E {
@@ -66,13 +55,18 @@ public class VoltageInitObserver {
         Counter.builder(COMPUTATION_COUNTER_NAME)
                 .tag(PROVIDER_TAG_NAME, COMPUTATION_TYPE)
                 .tag(TYPE_TAG_NAME, COMPUTATION_TYPE)
-                .tag(STATUS_TAG_NAME, getStatusFromResult(result))
+                .tag(STATUS_TAG_NAME, getResultStatus(result))
                 .register(meterRegistry)
                 .increment();
     }
 
-    private static String getStatusFromResult(OpenReacResult result) {
+    @Override
+    protected String getResultStatus(OpenReacResult result) {
         return result.getStatus() == OpenReacStatus.OK ? OK : NOK;
     }
 
+    @Override
+    protected String getComputationType() {
+        return COMPUTATION_TYPE;
+    }
 }

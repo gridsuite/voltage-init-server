@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
+import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
 import org.gridsuite.voltageinit.server.service.VoltageInitService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-import static org.gridsuite.voltageinit.server.service.NotificationService.HEADER_USER_ID;
+import static org.gridsuite.voltageinit.server.computation.service.NotificationService.HEADER_USER_ID;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
@@ -50,7 +51,8 @@ public class VoltageInitController {
                                            @Parameter(description = "The type name for the report") @RequestParam(name = "reportType", required = false, defaultValue = "VoltageInit") String reportType,
                                            @Parameter(description = "parametersUuid") @RequestParam(name = "parametersUuid", required = false) UUID parametersUuid,
                                            @RequestHeader(HEADER_USER_ID) String userId) {
-        UUID resultUuid = voltageInitService.runAndSaveResult(networkUuid, variantId, receiver, reportUuid, reporterId, userId, reportType, parametersUuid);
+        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid);
+        UUID resultUuid = voltageInitService.runAndSaveResult(runContext);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultUuid);
     }
 
@@ -84,15 +86,15 @@ public class VoltageInitController {
     @Operation(summary = "Get the voltage init status from the database")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage init status")})
     public ResponseEntity<String> getStatus(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
-        String result = voltageInitService.getStatus(resultUuid);
-        return ResponseEntity.ok().body(result);
+        VoltageInitStatus result = voltageInitService.getStatus(resultUuid);
+        return ResponseEntity.ok().body(result != null ? result.name() : null);
     }
 
     @PutMapping(value = "/results/invalidate-status", produces = APPLICATION_JSON_VALUE)
     @Operation(summary = "Invalidate the voltage init status from the database")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage init status has been invalidated")})
     public ResponseEntity<Void> invalidateStatus(@Parameter(description = "Result uuids") @RequestParam(name = "resultUuid") List<UUID> resultUuids) {
-        voltageInitService.setStatus(resultUuids, VoltageInitStatus.NOT_DONE.name());
+        voltageInitService.setStatus(resultUuids, VoltageInitStatus.NOT_DONE);
         return ResponseEntity.ok().build();
     }
 

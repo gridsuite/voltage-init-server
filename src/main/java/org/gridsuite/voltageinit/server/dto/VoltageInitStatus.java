@@ -12,5 +12,15 @@ package org.gridsuite.voltageinit.server.dto;
 public enum VoltageInitStatus {
     NOT_DONE,
     RUNNING,
-    COMPLETED
+    COMPLETED,
+
+    /**
+     * {@link com.powsybl.openreac.parameters.output.OpenReacStatus#OK}
+     */
+    OK,
+
+    /**
+     * {@link com.powsybl.openreac.parameters.output.OpenReacStatus#NOT_OK}
+     */
+    NOT_OK;
 }

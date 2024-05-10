@@ -7,44 +7,28 @@
 package org.gridsuite.voltageinit.server.service;
 
 import com.powsybl.commons.reporter.Reporter;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
+import org.gridsuite.voltageinit.server.computation.dto.ReportInfos;
+import org.gridsuite.voltageinit.server.computation.service.AbstractComputationRunContext;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
-@AllArgsConstructor
 @Getter
-public class VoltageInitRunContext {
-
-    private final UUID networkUuid;
-
-    private final String variantId;
-
-    private final String receiver;
-
-    private final UUID reportUuid;
-
-    private final String reporterId;
-
-    private final String reportType;
-
-    private final String userId;
+public class VoltageInitRunContext extends AbstractComputationRunContext<Void> {
 
     private final UUID parametersUuid;
 
     private final Map<String, Double> voltageLevelsIdsRestricted;
 
-    @Setter private Reporter subReporter;
-
     public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid, Map<String, Double> voltageLevelsIdsRestricted) {
-        this(Objects.requireNonNull(networkUuid), variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, voltageLevelsIdsRestricted, Reporter.NO_OP);
+        super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId, "", null, Reporter.NO_OP);
+        this.parametersUuid = parametersUuid;
+        this.voltageLevelsIdsRestricted = voltageLevelsIdsRestricted;
     }
 
     public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid) {

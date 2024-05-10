@@ -4,15 +4,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.gridsuite.voltageinit.server.repository;
+package org.gridsuite.voltageinit.server.service;
 
 import com.powsybl.iidm.network.Bus;
+import org.gridsuite.voltageinit.server.computation.service.AbstractComputationResultService;
+import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.entities.BusVoltageEmbeddable;
 import org.gridsuite.voltageinit.server.entities.GlobalStatusEntity;
 import org.gridsuite.voltageinit.server.entities.ReactiveSlackEmbeddable;
 import org.gridsuite.voltageinit.server.entities.VoltageInitResultEntity;
+import org.gridsuite.voltageinit.server.repository.GlobalStatusRepository;
+import org.gridsuite.voltageinit.server.repository.ResultRepository;
 import org.jgrapht.alg.util.Pair;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.powsybl.openreac.parameters.output.OpenReacResult;
@@ -28,14 +32,14 @@ import java.util.stream.Collectors;
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com
  */
-@Repository
-public class VoltageInitResultRepository {
+@Service
+public class VoltageInitResultService extends AbstractComputationResultService<VoltageInitStatus> {
 
     private GlobalStatusRepository globalStatusRepository;
     private ResultRepository resultRepository;
 
-    public VoltageInitResultRepository(GlobalStatusRepository globalStatusRepository,
-                                       ResultRepository resultRepository) {
+    public VoltageInitResultService(GlobalStatusRepository globalStatusRepository,
+                                    ResultRepository resultRepository) {
         this.globalStatusRepository = globalStatusRepository;
         this.resultRepository = resultRepository;
     }
@@ -71,10 +75,11 @@ public class VoltageInitResultRepository {
     }
 
     @Transactional
-    public void insertStatus(List<UUID> resultUuids, String status) {
+    @Override
+    public void insertStatus(List<UUID> resultUuids, VoltageInitStatus status) {
         Objects.requireNonNull(resultUuids);
         globalStatusRepository.saveAll(resultUuids.stream()
-                .map(uuid -> toStatusEntity(uuid, status)).collect(Collectors.toList()));
+                .map(uuid -> toStatusEntity(uuid, status.name())).collect(Collectors.toList()));
     }
 
     private static GlobalStatusEntity toStatusEntity(UUID resultUuid, String status) {
@@ -82,16 +87,19 @@ public class VoltageInitResultRepository {
     }
 
     @Transactional(readOnly = true)
-    public String findStatus(UUID resultUuid) {
+    @Override
+    public VoltageInitStatus findStatus(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
         GlobalStatusEntity globalEntity = globalStatusRepository.findByResultUuid(resultUuid);
         if (globalEntity != null) {
-            return globalEntity.getStatus();
+            return VoltageInitStatus.valueOf(globalEntity.getStatus());
         } else {
             return null;
         }
     }
 
+    @Transactional
+    @Override
     public void deleteAll() {
         globalStatusRepository.deleteAll();
         resultRepository.deleteAll();
