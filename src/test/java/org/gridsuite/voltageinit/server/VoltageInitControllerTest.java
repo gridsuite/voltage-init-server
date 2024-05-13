@@ -8,6 +8,7 @@ package org.gridsuite.voltageinit.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.commons.report.ReportNode;
 import com.powsybl.computation.CompletableFutureTask;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.modification.GeneratorModification;
@@ -142,7 +143,7 @@ public class VoltageInitControllerTest {
     private MockWebServer server;
 
     private OpenReacResult buildOpenReacResult() {
-        OpenReacAmplIOFiles openReacAmplIOFiles = new OpenReacAmplIOFiles(openReacParameters, network, false);
+        OpenReacAmplIOFiles openReacAmplIOFiles = new OpenReacAmplIOFiles(openReacParameters, null, network, false, ReportNode.NO_OP);
 
         GeneratorModification.Modifs m1 = new GeneratorModification.Modifs();
         m1.setTargetV(228.);
@@ -173,7 +174,7 @@ public class VoltageInitControllerTest {
     }
 
     private OpenReacResult buildNokOpenReacResult() {
-        OpenReacAmplIOFiles openReacAmplIOFiles = new OpenReacAmplIOFiles(openReacParameters, network, false);
+        OpenReacAmplIOFiles openReacAmplIOFiles = new OpenReacAmplIOFiles(openReacParameters, null, network, false, ReportNode.NO_OP);
         openReacResult = new OpenReacResult(OpenReacStatus.NOT_OK, openReacAmplIOFiles, INDICATORS);
         return openReacResult;
     }
