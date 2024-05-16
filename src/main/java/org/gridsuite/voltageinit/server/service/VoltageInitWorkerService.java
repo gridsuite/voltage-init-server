@@ -90,7 +90,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
     protected CompletableFuture<OpenReacResult> getCompletableFuture(Network network, VoltageInitRunContext context, String provider, UUID resultUuid) {
         OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         OpenReacConfig config = OpenReacConfig.load();
-        return OpenReacRunner.runAsync(network, network.getVariantManager().getWorkingVariantId(), parameters, config, executionService.getComputationManager());
+        return OpenReacRunner.runAsync(network, network.getVariantManager().getWorkingVariantId(), parameters, config, executionService.getComputationManager(), context.getReportNode(), null);
     }
 
     @Override

@@ -7,6 +7,7 @@
 package org.gridsuite.voltageinit.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.ampl.converter.AmplExportConfig;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.computation.CompletableFutureTask;
@@ -81,6 +82,7 @@ import static org.gridsuite.voltageinit.server.service.VoltageInitWorkerService.
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -306,7 +308,7 @@ public class VoltageInitControllerTest {
     @Test
     public void runTest() throws Exception {
         try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
-            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class)))
+            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class), any(ReportNode.class), isNull(AmplExportConfig.class)))
                 .thenReturn(completableFutureResultsTask);
 
             MvcResult result = mockMvc.perform(post(
@@ -358,7 +360,7 @@ public class VoltageInitControllerTest {
     @Test
     public void runWithReactiveSlacksOverThresholdTest() throws Exception {
         try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
-            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class)))
+            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class), any(ReportNode.class), isNull(AmplExportConfig.class)))
                 .thenReturn(completableFutureResultsTask);
 
             // run with parameters and at least one reactive slack over the threshold value
@@ -398,7 +400,7 @@ public class VoltageInitControllerTest {
     @Test
     public void testReturnsResultAndDoesNotGenerateModificationIfResultNotOk() throws Exception {
         try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
-            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class)))
+            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class), any(ReportNode.class), isNull(AmplExportConfig.class)))
                 .thenReturn(CompletableFutureTask.runAsync(this::buildNokOpenReacResult, ForkJoinPool.commonPool()));
 
             MvcResult result = mockMvc.perform(post(
@@ -460,8 +462,8 @@ public class VoltageInitControllerTest {
     @Test
     public void stopTest() throws Exception {
         try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
-            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class)))
-                    .thenReturn(completableFutureResultsTask);
+            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class), any(ReportNode.class), isNull(AmplExportConfig.class)))
+                .thenReturn(completableFutureResultsTask);
 
             mockMvc.perform(post(
                             "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
