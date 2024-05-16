@@ -78,6 +78,9 @@ public class VoltageInitParametersEntity {
     @Column(name = "reactiveSlacksThreshold")
     private double reactiveSlacksThreshold;
 
+    @Column(name = "shuntCompensatorActivationThreshold")
+    private double shuntCompensatorActivationThreshold;
+
     @Column(name = "updateBusVoltage")
     private boolean updateBusVoltage;
 
@@ -111,6 +114,7 @@ public class VoltageInitParametersEntity {
         variableShuntCompensators = FilterEquipmentsEmbeddable.toEmbeddableFilterEquipments(voltageInitParametersInfos.getVariableShuntCompensators());
         name = voltageInitParametersInfos.getName();
         reactiveSlacksThreshold = voltageInitParametersInfos.getReactiveSlacksThreshold();
+        shuntCompensatorActivationThreshold = voltageInitParametersInfos.getShuntCompensatorActivationThreshold();
         updateBusVoltage = voltageInitParametersInfos.isUpdateBusVoltage();
     }
 
@@ -142,6 +146,7 @@ public class VoltageInitParametersEntity {
                 .variableTwoWindingsTransformers(FilterEquipmentsEmbeddable.fromEmbeddableFilterEquipments(this.getVariableTwoWindingsTransformers()))
                 .variableShuntCompensators(FilterEquipmentsEmbeddable.fromEmbeddableFilterEquipments(this.getVariableShuntCompensators()))
                 .reactiveSlacksThreshold(this.getReactiveSlacksThreshold())
+                .shuntCompensatorActivationThreshold(this.getShuntCompensatorActivationThreshold())
                 .updateBusVoltage(this.isUpdateBusVoltage())
             .build();
     }

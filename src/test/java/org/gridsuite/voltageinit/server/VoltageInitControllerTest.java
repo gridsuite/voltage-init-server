@@ -214,6 +214,7 @@ public class VoltageInitControllerTest {
                     .filterName("vtwFilter2")
                     .build()))
             .reactiveSlacksThreshold(100.)
+            .shuntCompensatorActivationThreshold(100.)
             .build().toEntity();
     }
 
