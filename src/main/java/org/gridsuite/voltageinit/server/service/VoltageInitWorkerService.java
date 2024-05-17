@@ -6,8 +6,7 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
-import com.powsybl.commons.reporter.Report;
-import com.powsybl.commons.reporter.TypedValue;
+import com.powsybl.commons.report.TypedValue;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -82,7 +81,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
     protected CompletableFuture<OpenReacResult> getCompletableFuture(Network network, VoltageInitRunContext context, String provider, UUID resultUuid) {
         OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         OpenReacConfig config = OpenReacConfig.load();
-        return OpenReacRunner.runAsync(network, network.getVariantManager().getWorkingVariantId(), parameters, config, executionService.getComputationManager());
+        return OpenReacRunner.runAsync(network, network.getVariantManager().getWorkingVariantId(), parameters, config, executionService.getComputationManager(), context.getReportNode(), null);
     }
 
     @Override
@@ -133,12 +132,11 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
         double reactiveSlacksThreshold = voltageInitParametersService.getReactiveSlacksThreshold(runContext.getParametersUuid());
         boolean resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(result, reactiveSlacksThreshold);
         if (resultCheckReactiveSlacks) {
-            runContext.getReporter().report(Report.builder()
-                    .withKey("reactiveSlacksOverThreshold")
-                    .withDefaultMessage("Reactive slack exceeds ${threshold} MVar for at least one bus")
-                    .withValue("threshold", reactiveSlacksThreshold)
+            runContext.getReportNode().newReportNode()
+                    .withMessageTemplate("reactiveSlacksOverThreshold", "Reactive slack exceeds ${threshold} MVar for at least one bus")
+                    .withUntypedValue("threshold", reactiveSlacksThreshold)
                     .withSeverity(TypedValue.WARN_SEVERITY)
-                    .build());
+                    .add();
         }
     }
 

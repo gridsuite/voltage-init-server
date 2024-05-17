@@ -6,7 +6,7 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
-import com.powsybl.commons.reporter.Reporter;
+import com.powsybl.commons.report.ReportNode;
 import lombok.Getter;
 import org.gridsuite.voltageinit.server.computation.dto.ReportInfos;
 import org.gridsuite.voltageinit.server.computation.service.AbstractComputationRunContext;
@@ -26,7 +26,7 @@ public class VoltageInitRunContext extends AbstractComputationRunContext<Void> {
     private final Map<String, Double> voltageLevelsIdsRestricted;
 
     public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid, Map<String, Double> voltageLevelsIdsRestricted) {
-        super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId, "", null, Reporter.NO_OP);
+        super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId, "", null, ReportNode.NO_OP);
         this.parametersUuid = parametersUuid;
         this.voltageLevelsIdsRestricted = voltageLevelsIdsRestricted;
     }
