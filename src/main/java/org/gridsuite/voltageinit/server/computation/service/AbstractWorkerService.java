@@ -8,8 +8,7 @@ package org.gridsuite.voltageinit.server.computation.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.commons.reporter.ReporterModel;
+import com.powsybl.commons.report.ReportNode;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -184,24 +183,25 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
 
     protected S run(Network network, R runContext, UUID resultUuid) throws Exception {
         String provider = runContext.getProvider();
-        AtomicReference<Reporter> rootReporter = new AtomicReference<>(Reporter.NO_OP);
-        Reporter reporter = Reporter.NO_OP;
+        AtomicReference<ReportNode> rootReporter = new AtomicReference<>(ReportNode.NO_OP);
+        ReportNode reporter = ReportNode.NO_OP;
 
         if (runContext.getReportInfos().reportUuid() != null) {
             final String reportType = runContext.getReportInfos().computationType();
             String rootReporterId = runContext.getReportInfos().reporterId() == null ? reportType : runContext.getReportInfos().reporterId() + "@" + reportType;
-            rootReporter.set(new ReporterModel(rootReporterId, rootReporterId));
-            reporter = rootReporter.get().createSubReporter(reportType, String.format("%s (%s)", reportType, provider), "providerToUse", provider);
+            rootReporter.set(ReportNode.newRootReportNode().withMessageTemplate(rootReporterId, rootReporterId).build());
+            reporter = rootReporter.get().newReportNode().withMessageTemplate(reportType, String.format("%s (%s)", reportType, provider))
+                    .withUntypedValue("providerToUse", provider).add();
             // Delete any previous computation logs
             observer.observe("report.delete",
                     runContext, () -> reportService.deleteReport(runContext.getReportInfos().reportUuid(), reportType));
         }
-        runContext.setReporter(reporter);
+        runContext.setReportNode(reporter);
 
         preRun(runContext);
         CompletableFuture<S> future = runAsync(network, runContext, provider, resultUuid);
         S result = future == null ? null : observer.observeRun("run", runContext, future::get);
-        postRun(runContext);
+        postRun(runContext, result);
 
         if (runContext.getReportInfos().reportUuid() != null) {
             observer.observe("report.send", runContext, () -> reportService.sendReport(runContext.getReportInfos().reportUuid(), rootReporter.get()));
@@ -212,8 +212,10 @@ public abstract class AbstractWorkerService<S, R extends AbstractComputationRunC
     /**
      * Do some extra task after running the computation
      * @param ignoredRunContext This context may be used for extra task in overriding classes
+     * @param ignoredResult The result of the computation
      */
-    protected void postRun(R ignoredRunContext) { }
+    protected void postRun(R ignoredRunContext, S ignoredResult) {
+    }
 
     protected CompletableFuture<S> runAsync(
             Network network,

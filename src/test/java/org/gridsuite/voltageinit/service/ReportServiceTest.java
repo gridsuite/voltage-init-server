@@ -13,8 +13,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
-import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.commons.reporter.ReporterModel;
+import com.powsybl.commons.report.ReportNode;
 import org.gridsuite.voltageinit.server.computation.service.ReportService;
 import org.gridsuite.voltageinit.utils.ContextConfigurationWithTestChannel;
 import org.junit.After;
@@ -89,7 +88,7 @@ public class ReportServiceTest {
 
     @Test
     public void testSendReport() throws Exception {
-        Reporter reporter = new ReporterModel("test", "test");
+        ReportNode reporter = ReportNode.newRootReportNode().withMessageTemplate("test", "test").build();
         URI expectedUri = UriComponentsBuilder
                 .fromPath(DELIMITER + REPORT_API_VERSION + "/reports/{reportUuid}")
                 .build(REPORT_UUID);
@@ -97,7 +96,7 @@ public class ReportServiceTest {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(reporter), headers);
-        verify(restTemplate, times(1)).exchange(BASE_URI + server.port() + expectedUri, HttpMethod.PUT, entity, Reporter.class);
+        verify(restTemplate, times(1)).exchange(BASE_URI + server.port() + expectedUri, HttpMethod.PUT, entity, ReportNode.class);
     }
 
     @Test

@@ -7,7 +7,7 @@
 package org.gridsuite.voltageinit.server.service.parameters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.powsybl.commons.reporter.ReporterModel;
+import com.powsybl.commons.report.ReportNode;
 import com.powsybl.iidm.network.IdentifiableType;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
@@ -81,7 +81,7 @@ class ParametersTest {
 
     private static final JSONComparator REPORTER_COMPARATOR = new CustomComparator(JSONCompareMode.NON_EXTENSIBLE,
         // ignore field having uuid changing each run
-        new Customization("reportTree.subReporters[*].taskValues.parameters_id.value", (o1, o2) -> (o1 == null) == (o2 == null))
+        new Customization("reportRoot.children[*].values.parameters_id.value", (o1, o2) -> (o1 == null) == (o2 == null))
     );
 
     private Network network;
@@ -149,10 +149,10 @@ class ParametersTest {
             new VoltageInitParametersEntity(null, null, "", voltageLimits, null, null, null, 100., false)
         );
         final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
-        context.setReporter(new ReporterModel(COMPUTATION_TYPE, COMPUTATION_TYPE));
+        context.setReportNode(ReportNode.newRootReportNode().withMessageTemplate(COMPUTATION_TYPE, COMPUTATION_TYPE).build());
         final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
-        log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getReporter()));
-        JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString(reportFilename), mapper.writeValueAsString(context.getReporter()), REPORTER_COMPARATOR);
+        log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getReportNode()));
+        JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString(reportFilename), mapper.writeValueAsString(context.getReportNode()), REPORTER_COMPARATOR);
         return assertThat(openReacParameters.getSpecificVoltageLimits()).as("SpecificVoltageLimits");
     }
 
@@ -260,14 +260,14 @@ class ParametersTest {
         );
 
         final VoltageInitRunContext context = new VoltageInitRunContext(networkUuid, variantId, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
-        context.setReporter(new ReporterModel("VoltageInit", "VoltageInit"));
+        context.setReportNode(ReportNode.newRootReportNode().withMessageTemplate("VoltageInit", "VoltageInit").build());
         final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         if (log.isDebugEnabled()) {
-            log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getReporter()));
+            log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getReportNode()));
             final Writer writer = new StringWriter();
-            ((ReporterModel) context.getReporter()).export(writer);
+            ((ReportNode) context.getReportNode()).print(writer);
             log.debug("openReac report: {}", writer.toString());
         }
-        JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString("reporter_fourSubstations_noVoltageLimits.json"), mapper.writeValueAsString(context.getReporter()), REPORTER_COMPARATOR);
+        JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString("reporter_fourSubstations_noVoltageLimits.json"), mapper.writeValueAsString(context.getReportNode()), REPORTER_COMPARATOR);
     }
 }

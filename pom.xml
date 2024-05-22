@@ -49,8 +49,8 @@
     </developers>
 
     <properties>
-        <powsybl-ws-dependencies.version>2.9.0</powsybl-ws-dependencies.version>
-        <powsybl-open-reac.version>0.6.0</powsybl-open-reac.version>
+        <gridsuite-dependencies.version>29</gridsuite-dependencies.version>
+        <powsybl-open-reac.version>0.7.0</powsybl-open-reac.version>
         <mockito-inline.version>3.11.1</mockito-inline.version>
         <liquibase-hibernate-package>org.gridsuite.voltageinit.server</liquibase-hibernate-package>
     </properties>
@@ -91,9 +91,9 @@
 
             <!-- imports -->
             <dependency>
-                <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-ws-dependencies</artifactId>
-                <version>${powsybl-ws-dependencies.version}</version>
+                <groupId>org.gridsuite</groupId>
+                <artifactId>gridsuite-dependencies</artifactId>
+                <version>${gridsuite-dependencies.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
