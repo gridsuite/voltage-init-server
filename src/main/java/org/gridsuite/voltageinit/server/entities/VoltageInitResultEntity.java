@@ -6,11 +6,10 @@
  */
 package org.gridsuite.voltageinit.server.entities;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import java.time.ZonedDateTime;
 
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -40,8 +39,8 @@ public class VoltageInitResultEntity {
     @Id
     private UUID resultUuid;
 
-    @Column
-    private ZonedDateTime writeTimeStamp;
+    @Column(columnDefinition = "timestamptz")
+    private OffsetDateTime writeTimeStamp;
 
     @ElementCollection
     @CollectionTable

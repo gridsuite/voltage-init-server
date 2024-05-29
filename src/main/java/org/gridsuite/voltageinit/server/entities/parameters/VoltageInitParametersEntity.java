@@ -16,8 +16,8 @@ import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfo
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageLimitInfos;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
 
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,8 +41,8 @@ public class VoltageInitParametersEntity {
     @Column(name = "id")
     private UUID id;
 
-    @Column(name = "date")
-    private ZonedDateTime date;
+    @Column(name = "date", columnDefinition = "timestamptz")
+    private OffsetDateTime date;
 
     @Column(name = "name")
     private String name;
@@ -82,7 +82,7 @@ public class VoltageInitParametersEntity {
     private boolean updateBusVoltage;
 
     public VoltageInitParametersEntity(@NonNull VoltageInitParametersInfos voltageInitParametersInfos) {
-        this.date = ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS);
+        this.date = OffsetDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS);
         assignAttributes(voltageInitParametersInfos);
     }
 

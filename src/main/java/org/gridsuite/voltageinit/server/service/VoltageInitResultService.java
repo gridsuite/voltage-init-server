@@ -21,7 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -63,7 +64,7 @@ public class VoltageInitResultService extends AbstractComputationResultService<V
                 }
             }
         ).filter(Objects::nonNull).toList();
-        return new VoltageInitResultEntity(resultUuid, ZonedDateTime.now(), indicators, reactiveSlacks, busVoltages, modificationsGroupUuid,
+        return new VoltageInitResultEntity(resultUuid, OffsetDateTime.now(ZoneOffset.UTC), indicators, reactiveSlacks, busVoltages, modificationsGroupUuid,
                                            isReactiveSlacksOverThreshold, reactiveSlacksThreshold);
     }
 
@@ -128,6 +129,6 @@ public class VoltageInitResultService extends AbstractComputationResultService<V
     @Transactional
     public void insertErrorResult(UUID resultUuid, Map<String, String> errorIndicators) {
         Objects.requireNonNull(resultUuid);
-        resultRepository.save(new VoltageInitResultEntity(resultUuid, ZonedDateTime.now(), errorIndicators, List.of(), List.of(), null, false, null));
+        resultRepository.save(new VoltageInitResultEntity(resultUuid, OffsetDateTime.now(), errorIndicators, List.of(), List.of(), null, false, null));
     }
 }

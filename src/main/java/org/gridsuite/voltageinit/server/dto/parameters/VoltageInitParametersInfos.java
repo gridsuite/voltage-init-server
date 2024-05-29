@@ -9,7 +9,7 @@ package org.gridsuite.voltageinit.server.dto.parameters;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,7 +30,7 @@ public class VoltageInitParametersInfos {
     private UUID uuid;
 
     @Schema(description = "parameters date")
-    private ZonedDateTime date;
+    private OffsetDateTime date;
 
     @Schema(description = "parameters name")
     private String name;
