@@ -129,6 +129,6 @@ public class VoltageInitResultService extends AbstractComputationResultService<V
     @Transactional
     public void insertErrorResult(UUID resultUuid, Map<String, String> errorIndicators) {
         Objects.requireNonNull(resultUuid);
-        resultRepository.save(new VoltageInitResultEntity(resultUuid, OffsetDateTime.now(), errorIndicators, List.of(), List.of(), null, false, null));
+        resultRepository.save(new VoltageInitResultEntity(resultUuid, OffsetDateTime.now(ZoneOffset.UTC), errorIndicators, List.of(), List.of(), null, false, null));
     }
 }
