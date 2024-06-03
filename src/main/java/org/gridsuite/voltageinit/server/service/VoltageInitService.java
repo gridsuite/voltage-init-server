@@ -8,9 +8,9 @@ package org.gridsuite.voltageinit.server.service;
 
 import com.powsybl.network.store.client.NetworkStoreService;
 
-import org.gridsuite.voltageinit.server.computation.service.AbstractComputationService;
-import org.gridsuite.voltageinit.server.computation.service.NotificationService;
-import org.gridsuite.voltageinit.server.computation.service.UuidGeneratorService;
+import com.powsybl.ws.commons.computation.service.AbstractComputationService;
+import com.powsybl.ws.commons.computation.service.NotificationService;
+import com.powsybl.ws.commons.computation.service.UuidGeneratorService;
 import org.gridsuite.voltageinit.server.dto.BusVoltage;
 import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;

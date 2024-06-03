@@ -14,7 +14,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 import com.powsybl.commons.report.ReportNode;
-import org.gridsuite.voltageinit.server.computation.service.ReportService;
+import com.powsybl.ws.commons.computation.service.ReportService;
 import org.gridsuite.voltageinit.utils.ContextConfigurationWithTestChannel;
 import org.junit.After;
 import org.junit.Before;

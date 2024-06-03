@@ -8,15 +8,15 @@ package org.gridsuite.voltageinit.server.service;
 
 import com.powsybl.commons.PowsyblException;
 import lombok.Getter;
-import org.gridsuite.voltageinit.server.computation.service.AbstractResultContext;
+import com.powsybl.ws.commons.computation.service.AbstractResultContext;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
 
 import java.util.*;
 
-import static org.gridsuite.voltageinit.server.computation.service.NotificationService.HEADER_RECEIVER;
-import static org.gridsuite.voltageinit.server.computation.service.NotificationService.HEADER_USER_ID;
+import static com.powsybl.ws.commons.computation.service.NotificationService.HEADER_RECEIVER;
+import static com.powsybl.ws.commons.computation.service.NotificationService.HEADER_USER_ID;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -60,16 +60,16 @@ public class VoltageInitResultContext extends AbstractResultContext<VoltageInitR
 
     public Message<String> toMessage() {
         return MessageBuilder.withPayload("")
-                .setHeader("resultUuid", resultUuid.toString())
-                .setHeader("networkUuid", runContext.getNetworkUuid().toString())
-                .setHeader(PARAMETERS_UUID_HEADER, runContext.getParametersUuid() != null ? runContext.getParametersUuid().toString() : null)
-                .setHeader(VARIANT_ID_HEADER, runContext.getVariantId())
-                .setHeader(HEADER_RECEIVER, runContext.getReceiver())
-                .setHeader(HEADER_USER_ID, runContext.getUserId())
-                .setHeader(REPORT_UUID_HEADER, runContext.getReportInfos().reportUuid() != null ? runContext.getReportInfos().reportUuid().toString() : null)
-                .setHeader(REPORTER_ID_HEADER, runContext.getReportInfos().reporterId())
-                .setHeader(REPORT_TYPE_HEADER, runContext.getReportInfos().computationType())
-                .setHeader(VOLTAGE_LEVELS_IDS_RESTRICTED, runContext.getVoltageLevelsIdsRestricted())
+                .setHeader("resultUuid", getResultUuid().toString())
+                .setHeader("networkUuid", getRunContext().getNetworkUuid().toString())
+                .setHeader(PARAMETERS_UUID_HEADER, getRunContext().getParametersUuid() != null ? getRunContext().getParametersUuid().toString() : null)
+                .setHeader(VARIANT_ID_HEADER, getRunContext().getVariantId())
+                .setHeader(HEADER_RECEIVER, getRunContext().getReceiver())
+                .setHeader(HEADER_USER_ID, getRunContext().getUserId())
+                .setHeader(REPORT_UUID_HEADER, getRunContext().getReportInfos().reportUuid() != null ? getRunContext().getReportInfos().reportUuid().toString() : null)
+                .setHeader(REPORTER_ID_HEADER, getRunContext().getReportInfos().reporterId())
+                .setHeader(REPORT_TYPE_HEADER, getRunContext().getReportInfos().computationType())
+                .setHeader(VOLTAGE_LEVELS_IDS_RESTRICTED, getRunContext().getVoltageLevelsIdsRestricted())
                 .build();
     }
 }
