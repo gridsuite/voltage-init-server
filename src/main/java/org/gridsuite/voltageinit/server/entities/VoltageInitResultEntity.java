@@ -6,7 +6,7 @@
  */
 package org.gridsuite.voltageinit.server.entities;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -40,7 +40,7 @@ public class VoltageInitResultEntity {
     private UUID resultUuid;
 
     @Column(columnDefinition = "timestamptz")
-    private OffsetDateTime writeTimeStamp;
+    private Instant writeTimeStamp;
 
     @ElementCollection
     @CollectionTable
