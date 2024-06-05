@@ -9,14 +9,12 @@ package org.gridsuite.voltageinit.server;
 import com.powsybl.network.store.client.NetworkStoreService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @SuppressWarnings("checkstyle:HideUtilityClassConstructor")
-@SpringBootApplication
-@ComponentScan(basePackageClasses = {VoltageInitApplication.class, NetworkStoreService.class})
+@SpringBootApplication(scanBasePackageClasses = { VoltageInitApplication.class, NetworkStoreService.class })
 public class VoltageInitApplication {
     public static void main(String[] args) {
         SpringApplication.run(VoltageInitApplication.class, args);
