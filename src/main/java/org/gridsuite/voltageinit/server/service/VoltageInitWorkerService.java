@@ -131,7 +131,6 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
 
     @Override
     protected void postRun(VoltageInitRunContext runContext, AtomicReference<ReportNode> rootReportNode, OpenReacResult result) {
-        super.postRun(runContext, rootReportNode, result);
         double reactiveSlacksThreshold = voltageInitParametersService.getReactiveSlacksThreshold(runContext.getParametersUuid());
         boolean resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(result, reactiveSlacksThreshold);
         if (resultCheckReactiveSlacks) {
@@ -141,6 +140,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
                     .withSeverity(TypedValue.WARN_SEVERITY)
                     .add();
         }
+        super.postRun(runContext, rootReportNode, result);
     }
 
     @Override
