@@ -6,6 +6,7 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.network.store.client.NetworkStoreService;
 
 import com.powsybl.ws.commons.computation.service.AbstractComputationService;
@@ -38,8 +39,9 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
     public VoltageInitService(NotificationService notificationService,
                               NetworkModificationService networkModificationService,
                               UuidGeneratorService uuidGeneratorService,
-                              VoltageInitResultService resultService) {
-        super(notificationService, resultService, null, uuidGeneratorService, null);
+                              VoltageInitResultService resultService,
+                              ObjectMapper objectMapper) {
+        super(notificationService, resultService, objectMapper, uuidGeneratorService, null);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
     }
 
@@ -49,7 +51,7 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
 
         // update status to running status
         setStatus(List.of(resultUuid), VoltageInitStatus.RUNNING);
-        notificationService.sendRunMessage(new VoltageInitResultContext(resultUuid, runContext).toMessage());
+        notificationService.sendRunMessage(new VoltageInitResultContext(resultUuid, runContext).toMessage(objectMapper));
         return resultUuid;
     }
 

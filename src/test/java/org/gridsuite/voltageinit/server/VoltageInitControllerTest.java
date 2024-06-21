@@ -134,8 +134,8 @@ public class VoltageInitControllerTest {
     @MockBean
     private UuidGeneratorService uuidGeneratorService;
 
-    private final RestTemplateConfig restTemplateConfig = new RestTemplateConfig();
-    private final ObjectMapper mapper = restTemplateConfig.objectMapper();
+    @Autowired
+    private ObjectMapper mapper;
 
     private Network network;
     OpenReacParameters openReacParameters;
@@ -412,8 +412,8 @@ public class VoltageInitControllerTest {
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
 
             Message<byte[]> resultMessage = output.receive(TIMEOUT, "voltageinit.result");
-            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
-            assertEquals("me", resultMessage.getHeaders().get("receiver"));
+            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get(HEADER_RESULT_UUID));
+            assertEquals("me", resultMessage.getHeaders().get(HEADER_RECEIVER));
 
             result = mockMvc.perform(get(
                     "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))

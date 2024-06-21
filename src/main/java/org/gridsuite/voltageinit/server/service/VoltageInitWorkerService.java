@@ -6,6 +6,7 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.TypedValue;
 import com.powsybl.iidm.network.Bus;
@@ -60,8 +61,9 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
                                     VoltageInitParametersService voltageInitParametersService,
                                     VoltageInitResultService resultService,
                                     ReportService reportService,
-                                    VoltageInitObserver voltageInitObserver) {
-        super(networkStoreService, notificationService, reportService, resultService, executionService, voltageInitObserver, null);
+                                    VoltageInitObserver voltageInitObserver,
+                                    ObjectMapper objectMapper) {
+        super(networkStoreService, notificationService, reportService, resultService, executionService, voltageInitObserver, objectMapper);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
         this.voltageInitParametersService = Objects.requireNonNull(voltageInitParametersService);
     }
@@ -73,7 +75,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
 
     @Override
     protected VoltageInitResultContext fromMessage(Message<String> message) {
-        return VoltageInitResultContext.fromMessage(message);
+        return VoltageInitResultContext.fromMessage(message, objectMapper);
     }
 
     private boolean checkReactiveSlacksOverThreshold(OpenReacResult openReacResult, double reactiveSlacksThreshold) {
