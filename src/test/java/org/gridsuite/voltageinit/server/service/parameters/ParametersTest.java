@@ -146,7 +146,7 @@ class ParametersTest {
 
     private ListAssert<VoltageLimitOverride> testsBuildSpecificVoltageLimitsCommon(List<VoltageLimitEntity> voltageLimits, String reportFilename) throws Exception {
         final VoltageInitParametersEntity voltageInitParameters = entityManager.persistFlushFind(
-            new VoltageInitParametersEntity(null, null, "", voltageLimits, null, null, null, 100., false)
+            new VoltageInitParametersEntity(null, null, "", voltageLimits, null, null, null, 100., 0., false)
         );
         final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
         context.setReportNode(ReportNode.newRootReportNode().withMessageTemplate(COMPUTATION_TYPE, COMPUTATION_TYPE).build());
@@ -187,7 +187,7 @@ class ParametersTest {
             .hasSize(8)
             //There should (not?) be relative overrides since voltage limit modification are applied
             .anyMatch(VoltageLimitOverride::isRelative)
-            //VLGEN has both it limits set so it should now be impacted by modifications override
+            //VLGEN has both it limits set, so it should now be impacted by modifications override
             .satisfiesOnlyOnce(assertVoltageLimitOverride("VLGEN", VoltageLimitType.LOW_VOLTAGE_LIMIT, -1.))
             .satisfiesOnlyOnce(assertVoltageLimitOverride("VLGEN", VoltageLimitType.HIGH_VOLTAGE_LIMIT, -2.))
             //Because of the modification setting the voltage limits attributed to VLLOAD should now respectively be 43. and 86.
@@ -256,7 +256,7 @@ class ParametersTest {
         final VoltageLimitEntity vl3 = new VoltageLimitEntity(null, 70.0, 700.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(filterUuidS4VL2, filterIdS4VL2)));
         final VoltageLimitEntity vl4 = new VoltageLimitEntity(null, -20.0, 10.0, 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(filterUuidS3VL1, filterIdS3VL1)));
         final VoltageInitParametersEntity voltageInitParameters = entityManager.persistFlushFind(
-            new VoltageInitParametersEntity(null, null, "", List.of(vl1, vl2, vl3, vl4), null, null, null, 100., false)
+            new VoltageInitParametersEntity(null, null, "", List.of(vl1, vl2, vl3, vl4), null, null, null, 100., 0., false)
         );
 
         final VoltageInitRunContext context = new VoltageInitRunContext(networkUuid, variantId, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());

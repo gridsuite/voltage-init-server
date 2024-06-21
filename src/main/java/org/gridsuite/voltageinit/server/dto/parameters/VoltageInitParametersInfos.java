@@ -47,6 +47,8 @@ public class VoltageInitParametersInfos {
 
     double reactiveSlacksThreshold;
 
+    double shuntCompensatorActivationThreshold;
+
     boolean updateBusVoltage;
 
     public VoltageInitParametersEntity toEntity() {
