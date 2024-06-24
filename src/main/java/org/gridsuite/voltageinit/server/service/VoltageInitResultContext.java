@@ -51,26 +51,25 @@ public class VoltageInitResultContext extends AbstractResultContext<VoltageInitR
         String variantId = (String) headers.get(VARIANT_ID_HEADER);
         String receiver = (String) headers.get(HEADER_RECEIVER);
         String userId = (String) headers.get(HEADER_USER_ID);
-        Map<String, Double> voltageLevelsIdsRestricted = new HashMap<>();
-        if (headers.containsKey(VOLTAGE_LEVELS_IDS_RESTRICTED) && headers.get(VOLTAGE_LEVELS_IDS_RESTRICTED) != null) {
-            try {
-                TypeReference<Map<String, Double>> typeRef = new TypeReference<>() { };
-                voltageLevelsIdsRestricted = objectMapper.readValue((String) headers.get(VOLTAGE_LEVELS_IDS_RESTRICTED), typeRef);
-            } catch (JsonProcessingException e) {
-                throw new UncheckedIOException(e);
-            }
+        Map<String, Double> voltageLevelsIdsRestricted;
+        try {
+            voltageLevelsIdsRestricted = headers.get(VOLTAGE_LEVELS_IDS_RESTRICTED) != null ?
+                    objectMapper.readValue((String) headers.get(VOLTAGE_LEVELS_IDS_RESTRICTED), new TypeReference<>() { }) :
+                    null;
+        } catch (JsonProcessingException e) {
+            throw new UncheckedIOException(e);
         }
-        UUID parametersUuid = null;
-        if (headers.containsKey(PARAMETERS_UUID_HEADER)) {
-            parametersUuid = UUID.fromString(getNonNullHeader(headers, PARAMETERS_UUID_HEADER));
-        }
-        UUID reportUuid = null;
-        if (headers.containsKey(REPORT_UUID_HEADER)) {
-            reportUuid = UUID.fromString(getNonNullHeader(headers, REPORT_UUID_HEADER));
-        }
+        UUID parametersUuid = Optional.ofNullable((String) headers.get(PARAMETERS_UUID_HEADER))
+                .map(UUID::fromString)
+                .orElse(null);
+        UUID reportUuid = Optional.ofNullable((String) headers.get(REPORT_UUID_HEADER))
+                .map(UUID::fromString)
+                .orElse(null);
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
         String reportType = headers.containsKey(REPORT_TYPE_HEADER) ? (String) headers.get(REPORT_TYPE_HEADER) : null;
-        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, voltageLevelsIdsRestricted);
+        VoltageInitRunContext runContext = new VoltageInitRunContext(
+                networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, voltageLevelsIdsRestricted
+        );
         return new VoltageInitResultContext(resultUuid, runContext);
     }
 
@@ -80,7 +79,7 @@ public class VoltageInitResultContext extends AbstractResultContext<VoltageInitR
         if (getRunContext().getParametersUuid() != null) {
             specificMsgHeaders.put(PARAMETERS_UUID_HEADER, getRunContext().getParametersUuid().toString());
         }
-        if (getRunContext().getVoltageLevelsIdsRestricted() != null && objectMapper != null) {
+        if (getRunContext().getVoltageLevelsIdsRestricted() != null) {
             try {
                 specificMsgHeaders.put(VOLTAGE_LEVELS_IDS_RESTRICTED,
                         objectMapper.writeValueAsString(getRunContext().getVoltageLevelsIdsRestricted()));
