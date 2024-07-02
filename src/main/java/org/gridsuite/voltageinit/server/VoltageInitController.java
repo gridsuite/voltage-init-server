@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-import static org.gridsuite.voltageinit.server.computation.service.NotificationService.HEADER_USER_ID;
+import static com.powsybl.ws.commons.computation.service.NotificationService.HEADER_USER_ID;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**

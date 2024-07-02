@@ -36,8 +36,8 @@ import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import org.gridsuite.voltageinit.server.computation.service.UuidGeneratorService;
-import org.gridsuite.voltageinit.server.computation.utils.annotations.PostCompletionAdapter;
+import com.powsybl.ws.commons.computation.service.UuidGeneratorService;
+import com.powsybl.ws.commons.computation.utils.annotations.PostCompletionAdapter;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
@@ -77,7 +77,7 @@ import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
-import static org.gridsuite.voltageinit.server.computation.service.NotificationService.*;
+import static com.powsybl.ws.commons.computation.service.NotificationService.*;
 import static org.gridsuite.voltageinit.server.service.VoltageInitWorkerService.*;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -134,8 +134,8 @@ public class VoltageInitControllerTest {
     @MockBean
     private UuidGeneratorService uuidGeneratorService;
 
-    private final RestTemplateConfig restTemplateConfig = new RestTemplateConfig();
-    private final ObjectMapper mapper = restTemplateConfig.objectMapper();
+    @Autowired
+    private ObjectMapper mapper;
 
     private Network network;
     OpenReacParameters openReacParameters;
@@ -412,8 +412,8 @@ public class VoltageInitControllerTest {
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
 
             Message<byte[]> resultMessage = output.receive(TIMEOUT, "voltageinit.result");
-            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
-            assertEquals("me", resultMessage.getHeaders().get("receiver"));
+            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get(HEADER_RESULT_UUID));
+            assertEquals("me", resultMessage.getHeaders().get(HEADER_RECEIVER));
 
             result = mockMvc.perform(get(
                     "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))

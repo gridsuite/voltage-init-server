@@ -6,17 +6,20 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
 import lombok.Getter;
-import org.gridsuite.voltageinit.server.computation.service.AbstractResultContext;
+import com.powsybl.ws.commons.computation.service.AbstractResultContext;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
-import org.springframework.messaging.support.MessageBuilder;
 
+import java.io.UncheckedIOException;
 import java.util.*;
 
-import static org.gridsuite.voltageinit.server.computation.service.NotificationService.HEADER_RECEIVER;
-import static org.gridsuite.voltageinit.server.computation.service.NotificationService.HEADER_USER_ID;
+import static com.powsybl.ws.commons.computation.service.NotificationService.HEADER_RECEIVER;
+import static com.powsybl.ws.commons.computation.service.NotificationService.HEADER_USER_ID;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -40,36 +43,50 @@ public class VoltageInitResultContext extends AbstractResultContext<VoltageInitR
         return header;
     }
 
-    public static VoltageInitResultContext fromMessage(Message<String> message) {
+    public static VoltageInitResultContext fromMessage(Message<String> message, ObjectMapper objectMapper) {
         Objects.requireNonNull(message);
         MessageHeaders headers = message.getHeaders();
-        UUID resultUuid = UUID.fromString(getNonNullHeader(headers, "resultUuid"));
-        UUID networkUuid = UUID.fromString(getNonNullHeader(headers, "networkUuid"));
+        UUID resultUuid = UUID.fromString(getNonNullHeader(headers, RESULT_UUID_HEADER));
+        UUID networkUuid = UUID.fromString(getNonNullHeader(headers, NETWORK_UUID_HEADER));
         String variantId = (String) headers.get(VARIANT_ID_HEADER);
         String receiver = (String) headers.get(HEADER_RECEIVER);
         String userId = (String) headers.get(HEADER_USER_ID);
-        Map<String, Double> voltageLevelsIdsRestricted = (Map<String, Double>) headers.get(VOLTAGE_LEVELS_IDS_RESTRICTED);
-
-        UUID parametersUuid = headers.containsKey(PARAMETERS_UUID_HEADER) ? UUID.fromString((String) headers.get(PARAMETERS_UUID_HEADER)) : null;
-        UUID reportUuid = headers.containsKey(REPORT_UUID_HEADER) ? UUID.fromString((String) headers.get(REPORT_UUID_HEADER)) : null;
+        Map<String, Double> voltageLevelsIdsRestricted;
+        try {
+            voltageLevelsIdsRestricted = headers.get(VOLTAGE_LEVELS_IDS_RESTRICTED) != null ?
+                    objectMapper.readValue((String) headers.get(VOLTAGE_LEVELS_IDS_RESTRICTED), new TypeReference<>() { }) :
+                    null;
+        } catch (JsonProcessingException e) {
+            throw new UncheckedIOException(e);
+        }
+        UUID parametersUuid = Optional.ofNullable((String) headers.get(PARAMETERS_UUID_HEADER))
+                .map(UUID::fromString)
+                .orElse(null);
+        UUID reportUuid = Optional.ofNullable((String) headers.get(REPORT_UUID_HEADER))
+                .map(UUID::fromString)
+                .orElse(null);
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
         String reportType = headers.containsKey(REPORT_TYPE_HEADER) ? (String) headers.get(REPORT_TYPE_HEADER) : null;
-        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, voltageLevelsIdsRestricted);
+        VoltageInitRunContext runContext = new VoltageInitRunContext(
+                networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, voltageLevelsIdsRestricted
+        );
         return new VoltageInitResultContext(resultUuid, runContext);
     }
 
-    public Message<String> toMessage() {
-        return MessageBuilder.withPayload("")
-                .setHeader("resultUuid", resultUuid.toString())
-                .setHeader("networkUuid", runContext.getNetworkUuid().toString())
-                .setHeader(PARAMETERS_UUID_HEADER, runContext.getParametersUuid() != null ? runContext.getParametersUuid().toString() : null)
-                .setHeader(VARIANT_ID_HEADER, runContext.getVariantId())
-                .setHeader(HEADER_RECEIVER, runContext.getReceiver())
-                .setHeader(HEADER_USER_ID, runContext.getUserId())
-                .setHeader(REPORT_UUID_HEADER, runContext.getReportInfos().reportUuid() != null ? runContext.getReportInfos().reportUuid().toString() : null)
-                .setHeader(REPORTER_ID_HEADER, runContext.getReportInfos().reporterId())
-                .setHeader(REPORT_TYPE_HEADER, runContext.getReportInfos().computationType())
-                .setHeader(VOLTAGE_LEVELS_IDS_RESTRICTED, runContext.getVoltageLevelsIdsRestricted())
-                .build();
+    @Override
+    protected Map<String, String> getSpecificMsgHeaders(ObjectMapper objectMapper) {
+        Map<String, String> specificMsgHeaders = new HashMap<>();
+        if (getRunContext().getParametersUuid() != null) {
+            specificMsgHeaders.put(PARAMETERS_UUID_HEADER, getRunContext().getParametersUuid().toString());
+        }
+        if (getRunContext().getVoltageLevelsIdsRestricted() != null) {
+            try {
+                specificMsgHeaders.put(VOLTAGE_LEVELS_IDS_RESTRICTED,
+                        objectMapper.writeValueAsString(getRunContext().getVoltageLevelsIdsRestricted()));
+            } catch (JsonProcessingException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        return specificMsgHeaders;
     }
 }
