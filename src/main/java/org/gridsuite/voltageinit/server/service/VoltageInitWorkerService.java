@@ -89,7 +89,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
     }
 
     @Override
-    protected void handleNonCancellationException(AbstractResultContext<VoltageInitRunContext> resultContext, Exception exception) {
+    protected void handleNonCancellationException(AbstractResultContext<VoltageInitRunContext> resultContext, Exception exception, AtomicReference<ReportNode> rootReporter) {
         Map<String, String> errorIndicators = new HashMap<>();
         errorIndicators.put(ERROR, ERROR_DURING_VOLTAGE_PROFILE_INITIALISATION);
         resultService.insertErrorResult(resultContext.getResultUuid(), errorIndicators);
