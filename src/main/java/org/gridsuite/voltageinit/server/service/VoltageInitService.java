@@ -75,7 +75,7 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
             .map(slack -> new ReactiveSlack(slack.getBusId(), slack.getSlack()))
             .toList();
         List<BusVoltage> busVoltages = resultEntity.getBusVoltages().stream()
-            .map(bv -> new BusVoltage(bv.getBusId(), bv.getV(), bv.getAngle()))
+            .map(bv -> new BusVoltage(bv.getVoltageLevelId(), bv.getBusId(), bv.getV(), bv.getAngle()))
             .toList();
         return new VoltageInitResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), sortedIndicators,
             reactiveSlacks, busVoltages, resultEntity.getModificationsGroupUuid(), resultEntity.isReactiveSlacksOverThreshold(),
