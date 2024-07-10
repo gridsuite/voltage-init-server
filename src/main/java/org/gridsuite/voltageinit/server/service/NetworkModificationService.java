@@ -186,6 +186,7 @@ public class NetworkModificationService {
                     Bus bus = network.getBusView().getBus(busId);
                     if (bus != null) {
                         BusModificationInfos.BusModificationInfosBuilder builder = BusModificationInfos.builder()
+                            .voltageLevelId(bus.getVoltageLevel().getId())
                             .busId(busId)
                             .v(voltage.getFirst() * bus.getVoltageLevel().getNominalV())
                             .angle(Math.toDegrees(voltage.getSecond()));

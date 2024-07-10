@@ -17,6 +17,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BusVoltage {
+    private String voltageLevelId;
+
     private String busId;
 
     private double v;
