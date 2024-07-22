@@ -152,9 +152,6 @@ class ParametersTest {
         context.setReportNode(ReportNode.newRootReportNode().withMessageTemplate(COMPUTATION_TYPE, COMPUTATION_TYPE).build());
         final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getReportNode()));
-        System.out.println("*********** report = ");
-        System.out.println(mapper.writeValueAsString(context.getReportNode()));
-        //assertEquals(TestUtils.resourceToString(reportFilename), mapper.writerWithDefaultPrettyPrinter().writeValueAsString(context.getReportNode()));
         JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString(reportFilename), mapper.writeValueAsString(context.getReportNode()), REPORTER_COMPARATOR);
         return assertThat(openReacParameters.getSpecificVoltageLimits()).as("SpecificVoltageLimits");
     }
