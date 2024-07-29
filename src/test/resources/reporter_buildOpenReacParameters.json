@@ -1,5 +1,14 @@
 {
-  "version": "2.0",
+  "version": "2.1",
+  "dictionaries": {
+    "default": {
+      "VoltageInit": "VoltageInit",
+      "VoltageInitParameters": "VoltageInit parameters",
+      "missingVoltageLimits": "Missing voltage limits of ${nbMissingVoltageLimits} voltage levels have been replaced with user-defined default values.",
+      "voltageLimitModifications": "Voltage limits of ${nbVoltageLimitModifications} voltage levels have been modified according to user input.",
+      "voltageLimitModified": "Voltage limits of ${voltageLevelId} modified: low voltage limit = ${lowVoltageLimit}, high voltage limit = ${highVoltageLimit}"
+    }
+  },
   "reportRoot": {
     "messageKey": "VoltageInit",
     "children": [
@@ -64,15 +73,6 @@
           }
         ]
       }
-    ],
-    "dictionaries": {
-      "default": {
-        "VoltageInit": "VoltageInit",
-        "VoltageInitParameters": "VoltageInit parameters",
-        "missingVoltageLimits": "Missing voltage limits of ${nbMissingVoltageLimits} voltage levels have been replaced with user-defined default values.",
-        "voltageLimitModifications": "Voltage limits of ${nbVoltageLimitModifications} voltage levels have been modified according to user input.",
-        "voltageLimitModified": "Voltage limits of ${voltageLevelId} modified: low voltage limit = ${lowVoltageLimit}, high voltage limit = ${highVoltageLimit}"
-      }
-    }
+    ]
   }
 }
