@@ -230,7 +230,6 @@ public class VoltageInitParametersService {
                     .addVariableTwoWindingsTransformers(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableTwoWindingsTransformers()))
                     .addVariableShuntCompensators(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableShuntCompensators()));
 
-            // TODO : uncomment when new openreac release will contain this parameter
             parameters.setShuntCompensatorActivationAlertThreshold(voltageInitParameters.getShuntCompensatorActivationThreshold());
         });
 

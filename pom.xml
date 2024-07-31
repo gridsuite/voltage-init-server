@@ -9,7 +9,7 @@
          xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
-    
+
     <parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-parent-ws</artifactId>
@@ -49,8 +49,8 @@
     </developers>
 
     <properties>
-        <gridsuite-dependencies.version>30</gridsuite-dependencies.version>
-        <powsybl-open-reac.version>0.8.0-SNAPSHOT</powsybl-open-reac.version>
+        <gridsuite-dependencies.version>31</gridsuite-dependencies.version>
+        <powsybl-open-reac.version>0.8.0</powsybl-open-reac.version>
         <mockito-inline.version>3.11.1</mockito-inline.version>
         <liquibase-hibernate-package>org.gridsuite.voltageinit.server</liquibase-hibernate-package>
     </properties>

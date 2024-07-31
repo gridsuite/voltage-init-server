@@ -7,7 +7,7 @@
 package org.gridsuite.voltageinit.server.service;
 
 import com.powsybl.iidm.network.Bus;
-import org.gridsuite.voltageinit.server.computation.service.AbstractComputationResultService;
+import com.powsybl.ws.commons.computation.service.AbstractComputationResultService;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.entities.BusVoltageEmbeddable;
 import org.gridsuite.voltageinit.server.entities.GlobalStatusEntity;
@@ -55,7 +55,7 @@ public class VoltageInitResultService extends AbstractComputationResultService<V
             .map(vp -> {
                 Bus b = networkBuses.get(vp.getKey());
                 if (b != null) {
-                    return new BusVoltageEmbeddable(vp.getKey(),
+                    return new BusVoltageEmbeddable(b.getVoltageLevel().getId(), vp.getKey(),
                         vp.getValue().getFirst() * b.getVoltageLevel().getNominalV(),
                         Math.toDegrees(vp.getValue().getSecond()));
                 } else {

@@ -20,6 +20,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Embeddable
 public class BusVoltageEmbeddable {
+    @Column
+    private String voltageLevelId;
 
     @Column
     private String busId;

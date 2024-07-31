@@ -6,6 +6,8 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.TypedValue;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
@@ -16,7 +18,7 @@ import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
-import org.gridsuite.voltageinit.server.computation.service.*;
+import com.powsybl.ws.commons.computation.service.*;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
 import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
@@ -28,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -58,8 +61,9 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
                                     VoltageInitParametersService voltageInitParametersService,
                                     VoltageInitResultService resultService,
                                     ReportService reportService,
-                                    VoltageInitObserver voltageInitObserver) {
-        super(networkStoreService, notificationService, reportService, resultService, executionService, voltageInitObserver, null);
+                                    VoltageInitObserver voltageInitObserver,
+                                    ObjectMapper objectMapper) {
+        super(networkStoreService, notificationService, reportService, resultService, executionService, voltageInitObserver, objectMapper);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
         this.voltageInitParametersService = Objects.requireNonNull(voltageInitParametersService);
     }
@@ -71,21 +75,21 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
 
     @Override
     protected VoltageInitResultContext fromMessage(Message<String> message) {
-        return VoltageInitResultContext.fromMessage(message);
+        return VoltageInitResultContext.fromMessage(message, objectMapper);
     }
 
     private boolean checkReactiveSlacksOverThreshold(OpenReacResult openReacResult, double reactiveSlacksThreshold) {
         return openReacResult.getReactiveSlacks().stream().anyMatch(r -> Math.abs(r.slack) > reactiveSlacksThreshold);
     }
 
-    protected CompletableFuture<OpenReacResult> getCompletableFuture(Network network, VoltageInitRunContext context, String provider, UUID resultUuid) {
-        OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(context, network);
+    protected CompletableFuture<OpenReacResult> getCompletableFuture(VoltageInitRunContext context, String provider, UUID resultUuid) {
+        OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(context, context.getNetwork());
         OpenReacConfig config = OpenReacConfig.load();
-        return OpenReacRunner.runAsync(network, network.getVariantManager().getWorkingVariantId(), parameters, config, executionService.getComputationManager(), context.getReportNode(), null);
+        return OpenReacRunner.runAsync(context.getNetwork(), context.getNetwork().getVariantManager().getWorkingVariantId(), parameters, config, executionService.getComputationManager(), context.getReportNode(), null);
     }
 
     @Override
-    protected void handleNonCancellationException(AbstractResultContext<VoltageInitRunContext> resultContext, Exception exception) {
+    protected void handleNonCancellationException(AbstractResultContext<VoltageInitRunContext> resultContext, Exception exception, AtomicReference<ReportNode> rootReporter) {
         Map<String, String> errorIndicators = new HashMap<>();
         errorIndicators.put(ERROR, ERROR_DURING_VOLTAGE_PROFILE_INITIALISATION);
         resultService.insertErrorResult(resultContext.getResultUuid(), errorIndicators);
@@ -128,7 +132,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
     }
 
     @Override
-    protected void postRun(VoltageInitRunContext runContext, OpenReacResult result) {
+    protected void postRun(VoltageInitRunContext runContext, AtomicReference<ReportNode> rootReportNode, OpenReacResult result) {
         double reactiveSlacksThreshold = voltageInitParametersService.getReactiveSlacksThreshold(runContext.getParametersUuid());
         boolean resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(result, reactiveSlacksThreshold);
         if (resultCheckReactiveSlacks) {
@@ -138,6 +142,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
                     .withSeverity(TypedValue.WARN_SEVERITY)
                     .add();
         }
+        super.postRun(runContext, rootReportNode, result);
     }
 
     @Override

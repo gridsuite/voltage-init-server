@@ -1,5 +1,15 @@
 {
-  "version": "2.0",
+  "version": "2.1",
+  "dictionaries": {
+    "default": {
+      "restrictedVoltageLevels": "The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: ${joinedVoltageLevelsIds}",
+      "voltageLimitModifications": "Voltage limits of ${nbVoltageLimitModifications} voltage levels have been modified according to user input.",
+      "VoltageInitParameters": "VoltageInit parameters",
+      "VoltageInit": "VoltageInit",
+      "missingVoltageLimits": "Missing voltage limits of ${nbMissingVoltageLimits} voltage levels have been replaced with user-defined default values.",
+      "voltageLimitModified": "Voltage limits of ${voltageLevelId} modified: low voltage limit = ${lowVoltageLimit}, high voltage limit = ${highVoltageLimit}"
+    }
+  },
   "reportRoot": {
     "messageKey": "VoltageInit",
     "children": [
@@ -134,16 +144,6 @@
           }
         ]
       }
-    ],
-    "dictionaries": {
-      "default": {
-        "restrictedVoltageLevels": "The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: ${joinedVoltageLevelsIds}",
-        "voltageLimitModifications": "Voltage limits of ${nbVoltageLimitModifications} voltage levels have been modified according to user input.",
-        "VoltageInitParameters": "VoltageInit parameters",
-        "VoltageInit": "VoltageInit",
-        "missingVoltageLimits": "Missing voltage limits of ${nbMissingVoltageLimits} voltage levels have been replaced with user-defined default values.",
-        "voltageLimitModified": "Voltage limits of ${voltageLevelId} modified: low voltage limit = ${lowVoltageLimit}, high voltage limit = ${highVoltageLimit}"
-      }
-    }
+    ]
   }
 }

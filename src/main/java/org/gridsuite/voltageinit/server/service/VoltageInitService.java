@@ -6,11 +6,12 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.network.store.client.NetworkStoreService;
 
-import org.gridsuite.voltageinit.server.computation.service.AbstractComputationService;
-import org.gridsuite.voltageinit.server.computation.service.NotificationService;
-import org.gridsuite.voltageinit.server.computation.service.UuidGeneratorService;
+import com.powsybl.ws.commons.computation.service.AbstractComputationService;
+import com.powsybl.ws.commons.computation.service.NotificationService;
+import com.powsybl.ws.commons.computation.service.UuidGeneratorService;
 import org.gridsuite.voltageinit.server.dto.BusVoltage;
 import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
@@ -38,8 +39,9 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
     public VoltageInitService(NotificationService notificationService,
                               NetworkModificationService networkModificationService,
                               UuidGeneratorService uuidGeneratorService,
-                              VoltageInitResultService resultService) {
-        super(notificationService, resultService, null, uuidGeneratorService, null);
+                              VoltageInitResultService resultService,
+                              ObjectMapper objectMapper) {
+        super(notificationService, resultService, objectMapper, uuidGeneratorService, null);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
     }
 
@@ -49,7 +51,7 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
 
         // update status to running status
         setStatus(List.of(resultUuid), VoltageInitStatus.RUNNING);
-        notificationService.sendRunMessage(new VoltageInitResultContext(resultUuid, runContext).toMessage());
+        notificationService.sendRunMessage(new VoltageInitResultContext(resultUuid, runContext).toMessage(objectMapper));
         return resultUuid;
     }
 
@@ -73,7 +75,7 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
             .map(slack -> new ReactiveSlack(slack.getBusId(), slack.getSlack()))
             .toList();
         List<BusVoltage> busVoltages = resultEntity.getBusVoltages().stream()
-            .map(bv -> new BusVoltage(bv.getBusId(), bv.getV(), bv.getAngle()))
+            .map(bv -> new BusVoltage(bv.getVoltageLevelId(), bv.getBusId(), bv.getV(), bv.getAngle()))
             .toList();
         return new VoltageInitResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), sortedIndicators,
             reactiveSlacks, busVoltages, resultEntity.getModificationsGroupUuid(), resultEntity.isReactiveSlacksOverThreshold(),

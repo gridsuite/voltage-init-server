@@ -18,6 +18,8 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 public class BusModificationInfos {
+    private String voltageLevelId;
+
     private String busId;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

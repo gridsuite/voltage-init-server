@@ -13,7 +13,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.NonNull;
-import org.gridsuite.voltageinit.server.computation.service.AbstractComputationObserver;
+import com.powsybl.ws.commons.computation.service.AbstractComputationObserver;
 import org.springframework.stereotype.Service;
 
 /**
@@ -46,7 +46,7 @@ public class VoltageInitObserver extends AbstractComputationObserver<OpenReacRes
     }
 
     private Observation createObservation(String name) {
-        return Observation.createNotStarted(OBSERVATION_PREFIX + name, observationRegistry)
+        return Observation.createNotStarted(OBSERVATION_PREFIX + name, getObservationRegistry())
                 .lowCardinalityKeyValue(PROVIDER_TAG_NAME, COMPUTATION_TYPE)
                 .lowCardinalityKeyValue(TYPE_TAG_NAME, COMPUTATION_TYPE);
     }
@@ -56,7 +56,7 @@ public class VoltageInitObserver extends AbstractComputationObserver<OpenReacRes
                 .tag(PROVIDER_TAG_NAME, COMPUTATION_TYPE)
                 .tag(TYPE_TAG_NAME, COMPUTATION_TYPE)
                 .tag(STATUS_TAG_NAME, getResultStatus(result))
-                .register(meterRegistry)
+                .register(getMeterRegistry())
                 .increment();
     }
 
