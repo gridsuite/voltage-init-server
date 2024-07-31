@@ -229,6 +229,8 @@ public class VoltageInitParametersService {
             parameters.addConstantQGenerators(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getConstantQGenerators()))
                     .addVariableTwoWindingsTransformers(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableTwoWindingsTransformers()))
                     .addVariableShuntCompensators(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableShuntCompensators()));
+
+            parameters.setShuntCompensatorActivationAlertThreshold(voltageInitParameters.getShuntCompensatorActivationThreshold());
         });
 
         logVoltageLimitsModifications(reportNode, network, parameters.getSpecificVoltageLimits());
