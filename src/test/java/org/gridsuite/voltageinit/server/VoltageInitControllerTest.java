@@ -30,6 +30,7 @@ import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
+import com.powsybl.ws.commons.computation.service.ReportService;
 import lombok.SneakyThrows;
 import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.Dispatcher;
@@ -84,6 +85,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -127,6 +130,9 @@ public class VoltageInitControllerTest {
 
     @Autowired
     private FilterService filterService;
+
+    @MockBean
+    private ReportService reportService;
 
     @MockBean
     private NetworkStoreService networkStoreService;
@@ -519,4 +525,23 @@ public class VoltageInitControllerTest {
         assertEquals(1, TransactionSynchronizationManager.getSynchronizations().size());
         TransactionSynchronizationManager.clearSynchronization();
     }
+
+    @Test
+    public void runWithExceptionAndReportSentTest() throws Exception {
+        try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
+            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class), any(ReportNode.class), isNull(AmplExportConfig.class)))
+                .thenThrow(new PowsyblException("Exception during ampl execution"));
+
+            MvcResult result = mockMvc.perform(post(
+                "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId={variantId}&reportType=VoltageInit&reportUuid=" + REPORT_UUID + "&reporterId=" + UUID.randomUUID(), NETWORK_UUID, VARIANT_2_ID)
+                    .header(HEADER_USER_ID, "userId"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+            assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
+
+            verify(reportService, times(1)).sendReport(any(UUID.class), any(ReportNode.class));  // the report was sent
+        }
+    }
+
 }
