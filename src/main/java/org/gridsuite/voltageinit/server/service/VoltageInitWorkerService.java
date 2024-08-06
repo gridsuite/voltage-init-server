@@ -94,6 +94,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
         errorIndicators.put(ERROR, ERROR_DURING_VOLTAGE_PROFILE_INITIALISATION);
         resultService.insertErrorResult(resultContext.getResultUuid(), errorIndicators);
         resultService.insertStatus(List.of(resultContext.getResultUuid()), VoltageInitStatus.NOT_OK);
+        super.postRun(resultContext.getRunContext(), rootReporter, null);
     }
 
     private UUID createModificationGroup(OpenReacResult openReacResult, Network network, boolean updateBusVoltage) {
