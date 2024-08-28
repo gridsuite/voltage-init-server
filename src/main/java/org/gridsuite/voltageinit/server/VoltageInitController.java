@@ -102,8 +102,9 @@ public class VoltageInitController {
     @Operation(summary = "Stop a voltage init computation")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage init has been stopped")})
     public ResponseEntity<Void> stop(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
-                                     @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver) {
-        voltageInitService.stop(resultUuid, receiver);
+                                     @Parameter(description = "Result receiver") @RequestParam(name = "receiver", required = false) String receiver,
+                                     @RequestHeader(HEADER_USER_ID) String userId) {
+        voltageInitService.stop(resultUuid, receiver, userId);
         return ResponseEntity.ok().build();
     }
 
