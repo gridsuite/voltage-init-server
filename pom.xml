@@ -110,10 +110,10 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
-        <!-- FIXME: to be removed at next powsybl-ws-dependencies upgrade  -->
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-network-store-client</artifactId>
+            <!-- FIXME: remove version after dependencies release -->
             <version>${powsybl-network-store.version}</version>
         </dependency>
         <!-- FIXME: to be removed at next powsybl-ws-dependencies upgrade  -->
@@ -122,11 +122,12 @@
             <artifactId>powsybl-network-store-model</artifactId>
             <version>${powsybl-network-store.version}</version>
         </dependency>
-        <!-- FIXME: to be removed at next powsybl-ws-dependencies upgrade  -->
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-network-store-iidm-impl</artifactId>
+            <!-- FIXME: remove version after dependencies release -->
             <version>${powsybl-network-store.version}</version>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
