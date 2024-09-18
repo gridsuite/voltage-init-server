@@ -85,8 +85,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -303,6 +302,8 @@ public class VoltageInitControllerTest {
         }
         while (output.receive(1000, "voltageinit.failed") != null) {
         }
+        while (output.receive(1000, "voltageinit.cancelfailed") != null) {
+        }
     }
 
     @SneakyThrows
@@ -478,17 +479,22 @@ public class VoltageInitControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn();
+
             // stop voltage init analysis
             assertNotNull(output.receive(TIMEOUT, "voltageinit.run"));
-            mockMvc.perform(put("/" + VERSION + "/results/{resultUuid}/stop" + "?receiver=me", RESULT_UUID))
+            mockMvc.perform(put("/" + VERSION + "/results/{resultUuid}/stop" + "?receiver=me", RESULT_UUID)
+                            .header("userId", "userId"))
                     .andExpect(status().isOk());
             assertNotNull(output.receive(TIMEOUT, "voltageinit.cancel"));
 
-            Message<byte[]> message = output.receive(TIMEOUT, "voltageinit.stopped");
+            //the voltage init couldn't be cancelled since it's finished so we get a cancelfailed
+            Message<byte[]> message = output.receive(TIMEOUT, "voltageinit.cancelfailed");
             assertNotNull(message);
             assertEquals(RESULT_UUID.toString(), message.getHeaders().get("resultUuid"));
             assertEquals("me", message.getHeaders().get("receiver"));
-            assertEquals(getCancelMessage(COMPUTATION_TYPE), message.getHeaders().get("message"));
+            assertEquals(getCancelFailedMessage(COMPUTATION_TYPE), message.getHeaders().get("message"));
+
+            //FIXME how to test the case when the computation is still in progress and we send a cancel request
         }
     }
 
