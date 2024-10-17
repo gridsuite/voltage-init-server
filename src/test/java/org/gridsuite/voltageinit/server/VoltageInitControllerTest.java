@@ -222,7 +222,7 @@ class VoltageInitControllerTest {
     }
 
     @BeforeEach
-    void setUp(final MockWebServer server) throws Exception {
+    void setUp(final MockWebServer server) {
         MockitoAnnotations.initMocks(this);
 
         HttpUrl baseHttpUrl = server.url("");
