@@ -55,7 +55,6 @@ class VoltageInitParametersTest {
     @Autowired
     private VoltageInitParametersRepository parametersRepository;
 
-    @BeforeEach
     @AfterEach
     void cleanDB() {
         parametersRepository.deleteAll();
