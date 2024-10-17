@@ -67,6 +67,7 @@ public class VoltageInitResultService extends AbstractComputationResultService<V
                                            isReactiveSlacksOverThreshold, reactiveSlacksThreshold);
     }
 
+    @Override
     @Transactional
     public void delete(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);

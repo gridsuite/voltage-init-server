@@ -13,15 +13,13 @@ import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfo
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageLimitInfos;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,11 +35,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
  */
-@RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-public class VoltageInitParametersTest {
+class VoltageInitParametersTest {
 
     private static final String URI_PARAMETERS_BASE = "/v1/parameters";
 
@@ -58,14 +55,14 @@ public class VoltageInitParametersTest {
     @Autowired
     private VoltageInitParametersRepository parametersRepository;
 
-    @Before
-    @After
-    public void cleanDB() {
+    @BeforeEach
+    @AfterEach
+    void cleanDB() {
         parametersRepository.deleteAll();
     }
 
     @Test
-    public void testCreate() throws Exception {
+    void testCreate() throws Exception {
 
         VoltageInitParametersInfos parametersToCreate = buildParameters();
         String parametersToCreateJson = mapper.writeValueAsString(parametersToCreate);
@@ -79,7 +76,7 @@ public class VoltageInitParametersTest {
     }
 
     @Test
-    public void testRead() throws Exception {
+    void testRead() throws Exception {
 
         VoltageInitParametersInfos parametersToRead = buildParameters();
 
@@ -88,14 +85,13 @@ public class VoltageInitParametersTest {
         MvcResult mvcResult = mockMvc.perform(get(URI_PARAMETERS_GET_PUT + parametersUuid))
                 .andExpect(status().isOk()).andReturn();
         String resultAsString = mvcResult.getResponse().getContentAsString();
-        VoltageInitParametersInfos receivedParameters = mapper.readValue(resultAsString, new TypeReference<>() {
-        });
+        VoltageInitParametersInfos receivedParameters = mapper.readValue(resultAsString, new TypeReference<>() { });
 
         assertThat(receivedParameters).recursivelyEquals(parametersToRead);
     }
 
     @Test
-    public void testUpdate() throws Exception {
+    void testUpdate() throws Exception {
 
         VoltageInitParametersInfos parametersToUpdate = buildParameters();
 
@@ -114,7 +110,7 @@ public class VoltageInitParametersTest {
     }
 
     @Test
-    public void testDelete() throws Exception {
+    void testDelete() throws Exception {
 
         VoltageInitParametersInfos parametersToDelete = buildParameters();
 
@@ -128,7 +124,7 @@ public class VoltageInitParametersTest {
     }
 
     @Test
-    public void testGetAll() throws Exception {
+    void testGetAll() throws Exception {
         VoltageInitParametersInfos parameters1 = buildParameters();
 
         VoltageInitParametersInfos parameters2 = buildParametersUpdate();
@@ -140,14 +136,13 @@ public class VoltageInitParametersTest {
         MvcResult mvcResult = mockMvc.perform(get(URI_PARAMETERS_BASE))
                 .andExpect(status().isOk()).andReturn();
         String resultAsString = mvcResult.getResponse().getContentAsString();
-        List<VoltageInitParametersInfos> receivedParameters = mapper.readValue(resultAsString, new TypeReference<>() {
-        });
+        List<VoltageInitParametersInfos> receivedParameters = mapper.readValue(resultAsString, new TypeReference<>() { });
 
         assertThat(receivedParameters).hasSize(2);
     }
 
     @Test
-    public void testDuplicate() throws Exception {
+    void testDuplicate() throws Exception {
 
         VoltageInitParametersInfos parametersToCreate = buildParameters();
         String parametersToCreateJson = mapper.writeValueAsString(parametersToCreate);
