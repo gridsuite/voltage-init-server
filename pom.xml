@@ -53,6 +53,8 @@
         <powsybl-open-reac.version>0.8.0</powsybl-open-reac.version>
         <mockwebserver3.version>5.0.0-alpha.14</mockwebserver3.version>
         <liquibase-hibernate-package>org.gridsuite.voltageinit.server</liquibase-hibernate-package>
+        <!-- FIXME: powsybl-network-store modules'version is overloaded in the dependencies section.The overloads and this property below have to be removed at next powsybl-ws-dependencies.version upgrade -->
+        <powsybl-network-store.version>1.18.2</powsybl-network-store.version>
     </properties>
 
     <build>
@@ -94,6 +96,24 @@
                 <version>${mockwebserver3.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <!-- FIXME: to be removed at next powsybl-ws-dependencies upgrade  -->
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-network-store-iidm-impl</artifactId>
+                <version>${powsybl-network-store.version}</version>
+            </dependency>
+            <!-- FIXME: to be removed at next powsybl-ws-dependencies upgrade  -->
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-network-store-client</artifactId>
+                <version>${powsybl-network-store.version}</version>
+            </dependency>
+            <!-- FIXME: to be removed at next powsybl-ws-dependencies upgrade  -->
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-network-store-model</artifactId>
+                <version>${powsybl-network-store.version}</version>
             </dependency>
 
             <!-- imports -->
