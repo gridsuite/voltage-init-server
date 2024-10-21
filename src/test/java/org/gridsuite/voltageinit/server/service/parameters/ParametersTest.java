@@ -58,12 +58,11 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.condition.NestableCondition.nestable;
 import static org.assertj.core.condition.VerboseCondition.verboseCondition;
-import static org.mockito.BDDMockito.given;
-
 import static org.gridsuite.voltageinit.server.service.VoltageInitWorkerService.COMPUTATION_TYPE;
+import static org.mockito.BDDMockito.given;
 
 @ExtendWith({ MockitoExtension.class, SoftAssertionsExtension.class })
 @SpringBootTest
@@ -102,7 +101,7 @@ class ParametersTest {
     private FilterService filterService;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         network = EurostagTutorialExample1Factory.create(new NetworkFactoryImpl());
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_ID_1);
         network.getVariantManager().setWorkingVariant(VARIANT_ID_1);
