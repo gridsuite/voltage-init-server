@@ -45,6 +45,7 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
     }
 
+    @Override
     public UUID runAndSaveResult(VoltageInitRunContext runContext) {
         Objects.requireNonNull(runContext);
         var resultUuid = uuidGeneratorService.generate();

@@ -25,7 +25,6 @@ import org.gridsuite.voltageinit.server.dto.TransformerModificationInfos;
 import org.gridsuite.voltageinit.server.dto.VoltageInitModificationInfos;
 import org.gridsuite.voltageinit.server.dto.VscConverterStationModificationInfos;
 import org.jgrapht.alg.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -60,7 +59,6 @@ public class NetworkModificationService {
 
     private final ObjectMapper objectMapper;
 
-    @Autowired
     NetworkModificationService(@Value("${gridsuite.services.network-modification-server.base-uri:http://network-modification-server/}") String networkModificationServerBaseUri,
                                ObjectMapper objectMapper) {
         this.networkModificationServerBaseUri = networkModificationServerBaseUri;
