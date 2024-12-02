@@ -85,7 +85,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
     protected CompletableFuture<OpenReacResult> getCompletableFuture(VoltageInitRunContext context, String provider, UUID resultUuid) {
         OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(context, context.getNetwork());
         OpenReacConfig config = OpenReacConfig.load();
-        return OpenReacRunner.runAsync(context.getNetwork(), context.getNetwork().getVariantManager().getWorkingVariantId(), parameters, config, executionService.getComputationManager(), context.getReportNode(), null);
+        return OpenReacRunner.runAsync(context.getNetwork(), context.getNetwork().getVariantManager().getWorkingVariantId(), parameters, config, context.getComputationManager(), context.getReportNode(), null);
     }
 
     @Override
@@ -147,14 +147,14 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
     }
 
     @Override
-    protected void sendResultMessage(AbstractResultContext<VoltageInitRunContext> resultContext, OpenReacResult result) {
+    public Map<String, Object> getResultHeaders(AbstractResultContext<VoltageInitRunContext> resultContext, OpenReacResult result) {
+        Map<String, Object> additionalHeaders = super.getResultHeaders(resultContext, result);
         VoltageInitRunContext context = resultContext.getRunContext();
         double reactiveSlacksThreshold = voltageInitParametersService.getReactiveSlacksThreshold(context.getParametersUuid());
         boolean resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(result, reactiveSlacksThreshold);
-        Map<String, Object> additionalHeaders = new HashMap<>();
         additionalHeaders.put(HEADER_REACTIVE_SLACKS_OVER_THRESHOLD, resultCheckReactiveSlacks);
         additionalHeaders.put(HEADER_REACTIVE_SLACKS_THRESHOLD_VALUE, reactiveSlacksThreshold);
-        notificationService.sendResultMessage(resultContext.getResultUuid(), context.getReceiver(), context.getUserId(), additionalHeaders);
+        return additionalHeaders;
     }
 
     @Override

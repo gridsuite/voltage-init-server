@@ -147,7 +147,7 @@ class ParametersTest {
         final VoltageInitParametersEntity voltageInitParameters = entityManager.persistFlushFind(
             new VoltageInitParametersEntity(null, null, "", voltageLimits, null, null, null, 100., 0., false)
         );
-        final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
+        final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId(), true);
         context.setReportNode(ReportNode.newRootReportNode().withMessageTemplate(COMPUTATION_TYPE, COMPUTATION_TYPE).build());
         final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getReportNode()));
@@ -258,7 +258,7 @@ class ParametersTest {
             new VoltageInitParametersEntity(null, null, "", List.of(vl1, vl2, vl3, vl4), null, null, null, 100., 0., false)
         );
 
-        final VoltageInitRunContext context = new VoltageInitRunContext(networkUuid, variantId, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
+        final VoltageInitRunContext context = new VoltageInitRunContext(networkUuid, variantId, null, REPORT_UUID, null, "", "", voltageInitParameters.getId(), false);
         context.setReportNode(ReportNode.newRootReportNode().withMessageTemplate("VoltageInit", "VoltageInit").build());
         final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         if (log.isDebugEnabled()) {
