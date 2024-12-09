@@ -59,7 +59,9 @@ public class VoltageInitParametersService {
     }
 
     public UUID createParameters(VoltageInitParametersInfos parametersInfos) {
-        return voltageInitParametersRepository.save(parametersInfos.toEntity()).getId();
+        return voltageInitParametersRepository.save(parametersInfos != null
+            ? parametersInfos.toEntity()
+            : new VoltageInitParametersEntity()).getId();
     }
 
     public Optional<UUID> duplicateParameters(UUID sourceParametersId) {
