@@ -27,6 +27,10 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.gridsuite.voltageinit.utils.assertions.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -71,6 +75,21 @@ class VoltageInitParametersTest {
         VoltageInitParametersInfos createdParameters = parametersRepository.findAll().get(0).toVoltageInitParametersInfos();
 
         assertThat(createdParameters).recursivelyEquals(parametersToCreate);
+    }
+
+    @Test
+    void testCreateDefault() throws Exception {
+        mockMvc.perform(post(URI_PARAMETERS_BASE)).andExpect(status().isOk()).andReturn();
+        VoltageInitParametersInfos createdParameters = parametersRepository.findAll().get(0).toVoltageInitParametersInfos();
+        assertNotNull(createdParameters);
+        assertNull(createdParameters.getVoltageLimitsDefault());
+        assertNull(createdParameters.getVariableShuntCompensators());
+        assertNull(createdParameters.getVariableTwoWindingsTransformers());
+        assertNull(createdParameters.getConstantQGenerators());
+        assertNull(createdParameters.getVoltageLimitsModification());
+        assertEquals(0., createdParameters.getReactiveSlacksThreshold());
+        assertEquals(0., createdParameters.getShuntCompensatorActivationThreshold());
+        assertFalse(createdParameters.isUpdateBusVoltage());
     }
 
     @Test
