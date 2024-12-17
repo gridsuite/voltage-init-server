@@ -10,8 +10,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
-import lombok.Getter;
 import com.powsybl.ws.commons.computation.service.AbstractResultContext;
+import lombok.Getter;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 
@@ -67,8 +67,9 @@ public class VoltageInitResultContext extends AbstractResultContext<VoltageInitR
                 .orElse(null);
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
         String reportType = headers.containsKey(REPORT_TYPE_HEADER) ? (String) headers.get(REPORT_TYPE_HEADER) : null;
+        Boolean debug = (Boolean) headers.get(DEBUG_HEADER);
         VoltageInitRunContext runContext = new VoltageInitRunContext(
-                networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, voltageLevelsIdsRestricted
+                networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, voltageLevelsIdsRestricted, Optional.ofNullable(debug).orElse(false)
         );
         return new VoltageInitResultContext(resultUuid, runContext);
     }
