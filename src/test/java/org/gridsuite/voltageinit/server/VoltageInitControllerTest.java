@@ -302,6 +302,7 @@ class VoltageInitControllerTest {
     void tearDown() throws Exception {
         mockMvc.perform(delete("/" + VERSION + "/results"))
                 .andExpect(status().isOk());
+        parametersRepository.deleteAll();
     }
 
     @Test

@@ -41,7 +41,7 @@ public class VoltageInitParametersController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "parameters were created")})
     public ResponseEntity<UUID> createParameters(
-            @RequestBody VoltageInitParametersInfos parametersInfos) {
+            @RequestBody(required = false) VoltageInitParametersInfos parametersInfos) {
         return ResponseEntity.ok().body(parametersService.createParameters(parametersInfos));
     }
 
