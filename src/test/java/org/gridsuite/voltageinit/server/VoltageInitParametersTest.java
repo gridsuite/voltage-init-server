@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
+import static org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService.DEFAULT_REACTIVE_SLACKS_THRESHOLD;
 import static org.gridsuite.voltageinit.utils.assertions.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -82,12 +83,12 @@ class VoltageInitParametersTest {
         mockMvc.perform(post(URI_PARAMETERS_BASE)).andExpect(status().isOk()).andReturn();
         VoltageInitParametersInfos createdParameters = parametersRepository.findAll().get(0).toVoltageInitParametersInfos();
         assertNotNull(createdParameters);
-        assertNull(createdParameters.getVoltageLimitsDefault());
+        assertTrue(createdParameters.getVoltageLimitsDefault().isEmpty());
         assertNull(createdParameters.getVariableShuntCompensators());
         assertNull(createdParameters.getVariableTwoWindingsTransformers());
         assertNull(createdParameters.getConstantQGenerators());
-        assertNull(createdParameters.getVoltageLimitsModification());
-        assertEquals(0., createdParameters.getReactiveSlacksThreshold());
+        assertTrue(createdParameters.getVoltageLimitsModification().isEmpty());
+        assertEquals(DEFAULT_REACTIVE_SLACKS_THRESHOLD, createdParameters.getReactiveSlacksThreshold());
         assertEquals(0., createdParameters.getShuntCompensatorActivationThreshold());
         assertFalse(createdParameters.isUpdateBusVoltage());
     }
