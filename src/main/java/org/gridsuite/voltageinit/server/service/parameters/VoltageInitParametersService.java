@@ -59,9 +59,11 @@ public class VoltageInitParametersService {
     }
 
     public UUID createParameters(VoltageInitParametersInfos parametersInfos) {
-        return voltageInitParametersRepository.save(parametersInfos != null
-            ? parametersInfos.toEntity()
-            : new VoltageInitParametersEntity()).getId();
+        if (parametersInfos != null) {
+            return voltageInitParametersRepository.save(parametersInfos.toEntity()).getId();
+        } else {
+            return voltageInitParametersRepository.save(new VoltageInitParametersEntity(getDefaultParametersInfos())).getId();
+        }
     }
 
     public Optional<UUID> duplicateParameters(UUID sourceParametersId) {
@@ -94,11 +96,21 @@ public class VoltageInitParametersService {
 
     @Transactional
     public void updateParameters(UUID parametersUuid, VoltageInitParametersInfos parametersInfos) {
-        voltageInitParametersRepository.findById(parametersUuid).orElseThrow().update(parametersInfos);
+        VoltageInitParametersEntity entity = voltageInitParametersRepository.findById(parametersUuid).orElseThrow();
+        //if the parameters is null it means it's a reset to defaultValues
+        if (parametersInfos == null) {
+            entity.update(getDefaultParametersInfos());
+        } else {
+            entity.update(parametersInfos);
+        }
     }
 
     public void deleteParameters(UUID parametersUuid) {
         voltageInitParametersRepository.deleteById(parametersUuid);
+    }
+
+    private VoltageInitParametersInfos getDefaultParametersInfos() {
+        return VoltageInitParametersInfos.builder().reactiveSlacksThreshold(DEFAULT_REACTIVE_SLACKS_THRESHOLD).build();
     }
 
     private Map<String, VoltageLimitEntity> resolveVoltageLevelLimits(VoltageInitRunContext context, List<VoltageLimitEntity> voltageLimits) {

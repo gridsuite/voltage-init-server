@@ -82,7 +82,7 @@ public class VoltageInitParametersController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters were updated")})
     public ResponseEntity<Void> updateParameters(
             @Parameter(description = "parameters UUID") @PathVariable("uuid") UUID parametersUuid,
-            @RequestBody VoltageInitParametersInfos parametersInfos) {
+            @RequestBody(required = false) VoltageInitParametersInfos parametersInfos) {
         parametersService.updateParameters(parametersUuid, parametersInfos);
         return ResponseEntity.ok().build();
     }
