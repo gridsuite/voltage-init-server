@@ -52,7 +52,7 @@ public class VoltageInitObserver extends AbstractComputationObserver<OpenReacRes
     }
 
     private void incrementCount(OpenReacResult result) {
-        Counter.builder(COMPUTATION_COUNTER_NAME)
+        Counter.builder(COMPUTATION_TOTAL_COUNTER_NAME)
                 .tag(PROVIDER_TAG_NAME, COMPUTATION_TYPE)
                 .tag(TYPE_TAG_NAME, COMPUTATION_TYPE)
                 .tag(STATUS_TAG_NAME, getResultStatus(result))
