@@ -49,8 +49,8 @@
     </developers>
 
     <properties>
-        <gridsuite-dependencies.version>35</gridsuite-dependencies.version>
-        <powsybl-open-reac.version>0.8.0</powsybl-open-reac.version>
+        <gridsuite-dependencies.version>36</gridsuite-dependencies.version>
+        <powsybl-open-reac.version>0.10.0</powsybl-open-reac.version>
         <mockwebserver3.version>5.0.0-alpha.14</mockwebserver3.version>
         <liquibase-hibernate-package>org.gridsuite.voltageinit.server</liquibase-hibernate-package>
     </properties>
@@ -88,11 +88,6 @@
     <dependencyManagement>
         <dependencies>
             <!-- overrides of imports -->
-            <dependency><!-- To remove when integrate in next release of gridsuite-dependencies or powsybl-ws-dependencies -->
-                <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-ws-commons</artifactId>
-                <version>1.19.0</version>
-            </dependency>
             <dependency><!-- To remove when integrate in next release of gridsuite-dependencies or powsybl-ws-dependencies -->
                 <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>okhttp-bom</artifactId>
