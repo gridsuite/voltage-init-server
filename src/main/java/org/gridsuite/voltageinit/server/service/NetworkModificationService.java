@@ -205,7 +205,7 @@ public class NetworkModificationService {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            HttpEntity<String> httpEntity = new HttpEntity<>(objectMapper.writeValueAsString(Pair.of(voltageInitModificationInfos, List.of())), headers);
+            HttpEntity<String> httpEntity = new HttpEntity<>(objectMapper.writeValueAsString(org.springframework.data.util.Pair.of(voltageInitModificationInfos, List.of())), headers);
 
             restTemplate.exchange(path, HttpMethod.POST, httpEntity, Void.class);
         } catch (JsonProcessingException e) {
