@@ -17,6 +17,7 @@ import com.powsybl.iidm.network.ShuntCompensator;
 import com.powsybl.iidm.network.Terminal;
 import com.powsybl.iidm.network.TwoWindingsTransformer;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
+import com.powsybl.ws.commons.computation.service.UuidGeneratorService;
 import org.gridsuite.voltageinit.server.dto.BusModificationInfos;
 import org.gridsuite.voltageinit.server.dto.GeneratorModificationInfos;
 import org.gridsuite.voltageinit.server.dto.ShuntCompensatorModificationInfos;
@@ -35,10 +36,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.powsybl.iidm.network.IdentifiableType.TWO_WINDINGS_TRANSFORMER;
@@ -51,6 +49,8 @@ public class NetworkModificationService {
     private static final String NETWORK_MODIFICATION_API_VERSION = "v1";
     private static final String DELIMITER = "/";
     private static final String GROUP_PATH = "groups" + DELIMITER + "{groupUuid}";
+    private static final String NETWORK_MODIFICATIONS_PATH = "network-modifications";
+    private static final String QUERY_PARAM_GROUP_UUID = "groupUuid";
     public static final String QUERY_PARAM_ERROR_ON_GROUP_NOT_FOUND = "errorOnGroupNotFound";
 
     private String networkModificationServerBaseUri;
@@ -59,10 +59,13 @@ public class NetworkModificationService {
 
     private final ObjectMapper objectMapper;
 
+    private final UuidGeneratorService uuidGeneratorService;
+
     NetworkModificationService(@Value("${gridsuite.services.network-modification-server.base-uri:http://network-modification-server/}") String networkModificationServerBaseUri,
-                               ObjectMapper objectMapper) {
+                               ObjectMapper objectMapper, UuidGeneratorService uuidGeneratorService) {
         this.networkModificationServerBaseUri = networkModificationServerBaseUri;
         this.objectMapper = objectMapper;
+        this.uuidGeneratorService = uuidGeneratorService;
     }
 
     public void setNetworkModificationServerBaseUri(String networkModificationServerBaseUri) {
@@ -92,7 +95,7 @@ public class NetworkModificationService {
     }
 
     public UUID createVoltageInitModificationGroup(Network network, OpenReacResult result, boolean isUpdateBusVoltage) {
-        UUID modificationsGroupUuid;
+        UUID modificationsGroupUuid = uuidGeneratorService.generate();
 
         try {
             VoltageInitModificationInfos voltageInitModificationInfos = new VoltageInitModificationInfos();
@@ -193,7 +196,8 @@ public class NetworkModificationService {
                 });
             }
             var uriComponentsBuilder = UriComponentsBuilder
-                    .fromUriString(getNetworkModificationServerURI() + "groups" + DELIMITER + "modification");
+                    .fromUriString(getNetworkModificationServerURI() + NETWORK_MODIFICATIONS_PATH)
+                    .queryParam(QUERY_PARAM_GROUP_UUID, modificationsGroupUuid);
             var path = uriComponentsBuilder
                     .buildAndExpand()
                     .toUriString();
@@ -201,10 +205,9 @@ public class NetworkModificationService {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            HttpEntity<String> httpEntity = new HttpEntity<>(objectMapper.writeValueAsString(voltageInitModificationInfos), headers);
+            HttpEntity<String> httpEntity = new HttpEntity<>(objectMapper.writeValueAsString(org.springframework.data.util.Pair.of(voltageInitModificationInfos, List.of())), headers);
 
-            modificationsGroupUuid = restTemplate.exchange(path, HttpMethod.POST, httpEntity, UUID.class)
-                .getBody();
+            restTemplate.exchange(path, HttpMethod.POST, httpEntity, Void.class);
         } catch (JsonProcessingException e) {
             throw new PowsyblException("Error generating json modifications", e);
         } catch (HttpStatusCodeException e) {

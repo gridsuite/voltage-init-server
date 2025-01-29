@@ -6,9 +6,9 @@
  */
 package org.gridsuite.voltageinit.server.dto;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonTypeName;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,12 +19,9 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    property = "type"
-)
-@JsonTypeName("VOLTAGE_INIT_MODIFICATION")
 public class VoltageInitModificationInfos {
+    private String type = "VOLTAGE_INIT_MODIFICATION";
+
     private List<GeneratorModificationInfos> generators = new ArrayList<>();
 
     private List<TransformerModificationInfos> transformers = new ArrayList<>();
