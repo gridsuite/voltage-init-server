@@ -50,6 +50,7 @@ import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParameter
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.gridsuite.voltageinit.server.service.NetworkModificationService;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
+import org.gridsuite.voltageinit.server.util.EquipmentsSelectionType;
 import org.jgrapht.alg.util.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -204,13 +205,14 @@ class VoltageInitControllerTest {
                     .filterId(UUID.randomUUID())
                     .filterName("filterName")
                     .build()))
-                .build())).constantQGenerators(List.of(FilterEquipments.builder()
+                .build())).variableQGenerators(List.of(FilterEquipments.builder()
                     .filterId(UUID.randomUUID())
                     .filterName("qgenFilter1")
                     .build(), FilterEquipments.builder()
                     .filterId(UUID.randomUUID())
                     .filterName("qgenFilter2")
                     .build()))
+            .generatorsSelectionType(EquipmentsSelectionType.ALL_EXCEPT)
             .variableTwoWindingsTransformers(List.of(FilterEquipments.builder()
                     .filterId(UUID.randomUUID())
                     .filterName("vtwFilter1")
@@ -218,6 +220,8 @@ class VoltageInitControllerTest {
                     .filterId(UUID.randomUUID())
                     .filterName("vtwFilter2")
                     .build()))
+            .twoWindingsTransformersSelectionType(EquipmentsSelectionType.NONE_EXCEPT)
+            .shuntCompensatorsSelectionType(EquipmentsSelectionType.NONE_EXCEPT)
             .reactiveSlacksThreshold(100.)
             .shuntCompensatorActivationThreshold(100.)
             .build().toEntity();

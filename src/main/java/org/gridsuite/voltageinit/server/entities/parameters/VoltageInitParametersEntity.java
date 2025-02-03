@@ -14,6 +14,7 @@ import jakarta.transaction.Transactional;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageLimitInfos;
+import org.gridsuite.voltageinit.server.util.EquipmentsSelectionType;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
 
 import java.time.Instant;
@@ -52,11 +53,15 @@ public class VoltageInitParametersEntity {
 
     @ElementCollection
     @CollectionTable(
-            name = "voltageInitParametersEntityConstantQGenerators",
-            joinColumns = @JoinColumn(name = "voltageInitParametersId", foreignKey = @ForeignKey(name = "voltageInitParametersEntity_constantQGenerators_fk")),
-            indexes = {@Index(name = "VoltageInitParametersEntity_constantQGenerators_index", columnList = "voltageInitParametersId")}
+            name = "voltageInitParametersEntityVariableQGenerators",
+            joinColumns = @JoinColumn(name = "voltageInitParametersId", foreignKey = @ForeignKey(name = "voltageInitParametersEntity_variableQGenerators_fk")),
+            indexes = {@Index(name = "VoltageInitParametersEntity_variableQGenerators_index", columnList = "voltageInitParametersId")}
     )
-    private List<FilterEquipmentsEmbeddable> constantQGenerators;
+    private List<FilterEquipmentsEmbeddable> variableQGenerators;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "generatorsSelectionType")
+    private EquipmentsSelectionType generatorsSelectionType;
 
     @ElementCollection
     @CollectionTable(
@@ -66,6 +71,10 @@ public class VoltageInitParametersEntity {
     )
     private List<FilterEquipmentsEmbeddable> variableTwoWindingsTransformers;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "twoWindingsTransformersSelectionType")
+    private EquipmentsSelectionType twoWindingsTransformersSelectionType;
+
     @ElementCollection
     @CollectionTable(
             name = "voltageInitParametersEntityVariableShuntCompensators",
@@ -73,6 +82,10 @@ public class VoltageInitParametersEntity {
             indexes = {@Index(name = "VoltageInitParametersEntity_variableShuntCompensators_index", columnList = "voltageInitParametersId")}
     )
     private List<FilterEquipmentsEmbeddable> variableShuntCompensators;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "shuntCompensatorsSelectionType")
+    private EquipmentsSelectionType shuntCompensatorsSelectionType;
 
     @Column(name = "reactiveSlacksThreshold")
     private double reactiveSlacksThreshold;
@@ -108,9 +121,12 @@ public class VoltageInitParametersEntity {
                 voltageLimits.addAll(voltageLimitsEntities);
             }
         }
-        constantQGenerators = FilterEquipmentsEmbeddable.toEmbeddableFilterEquipments(voltageInitParametersInfos.getConstantQGenerators());
+        variableQGenerators = FilterEquipmentsEmbeddable.toEmbeddableFilterEquipments(voltageInitParametersInfos.getVariableQGenerators());
+        generatorsSelectionType = voltageInitParametersInfos.getGeneratorsSelectionType() != null ? voltageInitParametersInfos.getGeneratorsSelectionType() : EquipmentsSelectionType.ALL_EXCEPT;
         variableTwoWindingsTransformers = FilterEquipmentsEmbeddable.toEmbeddableFilterEquipments(voltageInitParametersInfos.getVariableTwoWindingsTransformers());
+        twoWindingsTransformersSelectionType = voltageInitParametersInfos.getTwoWindingsTransformersSelectionType() != null ? voltageInitParametersInfos.getTwoWindingsTransformersSelectionType() : EquipmentsSelectionType.NONE_EXCEPT;
         variableShuntCompensators = FilterEquipmentsEmbeddable.toEmbeddableFilterEquipments(voltageInitParametersInfos.getVariableShuntCompensators());
+        shuntCompensatorsSelectionType = voltageInitParametersInfos.getShuntCompensatorsSelectionType() != null ? voltageInitParametersInfos.getShuntCompensatorsSelectionType() : EquipmentsSelectionType.NONE_EXCEPT;
         name = voltageInitParametersInfos.getName();
         reactiveSlacksThreshold = voltageInitParametersInfos.getReactiveSlacksThreshold();
         shuntCompensatorActivationThreshold = voltageInitParametersInfos.getShuntCompensatorActivationThreshold();
@@ -136,17 +152,20 @@ public class VoltageInitParametersEntity {
     @Transactional
     public VoltageInitParametersInfos toVoltageInitParametersInfos() {
         return VoltageInitParametersInfos.builder()
-                .uuid(this.getId())
-                .date(this.getDate())
-                .name(this.getName())
-                .voltageLimitsModification(toVoltageLimits(this.getVoltageLimits(), VoltageLimitParameterType.MODIFICATION))
-                .voltageLimitsDefault(toVoltageLimits(this.getVoltageLimits(), VoltageLimitParameterType.DEFAULT))
-                .constantQGenerators(FilterEquipmentsEmbeddable.fromEmbeddableFilterEquipments(this.getConstantQGenerators()))
-                .variableTwoWindingsTransformers(FilterEquipmentsEmbeddable.fromEmbeddableFilterEquipments(this.getVariableTwoWindingsTransformers()))
-                .variableShuntCompensators(FilterEquipmentsEmbeddable.fromEmbeddableFilterEquipments(this.getVariableShuntCompensators()))
-                .reactiveSlacksThreshold(this.getReactiveSlacksThreshold())
-                .shuntCompensatorActivationThreshold(this.getShuntCompensatorActivationThreshold())
-                .updateBusVoltage(this.isUpdateBusVoltage())
+            .uuid(this.getId())
+            .date(this.getDate())
+            .name(this.getName())
+            .voltageLimitsModification(toVoltageLimits(this.getVoltageLimits(), VoltageLimitParameterType.MODIFICATION))
+            .voltageLimitsDefault(toVoltageLimits(this.getVoltageLimits(), VoltageLimitParameterType.DEFAULT))
+            .variableQGenerators(FilterEquipmentsEmbeddable.fromEmbeddableFilterEquipments(this.getVariableQGenerators()))
+            .generatorsSelectionType(this.getGeneratorsSelectionType() != null ? this.getGeneratorsSelectionType() : EquipmentsSelectionType.ALL_EXCEPT)
+            .variableTwoWindingsTransformers(FilterEquipmentsEmbeddable.fromEmbeddableFilterEquipments(this.getVariableTwoWindingsTransformers()))
+            .twoWindingsTransformersSelectionType(this.getTwoWindingsTransformersSelectionType() != null ? this.getTwoWindingsTransformersSelectionType() : EquipmentsSelectionType.NONE_EXCEPT)
+            .variableShuntCompensators(FilterEquipmentsEmbeddable.fromEmbeddableFilterEquipments(this.getVariableShuntCompensators()))
+            .shuntCompensatorsSelectionType(this.getShuntCompensatorsSelectionType() != null ? this.getShuntCompensatorsSelectionType() : EquipmentsSelectionType.NONE_EXCEPT)
+            .reactiveSlacksThreshold(this.getReactiveSlacksThreshold())
+            .shuntCompensatorActivationThreshold(this.getShuntCompensatorActivationThreshold())
+            .updateBusVoltage(this.isUpdateBusVoltage())
             .build();
     }
 }
