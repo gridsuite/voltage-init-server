@@ -49,7 +49,7 @@
     </developers>
 
     <properties>
-        <gridsuite-dependencies.version>36</gridsuite-dependencies.version>
+        <gridsuite-dependencies.version>36.1.0</gridsuite-dependencies.version>
         <powsybl-open-reac.version>0.10.0</powsybl-open-reac.version>
         <mockwebserver3.version>5.0.0-alpha.14</mockwebserver3.version>
         <liquibase-hibernate-package>org.gridsuite.voltageinit.server</liquibase-hibernate-package>
