@@ -13,6 +13,7 @@ import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfo
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageLimitInfos;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
+import org.gridsuite.voltageinit.server.util.EquipmentsSelectionType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,8 +86,11 @@ class VoltageInitParametersTest {
         assertNotNull(createdParameters);
         assertTrue(createdParameters.getVoltageLimitsDefault().isEmpty());
         assertNull(createdParameters.getVariableShuntCompensators());
+        assertEquals(EquipmentsSelectionType.NONE_EXCEPT, createdParameters.getShuntCompensatorsSelectionType());
         assertNull(createdParameters.getVariableTwoWindingsTransformers());
-        assertNull(createdParameters.getConstantQGenerators());
+        assertEquals(EquipmentsSelectionType.NONE_EXCEPT, createdParameters.getTwoWindingsTransformersSelectionType());
+        assertNull(createdParameters.getVariableQGenerators());
+        assertEquals(EquipmentsSelectionType.ALL_EXCEPT, createdParameters.getGeneratorsSelectionType());
         assertTrue(createdParameters.getVoltageLimitsModification().isEmpty());
         assertEquals(DEFAULT_REACTIVE_SLACKS_THRESHOLD, createdParameters.getReactiveSlacksThreshold());
         assertEquals(0., createdParameters.getShuntCompensatorActivationThreshold());
@@ -187,13 +191,14 @@ class VoltageInitParametersTest {
         return VoltageInitParametersInfos.builder()
             .voltageLimitsDefault(List.of())
             .voltageLimitsModification(List.of())
-            .constantQGenerators(List.of(FilterEquipments.builder()
+            .variableQGenerators(List.of(FilterEquipments.builder()
                     .filterId(UUID.randomUUID())
                     .filterName("qgenFilter1")
                     .build(), FilterEquipments.builder()
                     .filterId(UUID.randomUUID())
                     .filterName("qgenFilter2")
                     .build()))
+            .generatorsSelectionType(EquipmentsSelectionType.ALL_EXCEPT)
             .variableTwoWindingsTransformers(List.of(FilterEquipments.builder()
                     .filterId(UUID.randomUUID())
                     .filterName("vtwFilter1")
@@ -201,6 +206,8 @@ class VoltageInitParametersTest {
                     .filterId(UUID.randomUUID())
                     .filterName("vtwFilter2")
                     .build()))
+            .twoWindingsTransformersSelectionType(EquipmentsSelectionType.NONE_EXCEPT)
+            .shuntCompensatorsSelectionType(EquipmentsSelectionType.NONE_EXCEPT)
             .build();
     }
 
@@ -224,10 +231,12 @@ class VoltageInitParametersTest {
                     .filterName("filterName")
                     .build()))
                 .build()))
+            .generatorsSelectionType(EquipmentsSelectionType.ALL_EXCEPT)
             .variableShuntCompensators(List.of(FilterEquipments.builder()
                 .filterId(UUID.randomUUID())
                 .filterName("vscFilter1")
                 .build()))
+            .shuntCompensatorsSelectionType(EquipmentsSelectionType.NONE_EXCEPT)
             .variableTwoWindingsTransformers(List.of(FilterEquipments.builder()
                     .filterId(UUID.randomUUID())
                     .filterName("vtwFilter1Modified")
@@ -235,6 +244,7 @@ class VoltageInitParametersTest {
                     .filterId(UUID.randomUUID())
                     .filterName("vtwFilter2Modified")
                     .build()))
+            .twoWindingsTransformersSelectionType(EquipmentsSelectionType.ALL_EXCEPT)
             .build();
     }
 }
