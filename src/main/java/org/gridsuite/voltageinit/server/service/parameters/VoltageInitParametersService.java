@@ -9,7 +9,10 @@ package org.gridsuite.voltageinit.server.service.parameters;
 import com.google.common.annotations.VisibleForTesting;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.TypedValue;
+import com.powsybl.iidm.network.Generator;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.ShuntCompensator;
+import com.powsybl.iidm.network.TwoWindingsTransformer;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
@@ -25,6 +28,7 @@ import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParameter
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
+import org.gridsuite.voltageinit.server.util.EquipmentsSelectionType;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -240,9 +244,28 @@ public class VoltageInitParametersService {
                 logRestrictedVoltageLevels(reportNode, context.getVoltageLevelsIdsRestricted());
             }
 
-            parameters.addConstantQGenerators(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getConstantQGenerators()))
-                    .addVariableTwoWindingsTransformers(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableTwoWindingsTransformers()))
-                    .addVariableShuntCompensators(toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableShuntCompensators()));
+            // compute constant generators according to selection type parameter
+            List<String> selectedGeneratorsIds = toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableQGenerators());
+            List<String> constantGeneratorsIds = voltageInitParameters.getGeneratorsSelectionType() == EquipmentsSelectionType.ALL_EXCEPT
+                ? selectedGeneratorsIds
+                : network.getGeneratorStream().map(Generator::getId).filter(id -> !selectedGeneratorsIds.contains(id)).toList();
+
+            // compute variable two windings transformers according to selection type parameter
+            List<String> selectedTransformersIds = toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableTwoWindingsTransformers());
+            List<String> variableTransformersIds = voltageInitParameters.getTwoWindingsTransformersSelectionType() == EquipmentsSelectionType.NONE_EXCEPT
+                ? selectedTransformersIds
+                : network.getTwoWindingsTransformerStream().map(TwoWindingsTransformer::getId).filter(id -> !selectedTransformersIds.contains(id)).toList();
+
+            // compute variable shunt compensators according to selection type parameter
+            List<String> selectedShuntCompensatorsIds = toEquipmentIdsList(context.getNetworkUuid(), context.getVariantId(), voltageInitParameters.getVariableShuntCompensators());
+            List<String> variableShuntCompensatorsIds = voltageInitParameters.getShuntCompensatorsSelectionType() == EquipmentsSelectionType.NONE_EXCEPT
+                ? selectedShuntCompensatorsIds
+                : network.getShuntCompensatorStream().map(ShuntCompensator::getId).filter(id -> !selectedShuntCompensatorsIds.contains(id)).toList();
+
+            parameters
+                .addConstantQGenerators(constantGeneratorsIds)
+                .addVariableTwoWindingsTransformers(variableTransformersIds)
+                .addVariableShuntCompensators(variableShuntCompensatorsIds);
 
             parameters.setShuntCompensatorActivationAlertThreshold(voltageInitParameters.getShuntCompensatorActivationThreshold());
         });
