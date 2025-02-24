@@ -46,6 +46,7 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
     }
 
     @Override
+    @Transactional
     public UUID runAndSaveResult(VoltageInitRunContext runContext) {
         Objects.requireNonNull(runContext);
         var resultUuid = uuidGeneratorService.generate();
@@ -84,6 +85,7 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
     }
 
     @Override
+    @Transactional
     public void deleteResult(UUID resultUuid) {
         Optional<VoltageInitResultEntity> result = resultService.find(resultUuid);
         result.ifPresent(r -> {
@@ -95,6 +97,7 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
     }
 
     @Override
+    @Transactional
     public void deleteResults() {
         resultService.findAll().forEach(r -> {
             if (r.getModificationsGroupUuid() != null) {
