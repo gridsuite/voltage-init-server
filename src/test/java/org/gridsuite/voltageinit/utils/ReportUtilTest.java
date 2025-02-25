@@ -10,7 +10,6 @@ import com.powsybl.commons.report.ReportNode;
 import org.gridsuite.voltageinit.server.VoltageInitApplication;
 import org.gridsuite.voltageinit.server.util.ReportUtil;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -19,7 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
  */
-@SpringBootTest
 @ContextConfiguration(classes = {VoltageInitApplication.class})
 public class ReportUtilTest {
     @Test
