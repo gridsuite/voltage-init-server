@@ -7,10 +7,8 @@
 package org.gridsuite.voltageinit.utils;
 
 import com.powsybl.commons.report.ReportNode;
-import org.gridsuite.voltageinit.server.VoltageInitApplication;
 import org.gridsuite.voltageinit.server.util.ReportUtil;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.context.ContextConfiguration;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -18,10 +16,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
  */
-@ContextConfiguration(classes = {VoltageInitApplication.class})
-public class ReportUtilTest {
+class ReportUtilTest {
     @Test
-    public void test() {
+    void test() {
         ReportNode rootNode = ReportNode.newRootReportNode().withMessageTemplate("VoltageInit", "VoltageInit").build();
         ReportNode child1Node = rootNode.newReportNode().withMessageTemplate("key1", "template1").add();
         ReportNode child2Node = rootNode.newReportNode().withMessageTemplate("key2", "template2").add();
