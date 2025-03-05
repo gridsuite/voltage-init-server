@@ -70,6 +70,7 @@ public class VoltageInitParametersService {
         }
     }
 
+    @Transactional
     public Optional<UUID> duplicateParameters(UUID sourceParametersId) {
         Optional<VoltageInitParametersInfos> sourceVoltageInitParametersInfos = voltageInitParametersRepository.findById(sourceParametersId).map(VoltageInitParametersEntity::toVoltageInitParametersInfos);
         if (sourceVoltageInitParametersInfos.isPresent()) {
@@ -80,7 +81,7 @@ public class VoltageInitParametersService {
         return Optional.empty();
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public VoltageInitParametersInfos getParameters(UUID parametersUuid) {
         return voltageInitParametersRepository.findById(parametersUuid).map(VoltageInitParametersEntity::toVoltageInitParametersInfos).orElse(null);
     }
