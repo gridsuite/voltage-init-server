@@ -66,19 +66,11 @@ public class VoltageInitController {
                 : ResponseEntity.notFound().build();
     }
 
-    @DeleteMapping(value = "/results/{resultUuid}", produces = APPLICATION_JSON_VALUE)
-    @Operation(summary = "Delete a voltage init result from the database")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage init result has been deleted")})
-    public ResponseEntity<Void> deleteResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
-        voltageInitService.deleteResult(resultUuid);
-        return ResponseEntity.ok().build();
-    }
-
     @DeleteMapping(value = "/results", produces = APPLICATION_JSON_VALUE)
-    @Operation(summary = "Delete all voltage init results from the database")
+    @Operation(summary = "Delete voltage init results from the database")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "All voltage init results have been deleted")})
-    public ResponseEntity<Void> deleteResults() {
-        voltageInitService.deleteResults();
+    public ResponseEntity<Void> deleteResults(@Parameter(description = "Results UUID") @RequestParam(value = "resultsUuids", required = false) List<UUID> resultsUuids) {
+        voltageInitService.deleteResults(resultsUuids);
         return ResponseEntity.ok().build();
     }
 
