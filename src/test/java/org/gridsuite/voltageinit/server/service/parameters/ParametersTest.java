@@ -28,6 +28,7 @@ import org.gridsuite.voltageinit.server.entities.parameters.FilterEquipmentsEmbe
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
+import org.gridsuite.voltageinit.server.util.EquipmentsSelectionType;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
 import org.gridsuite.voltageinit.utils.TestUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -145,7 +146,7 @@ class ParametersTest {
 
     private ListAssert<VoltageLimitOverride> testsBuildSpecificVoltageLimitsCommon(List<VoltageLimitEntity> voltageLimits, String reportFilename) throws Exception {
         final VoltageInitParametersEntity voltageInitParameters = entityManager.persistFlushFind(
-            new VoltageInitParametersEntity(null, null, "", voltageLimits, null, null, null, 100., 0., false)
+            new VoltageInitParametersEntity(null, null, "", voltageLimits, null, EquipmentsSelectionType.ALL_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, 100., 0., false)
         );
         final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId(), true);
         context.setReportNode(ReportNode.newRootReportNode().withMessageTemplate(COMPUTATION_TYPE, COMPUTATION_TYPE).build());
@@ -255,7 +256,7 @@ class ParametersTest {
         final VoltageLimitEntity vl3 = new VoltageLimitEntity(null, 70.0, 700.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(filterUuidS4VL2, filterIdS4VL2)));
         final VoltageLimitEntity vl4 = new VoltageLimitEntity(null, -20.0, 10.0, 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(filterUuidS3VL1, filterIdS3VL1)));
         final VoltageInitParametersEntity voltageInitParameters = entityManager.persistFlushFind(
-            new VoltageInitParametersEntity(null, null, "", List.of(vl1, vl2, vl3, vl4), null, null, null, 100., 0., false)
+            new VoltageInitParametersEntity(null, null, "", List.of(vl1, vl2, vl3, vl4), null, EquipmentsSelectionType.ALL_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, 100., 0., false)
         );
 
         final VoltageInitRunContext context = new VoltageInitRunContext(networkUuid, variantId, null, REPORT_UUID, null, "", "", voltageInitParameters.getId(), false);

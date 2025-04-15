@@ -50,6 +50,7 @@ import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParameter
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.gridsuite.voltageinit.server.service.NetworkModificationService;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
+import org.gridsuite.voltageinit.server.util.EquipmentsSelectionType;
 import org.jgrapht.alg.util.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -100,13 +101,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ContextHierarchy({@ContextConfiguration(classes = {VoltageInitApplication.class, TestChannelBinderConfiguration.class})})
 class VoltageInitControllerTest {
 
+    private static final UUID GENEREATED_RANDOM_UUID = UUID.randomUUID();
     private static final UUID NETWORK_UUID = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
     private static final UUID OTHER_NETWORK_UUID = UUID.fromString("06824085-db85-4883-9458-8c5c9f1585d6");
-    private static final UUID RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5d");
+    private static final UUID RESULT_UUID = GENEREATED_RANDOM_UUID;
     private static final UUID REPORT_UUID = UUID.fromString("0c4de370-3e6a-4d72-b292-d355a97e0d53");
     private static final UUID OTHER_RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5a");
     private static final Map<String, String> INDICATORS = Map.of("defaultPmax", "1000.000000", "defaultQmax", "300.000000", "minimalQPrange", "1.000000");
-    private static final UUID MODIFICATIONS_GROUP_UUID = UUID.fromString("33333333-aaaa-bbbb-cccc-dddddddddddd");
+    private static final UUID MODIFICATIONS_GROUP_UUID = GENEREATED_RANDOM_UUID;
     private static final String FILTER_EQUIPMENT_JSON = "[{\"filterId\":\"cf399ef3-7f14-4884-8c82-1c90300da329\",\"identifiableAttributes\":[{\"id\":\"VL1\",\"type\":\"VOLTAGE_LEVEL\"}],\"notFoundEquipments\":[]}]";
     private static final String VARIANT_1_ID = "variant_1";
     private static final String VARIANT_2_ID = "variant_2";
@@ -203,13 +205,14 @@ class VoltageInitControllerTest {
                     .filterId(UUID.randomUUID())
                     .filterName("filterName")
                     .build()))
-                .build())).constantQGenerators(List.of(FilterEquipments.builder()
+                .build())).variableQGenerators(List.of(FilterEquipments.builder()
                     .filterId(UUID.randomUUID())
                     .filterName("qgenFilter1")
                     .build(), FilterEquipments.builder()
                     .filterId(UUID.randomUUID())
                     .filterName("qgenFilter2")
                     .build()))
+            .generatorsSelectionType(EquipmentsSelectionType.ALL_EXCEPT)
             .variableTwoWindingsTransformers(List.of(FilterEquipments.builder()
                     .filterId(UUID.randomUUID())
                     .filterName("vtwFilter1")
@@ -217,6 +220,8 @@ class VoltageInitControllerTest {
                     .filterId(UUID.randomUUID())
                     .filterName("vtwFilter2")
                     .build()))
+            .twoWindingsTransformersSelectionType(EquipmentsSelectionType.NONE_EXCEPT)
+            .shuntCompensatorsSelectionType(EquipmentsSelectionType.NONE_EXCEPT)
             .reactiveSlacksThreshold(100.)
             .shuntCompensatorActivationThreshold(100.)
             .build().toEntity();
@@ -262,8 +267,8 @@ class VoltageInitControllerTest {
 
         completableFutureResultsTask = CompletableFutureTask.runAsync(() -> openReacResult, ForkJoinPool.commonPool());
 
-        // UUID service mocking to always generate the same result UUID
-        given(uuidGeneratorService.generate()).willReturn(RESULT_UUID);
+        // UUID service mocking to always generate the same result UUID and group UUID
+        given(uuidGeneratorService.generate()).willReturn(GENEREATED_RANDOM_UUID);
 
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows
@@ -272,8 +277,8 @@ class VoltageInitControllerTest {
                 String path = Objects.requireNonNull(request.getPath());
                 if (path.matches("/v1/groups/.*") && request.getMethod().equals("DELETE")) {
                     return new MockResponse(200);
-                } else if (path.matches("/v1/groups/modification") && request.getMethod().equals("POST")) {
-                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), "\"" + MODIFICATIONS_GROUP_UUID + "\"");
+                } else if (path.matches("/v1/network-modifications\\?groupUuid=.*") && request.getMethod().equals("POST")) {
+                    return new MockResponse(200);
                 } else if (path.matches("/v1/filters/export\\?networkUuid=" + NETWORK_UUID + "&variantId=" + VARIANT_2_ID + "&ids=.*")) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), FILTER_EQUIPMENT_JSON);
                 }
@@ -350,7 +355,7 @@ class VoltageInitControllerTest {
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
                 .andExpect(status().isNotFound());
             // test one result deletion
-            mockMvc.perform(delete("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
+            mockMvc.perform(delete("/" + VERSION + "/results").queryParam("resultsUuids", RESULT_UUID.toString()))
                 .andExpect(status().isOk());
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                 .andExpect(status().isNotFound());

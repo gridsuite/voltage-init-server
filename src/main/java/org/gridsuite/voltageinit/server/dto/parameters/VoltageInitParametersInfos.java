@@ -16,6 +16,7 @@ import java.util.UUID;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.gridsuite.voltageinit.server.util.EquipmentsSelectionType;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
@@ -39,11 +40,17 @@ public class VoltageInitParametersInfos {
 
     List<VoltageLimitInfos> voltageLimitsDefault;
 
-    List<FilterEquipments> constantQGenerators;
+    List<FilterEquipments> variableQGenerators;
+
+    EquipmentsSelectionType generatorsSelectionType;
 
     List<FilterEquipments> variableTwoWindingsTransformers;
 
+    EquipmentsSelectionType twoWindingsTransformersSelectionType;
+
     List<FilterEquipments> variableShuntCompensators;
+
+    EquipmentsSelectionType shuntCompensatorsSelectionType;
 
     double reactiveSlacksThreshold;
 

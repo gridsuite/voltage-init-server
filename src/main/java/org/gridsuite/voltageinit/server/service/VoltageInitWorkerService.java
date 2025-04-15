@@ -35,6 +35,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.gridsuite.voltageinit.server.util.ReportUtil.checkReportWithKey;
+
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -45,6 +47,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
     public static final String COMPUTATION_TYPE = "VoltageInit";
     public static final String HEADER_REACTIVE_SLACKS_OVER_THRESHOLD = "REACTIVE_SLACKS_OVER_THRESHOLD";
     public static final String HEADER_REACTIVE_SLACKS_THRESHOLD_VALUE = "reactiveSlacksThreshold";
+    public static final String HEADER_VOLTAGE_LEVEL_LIMITS_OUT_OF_NOMINAL_VOLTAGE_RANGE = "VOLTAGE_LEVEL_LIMITS_OUT_OF_NOMINAL_VOLTAGE_RANGE";
     private static final Logger LOGGER = LoggerFactory.getLogger(VoltageInitWorkerService.class);
 
     private static final String ERROR = "error";
@@ -82,6 +85,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
         return openReacResult.getReactiveSlacks().stream().anyMatch(r -> Math.abs(r.slack) > reactiveSlacksThreshold);
     }
 
+    @Override
     protected CompletableFuture<OpenReacResult> getCompletableFuture(VoltageInitRunContext context, String provider, UUID resultUuid) {
         OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(context, context.getNetwork());
         OpenReacConfig config = OpenReacConfig.load();

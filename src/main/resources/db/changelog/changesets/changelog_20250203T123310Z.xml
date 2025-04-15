@@ -1,0 +1,46 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="lecuyerfra (generated)" id="1738586008780-1">
+        <dropForeignKeyConstraint baseTableName="voltage_init_parameters_entity_constantqgenerators"
+                                  constraintName="voltageInitParametersEntity_constantQGenerators_fk"/>
+    </changeSet>
+    <changeSet author="lecuyerfra (generated)" id="1738586008780-2">
+        <dropIndex tableName="voltage_init_parameters_entity_constantqgenerators"
+                   indexName="VoltageInitParametersEntity_constantQGenerators_index"/>
+    </changeSet>
+    <changeSet author="lecuyerfra (generated)" id="1738586008780-3">
+        <renameTable oldTableName="voltage_init_parameters_entity_constantqgenerators"
+                     newTableName="voltage_init_parameters_entity_variableqgenerators"/>
+    </changeSet>
+    <changeSet author="lecuyerfra (generated)" id="1738586008780-4">
+        <addForeignKeyConstraint baseColumnNames="voltage_init_parameters_id"
+                                 baseTableName="voltage_init_parameters_entity_variableqgenerators"
+                                 constraintName="voltageInitParametersEntity_variableQGenerators_fk"
+                                 deferrable="false"
+                                 initiallyDeferred="false"
+                                 referencedColumnNames="id"
+                                 referencedTableName="voltage_init_parameters"
+                                 validate="true"/>
+    </changeSet>
+    <changeSet author="lecuyerfra (generated)" id="1738586008780-5">
+        <createIndex tableName="voltage_init_parameters_entity_variableqgenerators"
+                     indexName="VoltageInitParametersEntity_variableQGenerators_index">
+            <column name="voltage_init_parameters_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="lecuyerfra (generated)" id="1738586008780-6">
+        <addColumn tableName="voltage_init_parameters">
+            <column name="generators_selection_type" type="varchar(255)" defaultValue="ALL_EXCEPT"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="lecuyerfra (generated)" id="1738586008780-7">
+        <addColumn tableName="voltage_init_parameters">
+            <column name="shunt_compensators_selection_type" type="varchar(255)" defaultValue="NONE_EXCEPT"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="lecuyerfra (generated)" id="1738586008780-8">
+        <addColumn tableName="voltage_init_parameters">
+            <column name="two_windings_transformers_selection_type" type="varchar(255)" defaultValue="NONE_EXCEPT"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
