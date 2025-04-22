@@ -217,7 +217,7 @@ public class VoltageInitParametersService {
     public OpenReacParameters buildOpenReacParameters(VoltageInitRunContext context, Network network) {
         final long startTime = System.nanoTime();
         final ReportNode reportNode = context.getReportNode().newReportNode()
-                                        .withMessageTemplate("VoltageInitParameters", "VoltageInit parameters")
+                                        .withMessageTemplate("VoltageInitParameters")
                                         .withTypedValue("parameters_id", Objects.toString(context.getParametersUuid()), "ID")
                                         .add();
         OpenReacParameters parameters = new OpenReacParameters();
@@ -297,7 +297,7 @@ public class VoltageInitParametersService {
     private static void logRestrictedVoltageLevels(final ReportNode reportNode, final Map<String, Double> voltageLevelsIdsRestricted) {
         if (!voltageLevelsIdsRestricted.isEmpty()) {
             reportNode.newReportNode()
-                    .withMessageTemplate("restrictedVoltageLevels", "The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: ${joinedVoltageLevelsIds}")
+                    .withMessageTemplate("restrictedVoltageLevels")
                     .withUntypedValue("joinedVoltageLevelsIds", voltageLevelsIdsRestricted
                             .entrySet()
                             .stream()
@@ -312,12 +312,12 @@ public class VoltageInitParametersService {
                                                              final MutableInt counterMissingVoltageLimits,
                                                              final MutableInt counterVoltageLimitModifications) {
         reportNode.newReportNode()
-                .withMessageTemplate("missingVoltageLimits", "Missing voltage limits of ${nbMissingVoltageLimits} voltage levels have been replaced with user-defined default values.")
+                .withMessageTemplate("missingVoltageLimits")
                 .withUntypedValue("nbMissingVoltageLimits", counterMissingVoltageLimits.longValue())
                 .withSeverity(TypedValue.INFO_SEVERITY)
                 .add();
         reportNode.newReportNode()
-                .withMessageTemplate("voltageLimitModifications", "Voltage limits of ${nbVoltageLimitModifications} voltage levels have been modified according to user input.")
+                .withMessageTemplate("voltageLimitModifications")
                 .withUntypedValue("nbVoltageLimitModifications", counterVoltageLimitModifications.longValue())
                 .withSeverity(TypedValue.INFO_SEVERITY)
                 .add();
@@ -342,7 +342,7 @@ public class VoltageInitParametersService {
                 final double initialLowVoltageLimit = voltageLevel.getLowVoltageLimit();
                 final double initialHighVoltage = voltageLevel.getHighVoltageLimit();
                 reporter.newReportNode()
-                        .withMessageTemplate("voltageLimitModified", "Voltage limits of ${voltageLevelId} modified: low voltage limit = ${lowVoltageLimit}, high voltage limit = ${highVoltageLimit}")
+                        .withMessageTemplate("voltageLimitModified")
                         .withTypedValue("voltageLevelId", voltageLevel.getId(), TypedValue.VOLTAGE_LEVEL)
                         .withTypedValue("lowVoltageLimit", computeRelativeVoltageLevel(initialLowVoltageLimit, voltageLimits.get(VoltageLimitType.LOW_VOLTAGE_LIMIT)), TypedValue.VOLTAGE)
                         .withTypedValue("highVoltageLimit", computeRelativeVoltageLevel(initialHighVoltage, voltageLimits.get(VoltageLimitType.HIGH_VOLTAGE_LIMIT)), TypedValue.VOLTAGE)
