@@ -1,5 +1,5 @@
 {
-  "version": "2.1",
+  "version": "3.0",
   "dictionaries": {
     "default": {
       "voltageLimitModifications": "Voltage limits of ${nbVoltageLimitModifications} voltage levels have been modified according to user input.",

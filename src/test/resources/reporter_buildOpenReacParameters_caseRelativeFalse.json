@@ -1,5 +1,5 @@
 {
-  "version": "2.1",
+  "version": "3.0",
   "dictionaries": {
     "default": {
       "restrictedVoltageLevels": "The modifications to the low limits for certain voltage levels have been restricted to avoid negative voltage limits: ${joinedVoltageLevelsIds}",
