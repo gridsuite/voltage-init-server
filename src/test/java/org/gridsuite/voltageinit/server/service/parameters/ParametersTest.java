@@ -81,7 +81,7 @@ class ParametersTest {
 
     private static final JSONComparator REPORTER_COMPARATOR = new CustomComparator(JSONCompareMode.NON_EXTENSIBLE,
         // ignore field having uuid changing each run
-        new Customization("reportRoot.children[*].values.parameters_id.value", (o1, o2) -> (o1 == null) == (o2 == null))
+        new Customization("reportRoot.children[messageKey=voltage.init.server.VoltageInitParameters].values.parameters_id.value", (o1, o2) -> (o1 == null) == (o2 == null))
     );
 
     private Network network;
