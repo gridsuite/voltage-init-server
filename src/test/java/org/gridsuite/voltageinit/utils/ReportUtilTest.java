@@ -19,13 +19,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ReportUtilTest {
     @Test
     void test() {
-        ReportNode rootNode = ReportNode.newRootReportNode().withMessageTemplate("VoltageInit", "VoltageInit").build();
-        ReportNode child1Node = rootNode.newReportNode().withMessageTemplate("key1", "template1").add();
-        ReportNode child2Node = rootNode.newReportNode().withMessageTemplate("key2", "template2").add();
-        ReportNode child11Node = child1Node.newReportNode().withMessageTemplate("key11", "template11").add();
-        ReportNode child21Node = child2Node.newReportNode().withMessageTemplate("key21", "template21").add();
-        ReportNode child22Node = child2Node.newReportNode().withMessageTemplate("key22", "template22").add();
-        ReportNode child221Node = child22Node.newReportNode().withMessageTemplate("key221", "template221").add();
+        ReportNode rootNode = ReportNode.newRootReportNode()
+                .withResourceBundles("i18n.reports")
+                .withMessageTemplate("VoltageInit").build();
+        ReportNode child1Node = rootNode.newReportNode().withMessageTemplate("key1").add();
+        ReportNode child2Node = rootNode.newReportNode().withMessageTemplate("key2").add();
+        ReportNode child11Node = child1Node.newReportNode().withMessageTemplate("key11").add();
+        ReportNode child21Node = child2Node.newReportNode().withMessageTemplate("key21").add();
+        ReportNode child22Node = child2Node.newReportNode().withMessageTemplate("key22").add();
+        ReportNode child221Node = child22Node.newReportNode().withMessageTemplate("key221").add();
 
         assertTrue(ReportUtil.checkReportWithKey("VoltageInit", rootNode));
         assertFalse(ReportUtil.checkReportWithKey("key", rootNode));
