@@ -18,6 +18,7 @@ import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
+import com.powsybl.ws.commons.computation.s3.S3Service;
 import com.powsybl.ws.commons.computation.service.*;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
@@ -63,10 +64,11 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
                                     NetworkModificationService networkModificationService,
                                     VoltageInitParametersService voltageInitParametersService,
                                     VoltageInitResultService resultService,
+                                    Optional<S3Service> s3Service,
                                     ReportService reportService,
                                     VoltageInitObserver voltageInitObserver,
                                     ObjectMapper objectMapper) {
-        super(networkStoreService, notificationService, reportService, resultService, executionService, voltageInitObserver, objectMapper);
+        super(networkStoreService, notificationService, reportService, resultService, s3Service, executionService, voltageInitObserver, objectMapper);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
         this.voltageInitParametersService = Objects.requireNonNull(voltageInitParametersService);
     }
@@ -151,14 +153,16 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
     }
 
     @Override
-    public Map<String, Object> getResultHeaders(AbstractResultContext<VoltageInitRunContext> resultContext, OpenReacResult result) {
-        Map<String, Object> additionalHeaders = super.getResultHeaders(resultContext, result);
+    protected void sendResultMessage(AbstractResultContext<VoltageInitRunContext> resultContext, OpenReacResult result) {
         VoltageInitRunContext context = resultContext.getRunContext();
         double reactiveSlacksThreshold = voltageInitParametersService.getReactiveSlacksThreshold(context.getParametersUuid());
         boolean resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(result, reactiveSlacksThreshold);
+        boolean voltageLevelsWithLimitsOutOfNominalVRange = checkReportWithKey("nbVoltageLevelsWithLimitsOutOfNominalVRange", resultContext.getRunContext().getReportNode());
+        Map<String, Object> additionalHeaders = new HashMap<>();
         additionalHeaders.put(HEADER_REACTIVE_SLACKS_OVER_THRESHOLD, resultCheckReactiveSlacks);
         additionalHeaders.put(HEADER_REACTIVE_SLACKS_THRESHOLD_VALUE, reactiveSlacksThreshold);
-        return additionalHeaders;
+        additionalHeaders.put(HEADER_VOLTAGE_LEVEL_LIMITS_OUT_OF_NOMINAL_VOLTAGE_RANGE, voltageLevelsWithLimitsOutOfNominalVRange);
+        notificationService.sendResultMessage(resultContext.getResultUuid(), context.getReceiver(), context.getUserId(), additionalHeaders);
     }
 
     @Override

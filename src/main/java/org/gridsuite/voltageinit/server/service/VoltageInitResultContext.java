@@ -69,7 +69,7 @@ public class VoltageInitResultContext extends AbstractResultContext<VoltageInitR
         String reportType = headers.containsKey(REPORT_TYPE_HEADER) ? (String) headers.get(REPORT_TYPE_HEADER) : null;
         Boolean debug = (Boolean) headers.get(DEBUG_HEADER);
         VoltageInitRunContext runContext = new VoltageInitRunContext(
-                networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, voltageLevelsIdsRestricted, Optional.ofNullable(debug).orElse(false)
+                networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, voltageLevelsIdsRestricted, debug
         );
         return new VoltageInitResultContext(resultUuid, runContext);
     }
