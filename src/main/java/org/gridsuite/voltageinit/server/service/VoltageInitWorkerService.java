@@ -18,7 +18,6 @@ import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
-import com.powsybl.ws.commons.computation.s3.S3Service;
 import com.powsybl.ws.commons.computation.service.*;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
@@ -64,11 +63,10 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
                                     NetworkModificationService networkModificationService,
                                     VoltageInitParametersService voltageInitParametersService,
                                     VoltageInitResultService resultService,
-                                    Optional<S3Service> s3Service,
                                     ReportService reportService,
                                     VoltageInitObserver voltageInitObserver,
                                     ObjectMapper objectMapper) {
-        super(networkStoreService, notificationService, reportService, resultService, s3Service, executionService, voltageInitObserver, objectMapper);
+        super(networkStoreService, notificationService, reportService, resultService, executionService, voltageInitObserver, objectMapper);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
         this.voltageInitParametersService = Objects.requireNonNull(voltageInitParametersService);
     }

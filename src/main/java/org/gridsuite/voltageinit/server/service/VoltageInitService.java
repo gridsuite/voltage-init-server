@@ -8,7 +8,7 @@ package org.gridsuite.voltageinit.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.network.store.client.NetworkStoreService;
-import com.powsybl.ws.commons.computation.s3.S3Service;
+
 import com.powsybl.ws.commons.computation.service.AbstractComputationService;
 import com.powsybl.ws.commons.computation.service.NotificationService;
 import com.powsybl.ws.commons.computation.service.UuidGeneratorService;
@@ -40,9 +40,8 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
                               NetworkModificationService networkModificationService,
                               UuidGeneratorService uuidGeneratorService,
                               VoltageInitResultService resultService,
-                              Optional<S3Service> s3Service,
                               ObjectMapper objectMapper) {
-        super(notificationService, resultService, s3Service, objectMapper, uuidGeneratorService, null);
+        super(notificationService, resultService, objectMapper, uuidGeneratorService, null);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
     }
 
