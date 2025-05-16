@@ -81,7 +81,7 @@ class ParametersTest {
 
     private static final JSONComparator REPORTER_COMPARATOR = new CustomComparator(JSONCompareMode.NON_EXTENSIBLE,
         // ignore field having uuid changing each run
-        new Customization("reportRoot.children[*].values.parameters_id.value", (o1, o2) -> (o1 == null) == (o2 == null))
+        new Customization("reportRoot.children[messageKey=voltage.init.server.VoltageInitParameters].values.parameters_id.value", (o1, o2) -> (o1 == null) == (o2 == null))
     );
 
     private Network network;
@@ -149,7 +149,9 @@ class ParametersTest {
             new VoltageInitParametersEntity(null, null, "", voltageLimits, null, EquipmentsSelectionType.ALL_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, 100., 0., false)
         );
         final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId(), true);
-        context.setReportNode(ReportNode.newRootReportNode().withMessageTemplate(COMPUTATION_TYPE, COMPUTATION_TYPE).build());
+        context.setReportNode(ReportNode.newRootReportNode()
+                .withResourceBundles("i18n.reports")
+                .withMessageTemplate(COMPUTATION_TYPE).build());
         final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getReportNode()));
         JSONAssert.assertEquals("build parameters logs", TestUtils.resourceToString(reportFilename), mapper.writeValueAsString(context.getReportNode()), REPORTER_COMPARATOR);
@@ -260,7 +262,9 @@ class ParametersTest {
         );
 
         final VoltageInitRunContext context = new VoltageInitRunContext(networkUuid, variantId, null, REPORT_UUID, null, "", "", voltageInitParameters.getId(), false);
-        context.setReportNode(ReportNode.newRootReportNode().withMessageTemplate("VoltageInit", "VoltageInit").build());
+        context.setReportNode(ReportNode.newRootReportNode()
+                .withResourceBundles("i18n.reports")
+                .withMessageTemplate("VoltageInit").build());
         final OpenReacParameters openReacParameters = voltageInitParametersService.buildOpenReacParameters(context, network);
         if (log.isDebugEnabled()) {
             log.debug("openReac build parameters report: {}", mapper.writeValueAsString(context.getReportNode()));

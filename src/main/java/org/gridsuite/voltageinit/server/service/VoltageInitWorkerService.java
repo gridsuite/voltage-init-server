@@ -146,7 +146,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
         boolean resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(result, reactiveSlacksThreshold);
         if (resultCheckReactiveSlacks) {
             runContext.getReportNode().newReportNode()
-                    .withMessageTemplate("reactiveSlacksOverThreshold", "Reactive slack exceeds ${threshold} MVar for at least one bus")
+                    .withMessageTemplate("voltage.init.server.reactiveSlacksOverThreshold")
                     .withUntypedValue("threshold", reactiveSlacksThreshold)
                     .withSeverity(TypedValue.WARN_SEVERITY)
                     .add();
