@@ -6,9 +6,9 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
+import lombok.Getter;
 import com.powsybl.ws.commons.computation.dto.ReportInfos;
 import com.powsybl.ws.commons.computation.service.AbstractComputationRunContext;
-import lombok.Getter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,15 +24,15 @@ public class VoltageInitRunContext extends AbstractComputationRunContext<Void> {
 
     private final Map<String, Double> voltageLevelsIdsRestricted;
 
-    public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid, Map<String, Double> voltageLevelsIdsRestricted, boolean debug) {
+    public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid, Map<String, Double> voltageLevelsIdsRestricted) {
         super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId,
             "default-provider",  // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
-            null, debug);
+            null);
         this.parametersUuid = parametersUuid;
         this.voltageLevelsIdsRestricted = voltageLevelsIdsRestricted;
     }
 
-    public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid, boolean debug) {
-        this(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, new HashMap<>(), debug);
+    public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid) {
+        this(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, new HashMap<>());
     }
 }
