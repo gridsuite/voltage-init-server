@@ -346,7 +346,7 @@ public class VoltageInitParametersService {
                         .withTypedValue("voltageLevelId", voltageLevel.getId(), TypedValue.VOLTAGE_LEVEL)
                         .withTypedValue("lowVoltageLimit", computeRelativeVoltageLevel(initialLowVoltageLimit, voltageLimits.get(VoltageLimitType.LOW_VOLTAGE_LIMIT)), TypedValue.VOLTAGE)
                         .withTypedValue("highVoltageLimit", computeRelativeVoltageLevel(initialHighVoltage, voltageLimits.get(VoltageLimitType.HIGH_VOLTAGE_LIMIT)), TypedValue.VOLTAGE)
-                        .withSeverity(TypedValue.TRACE_SEVERITY)
+                        .withSeverity(TypedValue.DETAIL_SEVERITY)
                         .add();
             });
     }
