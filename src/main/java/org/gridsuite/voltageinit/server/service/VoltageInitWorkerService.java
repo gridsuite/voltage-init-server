@@ -155,7 +155,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
         VoltageInitRunContext context = resultContext.getRunContext();
         double reactiveSlacksThreshold = voltageInitParametersService.getReactiveSlacksThreshold(context.getParametersUuid());
         boolean resultCheckReactiveSlacks = checkReactiveSlacksOverThreshold(result, reactiveSlacksThreshold);
-        boolean voltageLevelsWithLimitsOutOfNominalVRange = checkReportWithKey("nbVoltageLevelsWithLimitsOutOfNominalVRange", resultContext.getRunContext().getReportNode());
+        boolean voltageLevelsWithLimitsOutOfNominalVRange = checkReportWithKey("optimizer.openreac.nbVoltageLevelsWithLimitsOutOfNominalVRange", resultContext.getRunContext().getReportNode());
         Map<String, Object> additionalHeaders = new HashMap<>();
         additionalHeaders.put(HEADER_REACTIVE_SLACKS_OVER_THRESHOLD, resultCheckReactiveSlacks);
         additionalHeaders.put(HEADER_REACTIVE_SLACKS_THRESHOLD_VALUE, reactiveSlacksThreshold);
