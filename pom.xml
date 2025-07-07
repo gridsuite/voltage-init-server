@@ -56,8 +56,6 @@
         <liquibase-hibernate-package>org.gridsuite.voltageinit.server</liquibase-hibernate-package>
         <sonar.organization>gridsuite</sonar.organization>
         <sonar.projectKey>org.gridsuite:voltage-init-server</sonar.projectKey>
-        <!-- TODO network-store.version remove when migration powsybl -->
-        <network-store-client.version>1.27.1</network-store-client.version>
     </properties>
 
     <build>
@@ -99,24 +97,6 @@
                 <version>${mockwebserver3.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <!-- FIXME: to be removed at next powsybl-ws-dependencies upgrade  -->
-            <dependency>
-                <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-network-store-client</artifactId>
-                <version>${network-store-client.version}</version>
-            </dependency>
-            <!-- FIXME: to be removed at next powsybl-ws-dependencies upgrade  -->
-            <dependency>
-                <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-network-store-iidm-impl</artifactId>
-                <version>${network-store-client.version}</version>
-            </dependency>
-            <!-- FIXME: to be removed at next powsybl-ws-dependencies upgrade  -->
-            <dependency>
-                <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-network-store-model</artifactId>
-                <version>${network-store-client.version}</version>
             </dependency>
 
             <!-- imports -->
