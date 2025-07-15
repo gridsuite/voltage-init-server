@@ -23,6 +23,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+
 import static com.powsybl.ws.commons.computation.service.NotificationService.HEADER_USER_ID;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -60,8 +63,12 @@ public class VoltageInitController {
     @Operation(summary = "Get a voltage init result from the database")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage init result"),
         @ApiResponse(responseCode = "404", description = "Voltage init result has not been found")})
-    public ResponseEntity<VoltageInitResult> getResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
-        VoltageInitResult result = voltageInitService.getResult(resultUuid);
+    public ResponseEntity<VoltageInitResult> getResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid,
+                                                       @Parameter(description = "Global Filters") @RequestParam(name = "globalFilters", required = false) String globalFilters,
+                                                       @Parameter(description = "network Uuid") @RequestParam(name = "networkUuid", required = false) UUID networkUuid,
+                                                       @Parameter(description = "variant Id") @RequestParam(name = "variantId", required = false) String variantId) {
+        String decodedStringGlobalFilters = globalFilters != null ? URLDecoder.decode(globalFilters, StandardCharsets.UTF_8) : null;
+        VoltageInitResult result = voltageInitService.getResult(resultUuid, decodedStringGlobalFilters, networkUuid, variantId);
         return result != null ? ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(result)
                 : ResponseEntity.notFound().build();
     }

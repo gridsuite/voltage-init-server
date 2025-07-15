@@ -9,14 +9,18 @@ package org.gridsuite.voltageinit.server.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.network.store.client.NetworkStoreService;
 
+import com.powsybl.ws.commons.computation.dto.GlobalFilter;
 import com.powsybl.ws.commons.computation.service.AbstractComputationService;
 import com.powsybl.ws.commons.computation.service.NotificationService;
 import com.powsybl.ws.commons.computation.service.UuidGeneratorService;
+import com.powsybl.ws.commons.computation.utils.FilterUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.gridsuite.voltageinit.server.dto.BusVoltage;
 import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.entities.VoltageInitResultEntity;
+import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Service;
@@ -36,13 +40,17 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
     @Autowired
     NetworkModificationService networkModificationService;
 
+    private final FilterService filterService;
+
     public VoltageInitService(NotificationService notificationService,
                               NetworkModificationService networkModificationService,
                               UuidGeneratorService uuidGeneratorService,
                               VoltageInitResultService resultService,
+                              FilterService filterService,
                               ObjectMapper objectMapper) {
         super(notificationService, resultService, objectMapper, uuidGeneratorService, null);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
+        this.filterService = Objects.requireNonNull(filterService);
     }
 
     @Override
@@ -63,20 +71,32 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
     }
 
     @Transactional(readOnly = true)
-    public VoltageInitResult getResult(UUID resultUuid) {
+    public VoltageInitResult getResult(UUID resultUuid, String stringGlobalFilters, UUID networkUuid, String variantId) {
         Optional<VoltageInitResultEntity> result = resultService.find(resultUuid);
-        return result.map(VoltageInitService::fromEntity).orElse(null);
+
+        List<String> voltageLevelIds;
+        // get global filters
+        GlobalFilter globalFilter = FilterUtils.fromStringGlobalFiltersToDTO(stringGlobalFilters, objectMapper);
+        if (globalFilter != null) {
+            voltageLevelIds = filterService.getResourceFilters(networkUuid, variantId, globalFilter);
+        } else {
+            voltageLevelIds = null;
+        }
+
+        return result.map(entity -> VoltageInitService.fromEntity(entity, voltageLevelIds)).orElse(null);
     }
 
-    private static VoltageInitResult fromEntity(VoltageInitResultEntity resultEntity) {
+    private static VoltageInitResult fromEntity(VoltageInitResultEntity resultEntity, List<String> voltageLevelIds) {
         LinkedHashMap<String, String> sortedIndicators = resultEntity.getIndicators().entrySet()
             .stream()
             .sorted(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (collisionValue1, collisionValue2) -> collisionValue1, LinkedHashMap::new));
         List<ReactiveSlack> reactiveSlacks = resultEntity.getReactiveSlacks().stream()
-            .map(slack -> new ReactiveSlack(slack.getBusId(), slack.getSlack()))
+            .filter(slack -> CollectionUtils.isEmpty(voltageLevelIds) || voltageLevelIds.contains(slack.getVoltageLevelId()))
+            .map(slack -> new ReactiveSlack(slack.getVoltageLevelId(), slack.getBusId(), slack.getSlack()))
             .toList();
         List<BusVoltage> busVoltages = resultEntity.getBusVoltages().stream()
+            .filter(bv -> CollectionUtils.isEmpty(voltageLevelIds) || voltageLevelIds.contains(bv.getVoltageLevelId()))
             .map(bv -> new BusVoltage(bv.getVoltageLevelId(), bv.getBusId(), bv.getV(), bv.getAngle()))
             .toList();
         return new VoltageInitResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), sortedIndicators,

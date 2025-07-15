@@ -48,7 +48,7 @@ public class VoltageInitResultService extends AbstractComputationResultService<V
                                                                      boolean isReactiveSlacksOverThreshold, Double reactiveSlacksThreshold) {
         Map<String, String> indicators = result.getIndicators();
         List<ReactiveSlackEmbeddable> reactiveSlacks = result.getReactiveSlacks().stream().map(rs ->
-                new ReactiveSlackEmbeddable(rs.getBusId(), rs.getSlack()))
+                new ReactiveSlackEmbeddable(rs.getVoltageLevelId(), rs.getBusId(), rs.getSlack()))
             .collect(Collectors.toList());
         Map<String, Pair<Double, Double>> voltageProfile = result.getVoltageProfile();
         List<BusVoltageEmbeddable> busVoltages = voltageProfile.entrySet().stream()

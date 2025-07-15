@@ -21,6 +21,8 @@ import jakarta.persistence.Embeddable;
 @NoArgsConstructor
 @Embeddable
 public class ReactiveSlackEmbeddable {
+    @Column
+    private String voltageLevelId;
 
     @Column
     private String busId;

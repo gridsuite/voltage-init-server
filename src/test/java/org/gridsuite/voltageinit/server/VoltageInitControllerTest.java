@@ -6,6 +6,8 @@
  */
 package org.gridsuite.voltageinit.server;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.ampl.converter.AmplExportConfig;
 import com.powsybl.commons.PowsyblException;
@@ -17,6 +19,7 @@ import com.powsybl.iidm.modification.ShuntCompensatorModification;
 import com.powsybl.iidm.modification.StaticVarCompensatorModification;
 import com.powsybl.iidm.modification.VscConverterStationModification;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
+import com.powsybl.iidm.network.Country;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
 import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
@@ -30,6 +33,7 @@ import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
+import com.powsybl.ws.commons.computation.dto.GlobalFilter;
 import com.powsybl.ws.commons.computation.service.ReportService;
 import com.powsybl.ws.commons.computation.service.UuidGeneratorService;
 import com.powsybl.ws.commons.computation.utils.annotations.PostCompletionAdapter;
@@ -74,6 +78,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -227,6 +233,15 @@ class VoltageInitControllerTest {
             .build().toEntity();
     }
 
+    private String createStringGlobalFilter(
+            List<String> nominalVs,
+            Map<String, List<String>> substationProperty,
+            List<Country> countryCodes,
+            List<UUID> genericFiltersUuid) throws JsonProcessingException {
+        GlobalFilter globalFilter = new GlobalFilter(nominalVs, countryCodes, genericFiltersUuid, null, substationProperty);
+        return new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).writeValueAsString(globalFilter);
+    }
+
     @BeforeEach
     void setUp(final MockWebServer server) {
         MockitoAnnotations.initMocks(this);
@@ -328,6 +343,7 @@ class VoltageInitControllerTest {
             assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
 
+            // get result
             result = mockMvc.perform(get(
                     "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                 .andExpect(status().isOk())
@@ -339,6 +355,20 @@ class VoltageInitControllerTest {
             assertEquals(INDICATORS, resultDto.getIndicators());
             assertEquals(MODIFICATIONS_GROUP_UUID, resultDto.getModificationsGroupUuid());
 
+            // get result with global filter
+            String globalFilter = createStringGlobalFilter(List.of("380", "150"), Map.of(), List.of(Country.FR, Country.IT), List.of());
+            result = mockMvc.perform(get(
+                    "/" + VERSION + "/results/{resultUuid}" + "?globalFilters=" + URLEncoder.encode(globalFilter, StandardCharsets.UTF_8) + "&networkUuid=" + NETWORK_UUID + "&variantId=" + VARIANT_2_ID, RESULT_UUID))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+
+            resultDto = mapper.readValue(result.getResponse().getContentAsString(), VoltageInitResult.class);
+            assertEquals(RESULT_UUID, resultDto.getResultUuid());
+            assertEquals(INDICATORS, resultDto.getIndicators());
+            assertEquals(MODIFICATIONS_GROUP_UUID, resultDto.getModificationsGroupUuid());
+
+            // get modification group uuid
             result = mockMvc.perform(get(
                     "/" + VERSION + "/results/{resultUuid}/modifications-group-uuid", RESULT_UUID))
                 .andExpect(status().isOk())
