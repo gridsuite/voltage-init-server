@@ -42,7 +42,7 @@
                 "type": "VOLTAGE_LEVEL"
               },
               "reportSeverity": {
-                "value": "TRACE",
+                "value": "DETAIL",
                 "type": "SEVERITY"
               },
               "highVoltageLimit": {
@@ -63,7 +63,7 @@
                 "type": "VOLTAGE_LEVEL"
               },
               "reportSeverity": {
-                "value": "TRACE",
+                "value": "DETAIL",
                 "type": "SEVERITY"
               },
               "highVoltageLimit": {
@@ -84,7 +84,7 @@
                 "type": "VOLTAGE_LEVEL"
               },
               "reportSeverity": {
-                "value": "TRACE",
+                "value": "DETAIL",
                 "type": "SEVERITY"
               },
               "highVoltageLimit": {
@@ -105,7 +105,7 @@
                 "type": "VOLTAGE_LEVEL"
               },
               "reportSeverity": {
-                "value": "TRACE",
+                "value": "DETAIL",
                 "type": "SEVERITY"
               },
               "highVoltageLimit": {
