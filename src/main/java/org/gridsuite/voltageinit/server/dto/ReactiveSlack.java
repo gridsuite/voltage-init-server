@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ReactiveSlack {
+    private String voltageLevelId;
 
     private String busId;
 

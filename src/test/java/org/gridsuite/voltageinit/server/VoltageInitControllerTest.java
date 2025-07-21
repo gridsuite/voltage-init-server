@@ -6,6 +6,8 @@
  */
 package org.gridsuite.voltageinit.server;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.ampl.converter.AmplExportConfig;
 import com.powsybl.commons.PowsyblException;
@@ -17,6 +19,7 @@ import com.powsybl.iidm.modification.ShuntCompensatorModification;
 import com.powsybl.iidm.modification.StaticVarCompensatorModification;
 import com.powsybl.iidm.modification.VscConverterStationModification;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
+import com.powsybl.iidm.network.Country;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManagerConstants;
 import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
@@ -30,6 +33,7 @@ import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
+import com.powsybl.ws.commons.computation.dto.GlobalFilter;
 import com.powsybl.ws.commons.computation.service.ReportService;
 import com.powsybl.ws.commons.computation.service.UuidGeneratorService;
 import com.powsybl.ws.commons.computation.utils.annotations.PostCompletionAdapter;
@@ -41,6 +45,9 @@ import mockwebserver3.RecordedRequest;
 import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import org.gridsuite.filter.identifierlistfilter.IdentifierListFilter;
+import org.gridsuite.filter.identifierlistfilter.IdentifierListFilterEquipmentAttributes;
+import org.gridsuite.filter.utils.EquipmentType;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
@@ -74,6 +81,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -113,6 +123,7 @@ class VoltageInitControllerTest {
     private static final String VARIANT_1_ID = "variant_1";
     private static final String VARIANT_2_ID = "variant_2";
     private static final String VARIANT_3_ID = "variant_3";
+    private static final UUID FILTER_UUID = UUID.fromString("11111111-3e6c-4d72-b292-d355a97e0d5a");
 
     private static final String NOT_OK_RESULT = "NOT_OK";
 
@@ -227,8 +238,17 @@ class VoltageInitControllerTest {
             .build().toEntity();
     }
 
+    private String createStringGlobalFilter(
+            List<String> nominalVs,
+            Map<String, List<String>> substationProperty,
+            List<Country> countryCodes,
+            List<UUID> genericFiltersUuid) throws JsonProcessingException {
+        GlobalFilter globalFilter = new GlobalFilter(nominalVs, countryCodes, genericFiltersUuid, null, substationProperty);
+        return new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).writeValueAsString(globalFilter);
+    }
+
     @BeforeEach
-    void setUp(final MockWebServer server) {
+    void setUp(final MockWebServer server) throws JsonProcessingException {
         MockitoAnnotations.initMocks(this);
 
         HttpUrl baseHttpUrl = server.url("");
@@ -261,6 +281,12 @@ class VoltageInitControllerTest {
         given(networkStoreService.getNetwork(NETWORK_UUID, PreloadingStrategy.COLLECTION)).willReturn(network);
         given(networkStoreService.getNetwork(OTHER_NETWORK_UUID, PreloadingStrategy.ALL_COLLECTIONS_NEEDED_FOR_BUS_VIEW)).willThrow(new PowsyblException("Not found"));
 
+        IdentifierListFilter identifierListFilter = new IdentifierListFilter(FILTER_UUID,
+            new Date(), EquipmentType.VOLTAGE_LEVEL,
+            List.of(new IdentifierListFilterEquipmentAttributes("id1", 0D),
+                new IdentifierListFilterEquipmentAttributes("id2", 0D)));
+        String identifierListFilterJson = mapper.writeValueAsString(List.of(identifierListFilter));
+
         // OpenReac run mocking
         openReacParameters = new OpenReacParameters();
         openReacResult = buildOpenReacResult();
@@ -281,6 +307,8 @@ class VoltageInitControllerTest {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/filters/export\\?networkUuid=" + NETWORK_UUID + "&variantId=" + VARIANT_2_ID + "&ids=.*")) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), FILTER_EQUIPMENT_JSON);
+                } else if (path.matches("/v1/filters/metadata\\?ids=" + FILTER_UUID)) {
+                    return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), identifierListFilterJson);
                 }
                 return new MockResponse(418);
             }
@@ -328,6 +356,7 @@ class VoltageInitControllerTest {
             assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
 
+            // get result
             result = mockMvc.perform(get(
                     "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                 .andExpect(status().isOk())
@@ -339,6 +368,20 @@ class VoltageInitControllerTest {
             assertEquals(INDICATORS, resultDto.getIndicators());
             assertEquals(MODIFICATIONS_GROUP_UUID, resultDto.getModificationsGroupUuid());
 
+            // get result with global filter
+            String globalFilter = createStringGlobalFilter(List.of("380", "150"), Map.of("prop1", List.of("value1", "value1"), "prop2", List.of("value3", "value4")), List.of(Country.FR, Country.IT), List.of(FILTER_UUID));
+            result = mockMvc.perform(get(
+                    "/" + VERSION + "/results/{resultUuid}" + "?globalFilters=" + URLEncoder.encode(globalFilter, StandardCharsets.UTF_8) + "&networkUuid=" + NETWORK_UUID + "&variantId=" + VARIANT_2_ID, RESULT_UUID))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+
+            resultDto = mapper.readValue(result.getResponse().getContentAsString(), VoltageInitResult.class);
+            assertEquals(RESULT_UUID, resultDto.getResultUuid());
+            assertEquals(INDICATORS, resultDto.getIndicators());
+            assertEquals(MODIFICATIONS_GROUP_UUID, resultDto.getModificationsGroupUuid());
+
+            // get modification group uuid
             result = mockMvc.perform(get(
                     "/" + VERSION + "/results/{resultUuid}/modifications-group-uuid", RESULT_UUID))
                 .andExpect(status().isOk())
