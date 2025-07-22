@@ -14,7 +14,6 @@ import com.powsybl.ws.commons.computation.service.AbstractComputationService;
 import com.powsybl.ws.commons.computation.service.NotificationService;
 import com.powsybl.ws.commons.computation.service.UuidGeneratorService;
 import com.powsybl.ws.commons.computation.utils.FilterUtils;
-import org.apache.commons.collections4.CollectionUtils;
 import org.gridsuite.voltageinit.server.dto.BusVoltage;
 import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
@@ -92,11 +91,11 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
             .sorted(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (collisionValue1, collisionValue2) -> collisionValue1, LinkedHashMap::new));
         List<ReactiveSlack> reactiveSlacks = resultEntity.getReactiveSlacks().stream()
-            .filter(slack -> CollectionUtils.isEmpty(voltageLevelIds) || voltageLevelIds.contains(slack.getVoltageLevelId()))
+            .filter(slack -> voltageLevelIds == null || voltageLevelIds.contains(slack.getVoltageLevelId()))
             .map(slack -> new ReactiveSlack(slack.getVoltageLevelId(), slack.getBusId(), slack.getSlack()))
             .toList();
         List<BusVoltage> busVoltages = resultEntity.getBusVoltages().stream()
-            .filter(bv -> CollectionUtils.isEmpty(voltageLevelIds) || voltageLevelIds.contains(bv.getVoltageLevelId()))
+            .filter(bv -> voltageLevelIds == null || voltageLevelIds.contains(bv.getVoltageLevelId()))
             .map(bv -> new BusVoltage(bv.getVoltageLevelId(), bv.getBusId(), bv.getV(), bv.getAngle()))
             .toList();
         return new VoltageInitResult(resultEntity.getResultUuid(), resultEntity.getWriteTimeStamp(), sortedIndicators,
