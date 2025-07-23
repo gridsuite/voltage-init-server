@@ -49,9 +49,8 @@
     </developers>
 
     <properties>
-
         <gridsuite-dependencies.version>42.0.0</gridsuite-dependencies.version>
-        <powsybl-open-reac.version>0.13.0</powsybl-open-reac.version>
+        <powsybl-open-reac.version>0.14.0</powsybl-open-reac.version>
         <powsybl-optimizer-commons.version>0.13.0</powsybl-optimizer-commons.version>
         <mockwebserver3.version>5.0.0-alpha.14</mockwebserver3.version>
         <liquibase-hibernate-package>org.gridsuite.voltageinit.server</liquibase-hibernate-package>

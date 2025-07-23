@@ -30,7 +30,7 @@
                 "value": "NaN → 10.0 kV",
                 "type": "VOLTAGE"
               },
-              "reportSeverity": { "value": "TRACE", "type": "SEVERITY" }
+              "reportSeverity": { "value": "DETAIL", "type": "SEVERITY" }
             }
           },
           {
@@ -39,7 +39,7 @@
               "voltageLevelId": { "value": "VLHV1", "type": "VOLTAGE_LEVEL" },
               "lowVoltageLimit": { "value": "NaN → 5.0 kV", "type": "VOLTAGE" },
               "highVoltageLimit": { "value": "20.0 kV", "type": "VOLTAGE" },
-              "reportSeverity": { "value": "TRACE", "type": "SEVERITY" }
+              "reportSeverity": { "value": "DETAIL", "type": "SEVERITY" }
             }
           },
           {
@@ -54,7 +54,7 @@
                 "value": "NaN → 88.0 kV",
                 "type": "VOLTAGE"
               },
-              "reportSeverity": { "value": "TRACE", "type": "SEVERITY" }
+              "reportSeverity": { "value": "DETAIL", "type": "SEVERITY" }
             }
           },
           {
