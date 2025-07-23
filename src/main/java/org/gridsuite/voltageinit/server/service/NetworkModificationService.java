@@ -17,7 +17,7 @@ import com.powsybl.iidm.network.ShuntCompensator;
 import com.powsybl.iidm.network.Terminal;
 import com.powsybl.iidm.network.TwoWindingsTransformer;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
-import com.powsybl.ws.commons.computation.service.UuidGeneratorService;
+import org.gridsuite.computation.service.UuidGeneratorService;
 import org.gridsuite.voltageinit.server.dto.BusModificationInfos;
 import org.gridsuite.voltageinit.server.dto.GeneratorModificationInfos;
 import org.gridsuite.voltageinit.server.dto.ShuntCompensatorModificationInfos;
