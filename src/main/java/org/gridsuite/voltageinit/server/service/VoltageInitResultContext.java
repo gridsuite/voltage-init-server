@@ -18,8 +18,8 @@ import org.springframework.messaging.MessageHeaders;
 import java.io.UncheckedIOException;
 import java.util.*;
 
-import static com.powsybl.ws.commons.computation.service.NotificationService.HEADER_RECEIVER;
-import static com.powsybl.ws.commons.computation.service.NotificationService.HEADER_USER_ID;
+import static org.gridsuite.computation.service.NotificationService.HEADER_RECEIVER;
+import static org.gridsuite.computation.service.NotificationService.HEADER_USER_ID;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>

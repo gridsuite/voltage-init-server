@@ -91,7 +91,7 @@ import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
-import static com.powsybl.ws.commons.computation.service.NotificationService.*;
+import static org.gridsuite.computation.service.NotificationService.*;
 import static org.gridsuite.voltageinit.server.service.VoltageInitWorkerService.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
