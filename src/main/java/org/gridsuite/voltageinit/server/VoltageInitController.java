@@ -26,7 +26,7 @@ import java.util.UUID;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
-import static com.powsybl.ws.commons.computation.service.NotificationService.HEADER_USER_ID;
+import static org.gridsuite.computation.service.NotificationService.HEADER_USER_ID;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**

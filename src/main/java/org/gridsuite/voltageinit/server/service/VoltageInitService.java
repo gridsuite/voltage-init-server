@@ -9,11 +9,11 @@ package org.gridsuite.voltageinit.server.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.network.store.client.NetworkStoreService;
 
-import com.powsybl.ws.commons.computation.dto.GlobalFilter;
-import com.powsybl.ws.commons.computation.service.AbstractComputationService;
-import com.powsybl.ws.commons.computation.service.NotificationService;
-import com.powsybl.ws.commons.computation.service.UuidGeneratorService;
-import com.powsybl.ws.commons.computation.utils.FilterUtils;
+import org.gridsuite.computation.dto.GlobalFilter;
+import org.gridsuite.computation.service.AbstractComputationService;
+import org.gridsuite.computation.service.NotificationService;
+import org.gridsuite.computation.service.UuidGeneratorService;
+import org.gridsuite.computation.utils.FilterUtils;
 import org.gridsuite.voltageinit.server.dto.BusVoltage;
 import org.gridsuite.voltageinit.server.dto.ReactiveSlack;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;

@@ -50,6 +50,10 @@
 
     <properties>
         <gridsuite-dependencies.version>42.0.0</gridsuite-dependencies.version>
+        <!-- FIXME to remove at next upgrade of gridsuite-dependencies -->
+        <gridsuite-computation.version>1.0.0</gridsuite-computation.version>
+        <!-- FIXME to remove at next upgrade of powsybl-ws-dependencies -->
+        <powsybl-ws-commons.version>1.28.0</powsybl-ws-commons.version>
         <powsybl-open-reac.version>0.14.0</powsybl-open-reac.version>
         <powsybl-optimizer-commons.version>0.13.0</powsybl-optimizer-commons.version>
         <mockwebserver3.version>5.0.0-alpha.14</mockwebserver3.version>
@@ -148,6 +152,7 @@
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-ws-commons</artifactId>
+            <version>${powsybl-ws-commons.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
@@ -177,6 +182,11 @@
          <dependency>
             <groupId>org.gridsuite</groupId>
             <artifactId>gridsuite-filter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.gridsuite</groupId>
+            <artifactId>gridsuite-computation</artifactId>
+            <version>${gridsuite-computation.version}</version>
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>

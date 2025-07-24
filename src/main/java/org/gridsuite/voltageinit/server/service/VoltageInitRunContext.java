@@ -7,8 +7,8 @@
 package org.gridsuite.voltageinit.server.service;
 
 import lombok.Getter;
-import com.powsybl.ws.commons.computation.dto.ReportInfos;
-import com.powsybl.ws.commons.computation.service.AbstractComputationRunContext;
+import org.gridsuite.computation.dto.ReportInfos;
+import org.gridsuite.computation.service.AbstractComputationRunContext;
 
 import java.util.HashMap;
 import java.util.Map;
