@@ -148,7 +148,7 @@ class ParametersTest {
         final VoltageInitParametersEntity voltageInitParameters = entityManager.persistFlushFind(
             new VoltageInitParametersEntity(null, null, "", voltageLimits, null, EquipmentsSelectionType.ALL_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, 100., 0., false)
         );
-        final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
+        final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId(), false);
         context.setReportNode(ReportNode.newRootReportNode()
                 .withResourceBundles("i18n.reports")
                 .withMessageTemplate(COMPUTATION_TYPE).build());
@@ -261,7 +261,7 @@ class ParametersTest {
             new VoltageInitParametersEntity(null, null, "", List.of(vl1, vl2, vl3, vl4), null, EquipmentsSelectionType.ALL_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, 100., 0., false)
         );
 
-        final VoltageInitRunContext context = new VoltageInitRunContext(networkUuid, variantId, null, REPORT_UUID, null, "", "", voltageInitParameters.getId());
+        final VoltageInitRunContext context = new VoltageInitRunContext(networkUuid, variantId, null, REPORT_UUID, null, "", "", voltageInitParameters.getId(), false);
         context.setReportNode(ReportNode.newRootReportNode()
                 .withResourceBundles("i18n.reports")
                 .withMessageTemplate("VoltageInit").build());

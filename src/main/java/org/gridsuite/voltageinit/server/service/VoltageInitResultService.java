@@ -7,6 +7,7 @@
 package org.gridsuite.voltageinit.server.service;
 
 import com.powsybl.iidm.network.Bus;
+import com.powsybl.openreac.parameters.output.OpenReacResult;
 import org.gridsuite.computation.service.AbstractComputationResultService;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.entities.BusVoltageEmbeddable;
@@ -19,14 +20,8 @@ import org.jgrapht.alg.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.powsybl.openreac.parameters.output.OpenReacResult;
-
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -64,7 +59,7 @@ public class VoltageInitResultService extends AbstractComputationResultService<V
             }
         ).filter(Objects::nonNull).toList();
         return new VoltageInitResultEntity(resultUuid, Instant.now(), indicators, reactiveSlacks, busVoltages, modificationsGroupUuid,
-                                           isReactiveSlacksOverThreshold, reactiveSlacksThreshold);
+                                           isReactiveSlacksOverThreshold, reactiveSlacksThreshold, null);
     }
 
     @Override
@@ -129,6 +124,25 @@ public class VoltageInitResultService extends AbstractComputationResultService<V
     @Transactional
     public void insertErrorResult(UUID resultUuid, Map<String, String> errorIndicators) {
         Objects.requireNonNull(resultUuid);
-        resultRepository.save(new VoltageInitResultEntity(resultUuid, Instant.now(), errorIndicators, List.of(), List.of(), null, false, null));
+        resultRepository.save(new VoltageInitResultEntity(resultUuid, Instant.now(), errorIndicators, List.of(), List.of(), null, false, null, null));
+    }
+
+    @Override
+    @Transactional
+    public void saveDebugFileLocation(UUID resultUuid, String debugFilePath) {
+        resultRepository.findById(resultUuid).ifPresentOrElse(
+                (var resultEntity) -> resultRepository.updateDebugFileLocation(resultUuid, debugFilePath),
+                () -> resultRepository.save(new VoltageInitResultEntity(resultUuid, null, null, null, null, null,
+                        false, null, debugFilePath))
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String findDebugFileLocation(UUID resultUuid) {
+        Objects.requireNonNull(resultUuid);
+        return resultRepository.findById(resultUuid)
+                .map(VoltageInitResultEntity::getDebugFileLocation)
+                .orElse(null);
     }
 }

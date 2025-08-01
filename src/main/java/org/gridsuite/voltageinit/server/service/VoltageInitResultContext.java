@@ -18,8 +18,7 @@ import org.springframework.messaging.MessageHeaders;
 import java.io.UncheckedIOException;
 import java.util.*;
 
-import static org.gridsuite.computation.service.NotificationService.HEADER_RECEIVER;
-import static org.gridsuite.computation.service.NotificationService.HEADER_USER_ID;
+import static org.gridsuite.computation.service.NotificationService.*;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
@@ -51,6 +50,7 @@ public class VoltageInitResultContext extends AbstractResultContext<VoltageInitR
         String variantId = (String) headers.get(VARIANT_ID_HEADER);
         String receiver = (String) headers.get(HEADER_RECEIVER);
         String userId = (String) headers.get(HEADER_USER_ID);
+        Boolean debug = (Boolean) headers.get(HEADER_DEBUG);
         Map<String, Double> voltageLevelsIdsRestricted;
         try {
             voltageLevelsIdsRestricted = headers.get(VOLTAGE_LEVELS_IDS_RESTRICTED) != null ?
@@ -68,8 +68,7 @@ public class VoltageInitResultContext extends AbstractResultContext<VoltageInitR
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
         String reportType = headers.containsKey(REPORT_TYPE_HEADER) ? (String) headers.get(REPORT_TYPE_HEADER) : null;
         VoltageInitRunContext runContext = new VoltageInitRunContext(
-                networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, voltageLevelsIdsRestricted
-        );
+                networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, voltageLevelsIdsRestricted, debug);
         return new VoltageInitResultContext(resultUuid, runContext);
     }
 

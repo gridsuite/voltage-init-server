@@ -18,12 +18,14 @@ import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
+import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.*;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
 import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
@@ -63,10 +65,12 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
                                     NetworkModificationService networkModificationService,
                                     VoltageInitParametersService voltageInitParametersService,
                                     VoltageInitResultService resultService,
+                                    @Autowired(required = false)
+                                    ComputationS3Service computationS3Service,
                                     ReportService reportService,
                                     VoltageInitObserver voltageInitObserver,
                                     ObjectMapper objectMapper) {
-        super(networkStoreService, notificationService, reportService, resultService, executionService, voltageInitObserver, objectMapper);
+        super(networkStoreService, notificationService, reportService, resultService, computationS3Service, executionService, voltageInitObserver, objectMapper);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
         this.voltageInitParametersService = Objects.requireNonNull(voltageInitParametersService);
     }
@@ -88,6 +92,9 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
     @Override
     protected CompletableFuture<OpenReacResult> getCompletableFuture(VoltageInitRunContext context, String provider, UUID resultUuid) {
         OpenReacParameters parameters = voltageInitParametersService.buildOpenReacParameters(context, context.getNetwork());
+        if (context.getDebugDir() != null) {
+            parameters.setDebugDir(context.getDebugDir().toString());
+        }
         OpenReacConfig config = OpenReacConfig.load();
         return OpenReacRunner.runAsync(context.getNetwork(), context.getNetwork().getVariantManager().getWorkingVariantId(), parameters, config, executionService.getComputationManager(), context.getReportNode(), null);
     }
