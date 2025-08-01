@@ -6,12 +6,15 @@
  */
 package org.gridsuite.voltageinit.server.repository;
 
-import java.util.Optional;
-import java.util.UUID;
-
 import org.gridsuite.voltageinit.server.entities.VoltageInitResultEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
@@ -23,4 +26,8 @@ public interface ResultRepository extends JpaRepository<VoltageInitResultEntity,
     Optional<VoltageInitResultEntity> findByResultUuid(UUID resultUuid);
 
     void deleteByResultUuid(UUID resultUuid);
+
+    @Modifying
+    @Query("UPDATE VoltageInitResultEntity r SET r.debugFileLocation = :debugFileLocation WHERE r.resultUuid = :resultUuid")
+    int updateDebugFileLocation(@Param("resultUuid") UUID resultUuid, @Param("debugFileLocation") String debugFileLocation);
 }
