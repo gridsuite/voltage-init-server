@@ -33,10 +33,6 @@ import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
-import org.gridsuite.computation.dto.GlobalFilter;
-import org.gridsuite.computation.service.ReportService;
-import org.gridsuite.computation.service.UuidGeneratorService;
-import org.gridsuite.computation.utils.annotations.PostCompletionAdapter;
 import lombok.SneakyThrows;
 import mockwebserver3.Dispatcher;
 import mockwebserver3.MockResponse;
@@ -45,6 +41,10 @@ import mockwebserver3.RecordedRequest;
 import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import org.gridsuite.computation.dto.GlobalFilter;
+import org.gridsuite.computation.service.ReportService;
+import org.gridsuite.computation.service.UuidGeneratorService;
+import org.gridsuite.computation.utils.annotations.PostCompletionAdapter;
 import org.gridsuite.filter.identifierlistfilter.IdentifierListFilter;
 import org.gridsuite.filter.identifierlistfilter.IdentifierListFilterEquipmentAttributes;
 import org.gridsuite.filter.utils.EquipmentType;
@@ -70,6 +70,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cloud.stream.binder.test.OutputDestination;
 import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.http.HttpHeaders;
@@ -80,24 +81,30 @@ import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.http.AbortableInputStream;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
+import java.io.ByteArrayInputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ForkJoinPool;
 
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.gridsuite.computation.s3.ComputationS3Service.METADATA_FILE_NAME;
 import static org.gridsuite.computation.service.NotificationService.*;
 import static org.gridsuite.voltageinit.server.service.VoltageInitWorkerService.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -155,6 +162,9 @@ class VoltageInitControllerTest {
 
     @Autowired
     private ObjectMapper mapper;
+
+    @SpyBean
+    private S3Client s3Client;
 
     private Network network;
     private OpenReacParameters openReacParameters;
@@ -316,6 +326,8 @@ class VoltageInitControllerTest {
         server.setDispatcher(dispatcher);
 
         // purge messages
+        while (output.receive(1000, "voltageinit.debug") != null) {
+        }
         while (output.receive(1000, "voltageinit.result") != null) {
         }
         // purge messages
@@ -344,8 +356,18 @@ class VoltageInitControllerTest {
             openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class), any(ReportNode.class), isNull(AmplExportConfig.class)))
                 .thenReturn(completableFutureResultsTask);
 
+            // mock s3 client for run with debug
+            doReturn(PutObjectResponse.builder().build()).when(s3Client).putObject(eq(PutObjectRequest.builder().build()), any(RequestBody.class));
+            doReturn(new ResponseInputStream<>(
+                    GetObjectResponse.builder()
+                            .metadata(Map.of(METADATA_FILE_NAME, "debugFile"))
+                            .contentLength(100L).build(),
+                    AbortableInputStream.create(new ByteArrayInputStream("s3 debug file content".getBytes()))
+            )).when(s3Client).getObject(any(GetObjectRequest.class));
+
             MvcResult result = mockMvc.perform(post(
                     "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                    .param(HEADER_DEBUG, "true")
                     .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -353,8 +375,23 @@ class VoltageInitControllerTest {
             assertEquals(RESULT_UUID, mapper.readValue(result.getResponse().getContentAsString(), UUID.class));
 
             Message<byte[]> resultMessage = output.receive(TIMEOUT, "voltageinit.result");
-            assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
+            String resultUuid = Objects.requireNonNull(resultMessage.getHeaders().get("resultUuid")).toString();
+
+            assertEquals(RESULT_UUID.toString(), resultUuid);
             assertEquals("me", resultMessage.getHeaders().get("receiver"));
+
+            // check notification of debug
+            Message<byte[]> debugMessage = output.receive(TIMEOUT, "voltageinit.debug");
+            assertThat(debugMessage.getHeaders())
+                    .containsEntry(HEADER_RESULT_UUID, resultUuid);
+
+            // download debug zip file is ok
+            mockMvc.perform(get("/v1/results/{resultUuid}/download-debug-file", resultUuid))
+                    .andExpect(status().isOk());
+
+            // check interaction with s3 client
+            verify(s3Client, times(1)).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+            verify(s3Client, times(1)).getObject(any(GetObjectRequest.class));
 
             // get result
             result = mockMvc.perform(get(
