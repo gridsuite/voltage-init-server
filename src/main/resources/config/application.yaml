@@ -42,7 +42,7 @@ spring:
 
 computation:
   s3:
-    enabled: false
+    enabled: true
 
 debug-subpath: debug
 
