@@ -11,20 +11,19 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
 import org.gridsuite.voltageinit.server.service.VoltageInitService;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.UUID;
-
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.UUID;
 
 import static org.gridsuite.computation.service.NotificationService.HEADER_USER_ID;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -52,9 +51,10 @@ public class VoltageInitController {
                                            @Parameter(description = "reportUuid") @RequestParam(name = "reportUuid", required = false) UUID reportUuid,
                                            @Parameter(description = "reporterId") @RequestParam(name = "reporterId", required = false) String reporterId,
                                            @Parameter(description = "The type name for the report") @RequestParam(name = "reportType", required = false, defaultValue = "VoltageInit") String reportType,
+                                           @Parameter(description = "Debug") @RequestParam(name = "debug", required = false, defaultValue = "false") boolean debug,
                                            @Parameter(description = "parametersUuid") @RequestParam(name = "parametersUuid", required = false) UUID parametersUuid,
                                            @RequestHeader(HEADER_USER_ID) String userId) {
-        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid);
+        VoltageInitRunContext runContext = new VoltageInitRunContext(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, debug);
         UUID resultUuid = voltageInitService.runAndSaveResult(runContext);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultUuid);
     }
@@ -123,5 +123,13 @@ public class VoltageInitController {
     public ResponseEntity<Void> resetModificationsGroupUuidInResult(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
         voltageInitService.resetModificationsGroupUuid(resultUuid);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping(value = "/results/{resultUuid}/download-debug-file", produces = "application/json")
+    @Operation(summary = "Download a voltage init debug file")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Voltage init debug file"),
+        @ApiResponse(responseCode = "404", description = "Voltage init debug file has not been found")})
+    public ResponseEntity<Resource> downloadDebugFile(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
+        return voltageInitService.downloadDebugFile(resultUuid);
     }
 }
