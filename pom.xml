@@ -90,12 +90,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <dependency><!-- To remove when gridsuite-dependencies is released with this version -->
-
-                <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-ws-commons</artifactId>
-                <version>1.30.0</version>
-            </dependency>
 
             <dependency><!-- To remove when integrate in next release of gridsuite-dependencies or powsybl-ws-dependencies -->
                 <groupId>com.squareup.okhttp3</groupId>
