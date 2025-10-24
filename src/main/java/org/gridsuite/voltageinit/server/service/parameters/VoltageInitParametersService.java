@@ -225,6 +225,7 @@ public class VoltageInitParametersService {
         final MutableInt voltageLimitModificationsCounter = new MutableInt(0);
 
         Optional.ofNullable(context.getParametersUuid()).flatMap(voltageInitParametersRepository::findById).ifPresent(voltageInitParameters -> {
+            ensureReferencedFiltersExist(voltageInitParameters);
             if (voltageInitParameters.getVoltageLimits() != null) {
                 Map<String, VoltageLimitEntity> voltageLevelDefaultLimits = resolveVoltageLevelLimits(context, voltageInitParameters.getVoltageLimits().stream()
                     .filter(voltageLimit -> VoltageLimitParameterType.DEFAULT.equals(voltageLimit.getVoltageLimitParameterType()))
@@ -292,6 +293,30 @@ public class VoltageInitParametersService {
                             .map(IdentifiableAttributes::getId)
                             .distinct()
                             .toList();
+    }
+
+    private void ensureReferencedFiltersExist(VoltageInitParametersEntity voltageInitParameters) {
+        Map<UUID, String> filterNamesByUuid = new LinkedHashMap<>();
+        addFilterInfosFromVoltageLimits(filterNamesByUuid, voltageInitParameters.getVoltageLimits());
+        addFilterInfos(filterNamesByUuid, voltageInitParameters.getVariableQGenerators());
+        addFilterInfos(filterNamesByUuid, voltageInitParameters.getVariableTwoWindingsTransformers());
+        addFilterInfos(filterNamesByUuid, voltageInitParameters.getVariableShuntCompensators());
+        if (!filterNamesByUuid.isEmpty()) {
+            filterService.ensureFiltersExist(filterNamesByUuid);
+        }
+    }
+
+    private static void addFilterInfosFromVoltageLimits(Map<UUID, String> filterNamesByUuid, List<VoltageLimitEntity> voltageLimits) {
+        voltageLimits.stream()
+            .map(VoltageLimitEntity::getFilters)
+            .forEach(filters -> addFilterInfos(filterNamesByUuid, filters));
+    }
+
+    private static void addFilterInfos(Map<UUID, String> filterNamesByUuid, List<FilterEquipmentsEmbeddable> filters) {
+        filters.stream()
+            .filter(Objects::nonNull)
+            .filter(filter -> filter.getFilterId() != null)
+            .forEach(filter -> filterNamesByUuid.putIfAbsent(filter.getFilterId(), filter.getFilterName()));
     }
 
     private static void logRestrictedVoltageLevels(final ReportNode reportNode, final Map<String, Double> voltageLevelsIdsRestricted) {

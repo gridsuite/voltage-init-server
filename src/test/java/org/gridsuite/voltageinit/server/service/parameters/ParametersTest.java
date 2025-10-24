@@ -27,6 +27,7 @@ import org.gridsuite.voltageinit.server.dto.parameters.IdentifiableAttributes;
 import org.gridsuite.voltageinit.server.entities.parameters.FilterEquipmentsEmbeddable;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
+import org.gridsuite.voltageinit.server.error.VoltageInitException;
 import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
 import org.gridsuite.voltageinit.server.util.EquipmentsSelectionType;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
@@ -60,6 +61,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.condition.NestableCondition.nestable;
 import static org.assertj.core.condition.VerboseCondition.verboseCondition;
 import static org.gridsuite.voltageinit.server.service.VoltageInitWorkerService.COMPUTATION_TYPE;
@@ -195,6 +197,29 @@ class ParametersTest {
             //Because of the modification setting the voltage limits attributed to VLLOAD should now respectively be 43. and 86.
             .satisfiesOnlyOnce(assertVoltageLimitOverride("VLLOAD", VoltageLimitType.LOW_VOLTAGE_LIMIT, 43.))
             .satisfiesOnlyOnce(assertVoltageLimitOverride("VLLOAD", VoltageLimitType.HIGH_VOLTAGE_LIMIT, 86.));
+    }
+
+    @DisplayName("buildOpenReacParameters: should throw when referenced filter is missing")
+    @Test
+    void buildOpenReacParametersThrowsWhenFilterMissing() {
+        final VoltageLimitEntity voltageLimit = new VoltageLimitEntity(null, 5., 10., 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
+        final VoltageInitParametersEntity voltageInitParameters = entityManager.persistFlushFind(
+            new VoltageInitParametersEntity(null, null, "", List.of(voltageLimit), null, EquipmentsSelectionType.ALL_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, 100., 0., false)
+        );
+        final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId(), false);
+        context.setReportNode(ReportNode.newRootReportNode()
+            .withResourceBundles("i18n.reports")
+            .withMessageTemplate(COMPUTATION_TYPE).build());
+
+        Mockito.doThrow(new VoltageInitException(FilterService.FILTERS_NOT_FOUND + " [" + FILTER_1 + "]"))
+            .when(filterService)
+            .ensureFiltersExist(Mockito.anyMap());
+
+        assertThatThrownBy(() -> voltageInitParametersService.buildOpenReacParameters(context, network))
+            .isInstanceOf(VoltageInitException.class)
+            .hasMessageContaining(FilterService.FILTERS_NOT_FOUND)
+            .hasMessageContaining(FILTER_1)
+            .hasMessageNotContaining(FILTER_UUID_1.toString());
     }
 
     @DisplayName("buildSpecificVoltageLimits: Case relative true overrides")
