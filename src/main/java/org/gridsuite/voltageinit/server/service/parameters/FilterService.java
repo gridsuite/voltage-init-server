@@ -30,6 +30,7 @@ import org.gridsuite.filter.utils.expertfilter.CombinatorType;
 import org.gridsuite.filter.utils.expertfilter.FieldType;
 import org.gridsuite.filter.utils.expertfilter.OperatorType;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
+import org.gridsuite.voltageinit.server.error.VoltageInitException;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -41,13 +42,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -111,6 +106,27 @@ public class FilterService implements FilterLoader {
         } catch (HttpStatusCodeException e) {
             throw new PowsyblException(FILTERS_NOT_FOUND + " [" + filtersUuids + "]");
         }
+    }
+
+    public void ensureFiltersExist(Map<UUID, String> filterNamesByUuid) {
+        List<AbstractFilter> filters = getFilters(new ArrayList<>(filterNamesByUuid.keySet()));
+        Set<UUID> validFilters = filters.stream()
+            .map(AbstractFilter::getId)
+            .collect(Collectors.toSet());
+        List<UUID> missingFilters = filterNamesByUuid.keySet().stream()
+            .filter(filterId -> !validFilters.contains(filterId))
+            .toList();
+        if (!missingFilters.isEmpty()) {
+            throw new VoltageInitException(buildMissingFiltersMessage(missingFilters, filterNamesByUuid));
+        }
+    }
+
+    private String buildMissingFiltersMessage(Collection<UUID> filtersUuids, Map<UUID, String> filterNamesByUuid) {
+        List<String> missingFilterNames = filtersUuids.stream()
+            .map(filterUuid -> Optional.ofNullable(filterNamesByUuid.get(filterUuid)).orElse(filterUuid.toString()))
+            .distinct()
+            .toList();
+        return "Some filters does not exist: " + " [" + String.join(", ", missingFilterNames) + "]";
     }
 
     private List<AbstractExpertRule> createNumberExpertRules(List<String> values, FieldType fieldType) {
