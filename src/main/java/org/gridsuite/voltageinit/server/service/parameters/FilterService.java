@@ -126,7 +126,7 @@ public class FilterService implements FilterLoader {
             .map(filterUuid -> Optional.ofNullable(filterNamesByUuid.get(filterUuid)).orElse(filterUuid.toString()))
             .distinct()
             .toList();
-        return "Some filters does not exist: " + " [" + String.join(", ", missingFilterNames) + "]";
+        return "Some filters do not exist: " + " [" + String.join(", ", missingFilterNames) + "]";
     }
 
     private List<AbstractExpertRule> createNumberExpertRules(List<String> values, FieldType fieldType) {
