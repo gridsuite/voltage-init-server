@@ -52,7 +52,7 @@ class FilterServiceTest {
 
         assertThatThrownBy(() -> filterService.ensureFiltersExist(filters))
             .isInstanceOf(VoltageInitException.class)
-            .hasMessageContaining("Some filters does not exist:  [Missing filter]")
+            .hasMessageContaining("Some filters do not exist:  [Missing filter]")
             .hasMessageNotContaining("Existing filter");
     }
 
