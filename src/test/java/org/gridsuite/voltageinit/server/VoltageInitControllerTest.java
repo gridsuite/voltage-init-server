@@ -148,7 +148,7 @@ class VoltageInitControllerTest {
     @Autowired
     private VoltageInitParametersRepository parametersRepository;
 
-    @Autowired
+    @SpyBean
     private FilterService filterService;
 
     @MockitoBean
@@ -265,6 +265,7 @@ class VoltageInitControllerTest {
         String baseUrl = baseHttpUrl.toString().substring(0, baseHttpUrl.toString().length() - 1);
         networkModificationService.setNetworkModificationServerBaseUri(baseUrl);
         filterService.setFilterServerBaseUri(baseUrl);
+        doNothing().when(filterService).ensureFiltersExist(anyMap());
 
         // network store service mocking
         network = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
