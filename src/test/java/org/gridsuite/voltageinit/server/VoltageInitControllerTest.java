@@ -148,7 +148,7 @@ class VoltageInitControllerTest {
     @Autowired
     private VoltageInitParametersRepository parametersRepository;
 
-    @SpyBean
+    @MockitoSpyBean
     private FilterService filterService;
 
     @MockitoBean

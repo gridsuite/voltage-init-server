@@ -11,7 +11,6 @@ import com.powsybl.iidm.network.Country;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
-import jakarta.validation.constraints.NotNull;
 import org.gridsuite.computation.dto.GlobalFilter;
 import lombok.NonNull;
 import org.apache.commons.collections4.CollectionUtils;
