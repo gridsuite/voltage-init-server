@@ -18,6 +18,7 @@ import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride.VoltageLimitType;
 import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
+import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
@@ -30,7 +31,6 @@ import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParamet
 import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
 import org.gridsuite.voltageinit.server.util.EquipmentsSelectionType;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
