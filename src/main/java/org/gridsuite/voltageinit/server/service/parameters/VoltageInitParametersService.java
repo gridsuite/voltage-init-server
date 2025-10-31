@@ -23,6 +23,7 @@ import org.apache.commons.lang3.mutable.MutableInt;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.gridsuite.voltageinit.server.dto.parameters.IdentifiableAttributes;
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
+import org.gridsuite.voltageinit.server.dto.parameters.VoltageLimitInfos;
 import org.gridsuite.voltageinit.server.entities.parameters.FilterEquipmentsEmbeddable;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
@@ -83,7 +84,10 @@ public class VoltageInitParametersService {
 
     @Transactional(readOnly = true)
     public VoltageInitParametersInfos getParameters(UUID parametersUuid) {
-        return voltageInitParametersRepository.findById(parametersUuid).map(VoltageInitParametersEntity::toVoltageInitParametersInfos).orElse(null);
+        return voltageInitParametersRepository.findById(parametersUuid)
+            .map(VoltageInitParametersEntity::toVoltageInitParametersInfos)
+            .map(this::populateFiltersExistence)
+            .orElse(null);
     }
 
     @Transactional
@@ -293,6 +297,41 @@ public class VoltageInitParametersService {
                             .map(IdentifiableAttributes::getId)
                             .distinct()
                             .toList();
+    }
+
+    private VoltageInitParametersInfos populateFiltersExistence(VoltageInitParametersInfos parametersInfos) {
+        Map<UUID, List<FilterEquipments>> filtersByUuid = new LinkedHashMap<>();
+        collectFilterInfos(filtersByUuid, parametersInfos.getVariableQGenerators());
+        collectFilterInfos(filtersByUuid, parametersInfos.getVariableTwoWindingsTransformers());
+        collectFilterInfos(filtersByUuid, parametersInfos.getVariableShuntCompensators());
+        collectFilterInfosFromVoltageLimits(filtersByUuid, parametersInfos.getVoltageLimitsDefault());
+        collectFilterInfosFromVoltageLimits(filtersByUuid, parametersInfos.getVoltageLimitsModification());
+        if (filtersByUuid.isEmpty()) {
+            return parametersInfos;
+        }
+        Map<UUID, Boolean> filtersExistence = filterService.getFiltersExistence(filtersByUuid.keySet());
+        filtersByUuid.forEach((filterId, filters) -> {
+            filters.forEach(filter -> filter.setValid(filtersExistence.get(filterId)));
+        });
+        return parametersInfos;
+    }
+
+    private static void collectFilterInfos(Map<UUID, List<FilterEquipments>> filtersByUuid, List<FilterEquipments> filters) {
+        if (filters == null) {
+            return;
+        }
+        filters.stream()
+            .filter(filter -> filter.getFilterId() != null)
+            .forEach(filter -> filtersByUuid.computeIfAbsent(filter.getFilterId(), ignored -> new ArrayList<>()).add(filter));
+    }
+
+    private static void collectFilterInfosFromVoltageLimits(Map<UUID, List<FilterEquipments>> filtersByUuid, List<VoltageLimitInfos> voltageLimits) {
+        if (voltageLimits == null) {
+            return;
+        }
+        voltageLimits.stream()
+            .map(VoltageLimitInfos::getFilters)
+            .forEach(filters -> collectFilterInfos(filtersByUuid, filters));
     }
 
     private void ensureReferencedFiltersExist(VoltageInitParametersEntity voltageInitParameters) {

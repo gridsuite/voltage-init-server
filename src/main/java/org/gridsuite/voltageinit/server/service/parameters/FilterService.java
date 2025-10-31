@@ -108,6 +108,22 @@ public class FilterService implements FilterLoader {
         }
     }
 
+    public Map<UUID, Boolean> getFiltersExistence(Collection<UUID> filtersUuids) {
+        List<UUID> filterIds = filtersUuids.stream()
+            .distinct()
+            .toList();
+        List<AbstractFilter> filters;
+        try {
+            filters = getFilters(filterIds);
+        } catch (PowsyblException e) {
+            return filterIds.stream().collect(Collectors.toMap(id -> id, id -> Boolean.FALSE, (a, b) -> a, LinkedHashMap::new));
+        }
+        Set<UUID> existingFilters = Optional.ofNullable(filters)
+            .map(list -> list.stream().map(AbstractFilter::getId).collect(Collectors.toSet()))
+            .orElse(Set.of());
+        return filterIds.stream().collect(Collectors.toMap(id -> id, existingFilters::contains, (a, b) -> a, LinkedHashMap::new));
+    }
+
     public void ensureFiltersExist(Map<UUID, String> filterNamesByUuid) {
         List<AbstractFilter> filters = getFilters(new ArrayList<>(filterNamesByUuid.keySet()));
         Set<UUID> validFilters = filters.stream()

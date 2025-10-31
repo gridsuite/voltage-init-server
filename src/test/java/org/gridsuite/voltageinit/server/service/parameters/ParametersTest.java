@@ -120,10 +120,10 @@ class ParametersTest {
                 new IdentifiableAttributes("VLHV1", IdentifiableType.VOLTAGE_LEVEL, null),
                 new IdentifiableAttributes("VLHV2", IdentifiableType.VOLTAGE_LEVEL, null),
                 new IdentifiableAttributes("VLLOAD", IdentifiableType.VOLTAGE_LEVEL, null)
-            ), List.of())
+            ), List.of(), true)
         ));
         given(filterService.exportFilters(List.of(FILTER_UUID_2), NETWORK_UUID, VARIANT_ID_1)).willReturn(List.of(
-            new FilterEquipments(FILTER_UUID_2, FILTER_2, List.of(new IdentifiableAttributes("VLLOAD", IdentifiableType.VOLTAGE_LEVEL, null)), List.of())
+            new FilterEquipments(FILTER_UUID_2, FILTER_2, List.of(new IdentifiableAttributes("VLLOAD", IdentifiableType.VOLTAGE_LEVEL, null)), List.of(), true)
         ));
     }
 
@@ -163,8 +163,8 @@ class ParametersTest {
     @DisplayName("buildSpecificVoltageLimits: No voltage limit modification")
     @Test
     void testsBuildSpecificVoltageLimitsSimple() throws Exception {
-        final VoltageLimitEntity voltageLimit = new VoltageLimitEntity(null, 5., 10., 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
-        final VoltageLimitEntity voltageLimit2 = new VoltageLimitEntity(null, 44., 88., 1, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_2, FILTER_2)));
+        final VoltageLimitEntity voltageLimit = new VoltageLimitEntity(null, 5., 10., 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1, false)));
+        final VoltageLimitEntity voltageLimit2 = new VoltageLimitEntity(null, 44., 88., 1, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_2, FILTER_2, false)));
         testsBuildSpecificVoltageLimitsCommon(List.of(voltageLimit, voltageLimit2), "reporter_buildOpenReacParameters.json")
             .hasSize(4)
             //No override should be relative since there is no voltage limit modification
@@ -182,9 +182,9 @@ class ParametersTest {
     @DisplayName("buildSpecificVoltageLimits: With voltage limit modifications")
     @Test
     void testsBuildSpecificVoltageLimitsWithLimitModifications() throws Exception {
-        final VoltageLimitEntity voltageLimit = new VoltageLimitEntity(null, 5., 10., 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
-        final VoltageLimitEntity voltageLimit2 = new VoltageLimitEntity(null, 44., 88., 1, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_2, FILTER_2)));
-        final VoltageLimitEntity voltageLimit3 = new VoltageLimitEntity(null, -1., -2., 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
+        final VoltageLimitEntity voltageLimit = new VoltageLimitEntity(null, 5., 10., 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1, false)));
+        final VoltageLimitEntity voltageLimit2 = new VoltageLimitEntity(null, 44., 88., 1, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_2, FILTER_2, false)));
+        final VoltageLimitEntity voltageLimit3 = new VoltageLimitEntity(null, -1., -2., 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1, false)));
         //We now add limit modifications in additions to defaults settings
         testsBuildSpecificVoltageLimitsCommon(List.of(voltageLimit, voltageLimit2, voltageLimit3), "reporter_buildOpenReacParameters_withLimitModifications.json")
             //Limits that weren't impacted by default settings are now impacted by modification settings
@@ -202,7 +202,7 @@ class ParametersTest {
     @DisplayName("buildOpenReacParameters: should throw when referenced filter is missing")
     @Test
     void buildOpenReacParametersThrowsWhenFilterMissing() {
-        final VoltageLimitEntity voltageLimit = new VoltageLimitEntity(null, 5., 10., 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
+        final VoltageLimitEntity voltageLimit = new VoltageLimitEntity(null, 5., 10., 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1, false)));
         final VoltageInitParametersEntity voltageInitParameters = entityManager.persistFlushFind(
             new VoltageInitParametersEntity(null, null, "", List.of(voltageLimit), null, EquipmentsSelectionType.ALL_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, 100., 0., false)
         );
@@ -225,7 +225,7 @@ class ParametersTest {
     @DisplayName("buildSpecificVoltageLimits: Case relative true overrides")
     @Test
     void testsBuildSpecificVoltageLimitsCaseRelativeTrue() throws Exception {
-        final VoltageLimitEntity voltageLimit4 = new VoltageLimitEntity(null, -20.0, 10.0, 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
+        final VoltageLimitEntity voltageLimit4 = new VoltageLimitEntity(null, -20.0, 10.0, 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1, false)));
         // We need to check for the case of relative = true with the modification less than 0 => the new low voltage limit = low voltage limit * -1
         testsBuildSpecificVoltageLimitsCommon(List.of(voltageLimit4), "reporter_buildOpenReacParameters_caseRelativeTrue.json")
             .hasSize(4)
@@ -238,8 +238,8 @@ class ParametersTest {
     @DisplayName("buildSpecificVoltageLimits: Case relative false overrides")
     @Test
     void testsBuildSpecificVoltageLimitsCaseRelativeFalse() throws Exception {
-        final VoltageLimitEntity voltageLimit4 = new VoltageLimitEntity(null, -20.0, 10.0, 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
-        final VoltageLimitEntity voltageLimit5 = new VoltageLimitEntity(null, 10.0, 10.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
+        final VoltageLimitEntity voltageLimit4 = new VoltageLimitEntity(null, -20.0, 10.0, 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1, false)));
+        final VoltageLimitEntity voltageLimit5 = new VoltageLimitEntity(null, 10.0, 10.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1, false)));
         // We need to check for the case of relative = false with the modification less than 0 => the new low voltage limit = 0
         testsBuildSpecificVoltageLimitsCommon(List.of(voltageLimit4, voltageLimit5), "reporter_buildOpenReacParameters_caseRelativeFalse.json")
             .hasSize(8)
@@ -269,19 +269,19 @@ class ParametersTest {
         final UUID filterUuidS4VL2 = UUID.randomUUID();
         final String filterIdS4VL2 = "FILTER_S4VL2";
         given(filterService.exportFilters(List.of(filterUuidS3VL1), networkUuid, variantId)).willReturn(List.of(
-            new FilterEquipments(filterUuidS3VL1, filterIdS3VL1, List.of(new IdentifiableAttributes("S3VL1", IdentifiableType.VOLTAGE_LEVEL, null)), List.of())
+            new FilterEquipments(filterUuidS3VL1, filterIdS3VL1, List.of(new IdentifiableAttributes("S3VL1", IdentifiableType.VOLTAGE_LEVEL, null)), List.of(), true)
         ));
         given(filterService.exportFilters(List.of(filterUuidS4VL1), networkUuid, variantId)).willReturn(List.of(
-            new FilterEquipments(filterUuidS4VL1, filterIdS4VL1, List.of(new IdentifiableAttributes("S4VL1", IdentifiableType.VOLTAGE_LEVEL, null)), List.of())
+            new FilterEquipments(filterUuidS4VL1, filterIdS4VL1, List.of(new IdentifiableAttributes("S4VL1", IdentifiableType.VOLTAGE_LEVEL, null)), List.of(), true)
         ));
         given(filterService.exportFilters(List.of(filterUuidS4VL2), networkUuid, variantId)).willReturn(List.of(
-            new FilterEquipments(filterUuidS4VL2, filterIdS4VL2, List.of(new IdentifiableAttributes("S4VL2", IdentifiableType.VOLTAGE_LEVEL, null)), List.of())
+            new FilterEquipments(filterUuidS4VL2, filterIdS4VL2, List.of(new IdentifiableAttributes("S4VL2", IdentifiableType.VOLTAGE_LEVEL, null)), List.of(), true)
         ));
 
-        final VoltageLimitEntity vl1 = new VoltageLimitEntity(null, 50.0, 500.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(filterUuidS3VL1, filterIdS3VL1)));
-        final VoltageLimitEntity vl2 = new VoltageLimitEntity(null, 60.0, 600.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(filterUuidS4VL1, filterIdS4VL1)));
-        final VoltageLimitEntity vl3 = new VoltageLimitEntity(null, 70.0, 700.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(filterUuidS4VL2, filterIdS4VL2)));
-        final VoltageLimitEntity vl4 = new VoltageLimitEntity(null, -20.0, 10.0, 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(filterUuidS3VL1, filterIdS3VL1)));
+        final VoltageLimitEntity vl1 = new VoltageLimitEntity(null, 50.0, 500.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(filterUuidS3VL1, filterIdS3VL1, false)));
+        final VoltageLimitEntity vl2 = new VoltageLimitEntity(null, 60.0, 600.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(filterUuidS4VL1, filterIdS4VL1, false)));
+        final VoltageLimitEntity vl3 = new VoltageLimitEntity(null, 70.0, 700.0, 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(filterUuidS4VL2, filterIdS4VL2, false)));
+        final VoltageLimitEntity vl4 = new VoltageLimitEntity(null, -20.0, 10.0, 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(filterUuidS3VL1, filterIdS3VL1, false)));
         final VoltageInitParametersEntity voltageInitParameters = entityManager.persistFlushFind(
             new VoltageInitParametersEntity(null, null, "", List.of(vl1, vl2, vl3, vl4), null, EquipmentsSelectionType.ALL_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, 100., 0., false)
         );
