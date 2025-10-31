@@ -31,7 +31,6 @@ import org.gridsuite.filter.utils.expertfilter.FieldType;
 import org.gridsuite.filter.utils.expertfilter.OperatorType;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.gridsuite.voltageinit.server.error.VoltageInitException;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -245,7 +244,6 @@ public class FilterService implements FilterLoader {
         return new ExpertFilter(UUID.randomUUID(), new Date(), EquipmentType.VOLTAGE_LEVEL, andCombination);
     }
 
-    @NotNull
     private static List<String> filterNetwork(AbstractFilter filter, Network network, FilterLoader filterLoader) {
         return FilterServiceUtils.getIdentifiableAttributes(filter, network, filterLoader)
                 .stream()

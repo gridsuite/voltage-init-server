@@ -69,8 +69,6 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cloud.stream.binder.test.OutputDestination;
 import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.http.HttpHeaders;
@@ -78,6 +76,8 @@ import org.springframework.http.MediaType;
 import org.springframework.messaging.Message;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -148,22 +148,22 @@ class VoltageInitControllerTest {
     @Autowired
     private VoltageInitParametersRepository parametersRepository;
 
-    @SpyBean
+    @MockitoSpyBean
     private FilterService filterService;
 
-    @MockBean
+    @MockitoBean
     private ReportService reportService;
 
-    @MockBean
+    @MockitoBean
     private NetworkStoreService networkStoreService;
 
-    @MockBean
+    @MockitoBean
     private UuidGeneratorService uuidGeneratorService;
 
     @Autowired
     private ObjectMapper mapper;
 
-    @SpyBean
+    @MockitoSpyBean
     private S3Client s3Client;
 
     private Network network;
