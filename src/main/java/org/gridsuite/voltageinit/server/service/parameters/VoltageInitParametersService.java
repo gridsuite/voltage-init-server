@@ -310,9 +310,9 @@ public class VoltageInitParametersService {
             return parametersInfos;
         }
         Map<UUID, Boolean> filtersExistence = filterService.getFiltersExistence(filtersByUuid.keySet());
-        filtersByUuid.forEach((filterId, filters) -> {
-            filters.forEach(filter -> filter.setValid(filtersExistence.get(filterId)));
-        });
+        filtersByUuid.forEach((filterId, filters) ->
+            filters.forEach(
+                filter -> filter.setValid(filtersExistence.get(filterId))));
         return parametersInfos;
     }
 

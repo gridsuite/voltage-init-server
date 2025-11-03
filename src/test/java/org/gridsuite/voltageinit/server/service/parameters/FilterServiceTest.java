@@ -19,6 +19,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
@@ -85,8 +87,8 @@ class FilterServiceTest {
         Map<UUID, Boolean> existence = filterService.getFiltersExistence(List.of(existingId, missingId));
 
         assertThat(existence.keySet()).containsExactly(existingId, missingId);
-        assertThat(existence).containsEntry(existingId, Boolean.TRUE);
-        assertThat(existence).containsEntry(missingId, Boolean.FALSE);
+        assertTrue(existence.get(existingId));
+        assertFalse(existence.get(missingId));
     }
 }
 
