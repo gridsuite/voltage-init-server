@@ -12,6 +12,7 @@ import org.gridsuite.voltageinit.server.error.VoltageInitException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,7 @@ class FilterServiceTest {
 
     @BeforeEach
     void setUp() {
-        filterService = spy(new FilterService(Mockito.mock(NetworkStoreService.class), "http://filter-server/"));
+        filterService = spy(new FilterService(Mockito.mock(NetworkStoreService.class), "http://filter-server/", new RestTemplate()));
     }
 
     @Test

@@ -56,16 +56,18 @@ public class FilterService implements FilterLoader {
 
     private static String filterServerBaseUri;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     private final NetworkStoreService networkStoreService;
 
     public static final String FILTERS_NOT_FOUND = "Filters not found";
 
     public FilterService(NetworkStoreService networkStoreService,
-                         @Value("${gridsuite.services.filter-server.base-uri:http://filter-server/}") String filterServerBaseUri) {
+                         @Value("${gridsuite.services.filter-server.base-uri:http://filter-server/}") String filterServerBaseUri,
+                         RestTemplate restTemplate) {
         this.networkStoreService = networkStoreService;
         setFilterServerBaseUri(filterServerBaseUri);
+        this.restTemplate = restTemplate;
     }
 
     public static void setFilterServerBaseUri(String filterServerBaseUri) {
