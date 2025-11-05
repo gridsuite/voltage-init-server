@@ -76,7 +76,7 @@ class VoltageInitParametersTest {
             .thenAnswer(inv -> {
                 @SuppressWarnings("unchecked")
                 Set<UUID> ids = (Set<UUID>) inv.getArgument(0);
-                return ids.stream().collect(Collectors.toMap(id -> id, id -> false));
+                return ids.stream().collect(Collectors.toMap(id -> id, id -> true));
             });
     }
 

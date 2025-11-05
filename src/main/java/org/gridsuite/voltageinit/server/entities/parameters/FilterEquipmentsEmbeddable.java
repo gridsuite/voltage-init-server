@@ -33,20 +33,17 @@ public class FilterEquipmentsEmbeddable {
     @Column(name = "filterName")
     private String filterName;
 
-    @Column(name = "isValid")
-    private boolean isValid = false;
-
     public static List<FilterEquipmentsEmbeddable> toEmbeddableFilterEquipments(List<FilterEquipments> filters) {
         return filters == null ? null :
-            filters.stream()
-                .map(filter -> new FilterEquipmentsEmbeddable(filter.getFilterId(), filter.getFilterName(), filter.isValid()))
-                .toList();
+                filters.stream()
+                        .map(filter -> new FilterEquipmentsEmbeddable(filter.getFilterId(), filter.getFilterName()))
+                        .toList();
     }
 
     public static List<FilterEquipments> fromEmbeddableFilterEquipments(List<FilterEquipmentsEmbeddable> filters) {
         return filters == null ? null :
-            filters.stream()
-                .map(filter -> new FilterEquipments(filter.getFilterId(), filter.getFilterName(), null, null, filter.isValid()))
-                .toList();
+                filters.stream()
+                        .map(filter -> new FilterEquipments(filter.getFilterId(), filter.getFilterName(), null, null))
+                        .toList();
     }
 }
