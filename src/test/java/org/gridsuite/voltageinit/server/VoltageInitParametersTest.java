@@ -30,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.LinkedHashSet;
 
 import static org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService.DEFAULT_REACTIVE_SLACKS_THRESHOLD;
 import static org.gridsuite.voltageinit.utils.assertions.Assertions.assertThat;
@@ -76,7 +76,7 @@ class VoltageInitParametersTest {
             .thenAnswer(inv -> {
                 @SuppressWarnings("unchecked")
                 Set<UUID> ids = (Set<UUID>) inv.getArgument(0);
-                return ids.stream().collect(Collectors.toMap(id -> id, id -> true));
+                return new LinkedHashSet<>(ids);
             });
     }
 
