@@ -13,19 +13,24 @@ import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfo
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageLimitInfos;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
+import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.gridsuite.voltageinit.server.util.EquipmentsSelectionType;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.LinkedHashSet;
 
 import static org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService.DEFAULT_REACTIVE_SLACKS_THRESHOLD;
 import static org.gridsuite.voltageinit.utils.assertions.Assertions.assertThat;
@@ -34,6 +39,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -59,6 +66,19 @@ class VoltageInitParametersTest {
 
     @Autowired
     private VoltageInitParametersRepository parametersRepository;
+
+    @MockitoBean
+    private FilterService filterService;
+
+    @BeforeEach
+    void setUpFilterMock() {
+        when(filterService.getFiltersExistence(anySet()))
+            .thenAnswer(inv -> {
+                @SuppressWarnings("unchecked")
+                Set<UUID> ids = (Set<UUID>) inv.getArgument(0);
+                return new LinkedHashSet<>(ids);
+            });
+    }
 
     @AfterEach
     void cleanDB() {
