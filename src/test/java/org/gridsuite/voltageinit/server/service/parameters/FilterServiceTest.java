@@ -20,6 +20,8 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
@@ -85,8 +87,8 @@ class FilterServiceTest {
 
         Set<UUID> existingFilters = filterService.getFiltersExistence(List.of(existingId, missingId));
 
-        assertThat(existingFilters).containsExactly(existingId);
-        assertThat(existingFilters).doesNotContain(missingId);
+        assertTrue(existingFilters.contains(existingId));
+        assertFalse(existingFilters.contains(missingId));
     }
 }
 
