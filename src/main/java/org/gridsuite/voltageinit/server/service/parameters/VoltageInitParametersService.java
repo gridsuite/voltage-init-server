@@ -313,7 +313,7 @@ public class VoltageInitParametersService {
         filtersByUuid.forEach((filterId, filters) ->
             filters.forEach(
                 filter -> {
-                    if (!filtersExistence.get(filterId)) {
+                    if (!filtersExistence.containsKey(filterId)) {
                         filter.setFilterName(null);
                     }
                 }));
