@@ -253,7 +253,11 @@ class VoltageInitControllerTest {
             Map<String, List<String>> substationProperty,
             List<Country> countryCodes,
             List<UUID> genericFiltersUuid) throws JsonProcessingException {
-        GlobalFilter globalFilter = new GlobalFilter(nominalVs, countryCodes, genericFiltersUuid, null, substationProperty);
+        GlobalFilter globalFilter = new GlobalFilter();
+        globalFilter.setNominalV(nominalVs);
+        globalFilter.setCountryCode(countryCodes);
+        globalFilter.setSubstationProperty(substationProperty);
+        globalFilter.setGenericFilter(genericFiltersUuid);
         return new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).writeValueAsString(globalFilter);
     }
 

@@ -57,7 +57,10 @@
         <sonar.organization>gridsuite</sonar.organization>
         <sonar.projectKey>org.gridsuite:voltage-init-server</sonar.projectKey>
 
-        <!-- FIXME : to remove when using new gridsuite dependencies release -->
+        <!--
+        To remove after when using gridsuite dependencies release referencing filter 1.12.0 version or greater
+        and computation version containing merged PR: https://github.com/gridsuite/computation/pull/13
+        -->
         <gridsuite-filter.version>1.12.0</gridsuite-filter.version>
         <gridsuite-computation.version>1.6.0-SNAPSHOT</gridsuite-computation.version>
     </properties>
