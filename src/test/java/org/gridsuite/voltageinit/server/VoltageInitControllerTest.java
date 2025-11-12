@@ -78,6 +78,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -268,7 +269,7 @@ class VoltageInitControllerTest {
         HttpUrl baseHttpUrl = server.url("");
         String baseUrl = baseHttpUrl.toString().substring(0, baseHttpUrl.toString().length() - 1);
         networkModificationService.setNetworkModificationServerBaseUri(baseUrl);
-        filterService.setFilterServerBaseUri(baseUrl);
+        ReflectionTestUtils.setField(filterService, "filterServerBaseUri", baseUrl);
         doNothing().when(filterService).ensureFiltersExist(anyMap());
 
         // network store service mocking
