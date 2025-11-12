@@ -97,14 +97,13 @@ public class FilterService extends AbstractFilterService {
         return "Some filters do not exist: " + " [" + String.join(", ", missingFilterNames) + "]";
     }
 
+    @SuppressWarnings("unchecked")
     public List<String> getResourceFilters(@NonNull UUID networkUuid, @NonNull String variantId, @NonNull GlobalFilter globalFilter) {
         Optional<ResourceFilterDTO> res = super.getResourceFilter(networkUuid, variantId, globalFilter, List.of(EquipmentType.VOLTAGE_LEVEL), null);
         if (res.isEmpty() || !(res.get().value() instanceof List<?> list)) {
             return List.of();
         } else {
-            @SuppressWarnings("unchecked")
-            List<String> stringList = (List<String>) list;
-            return stringList;
+            return (List<String>) list;
         }
     }
 }
