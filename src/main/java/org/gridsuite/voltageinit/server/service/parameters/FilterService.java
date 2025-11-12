@@ -6,6 +6,7 @@
  */
 package org.gridsuite.voltageinit.server.service.parameters;
 
+import com.powsybl.commons.PowsyblException;
 import com.powsybl.network.store.client.NetworkStoreService;
 import lombok.NonNull;
 import org.gridsuite.computation.dto.GlobalFilter;
@@ -23,8 +24,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -55,6 +58,22 @@ public class FilterService extends AbstractFilterService {
                 .toUriString();
         return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<FilterEquipments>>() { })
                 .getBody();
+    }
+
+    public Set<UUID> getFiltersExistence(Collection<UUID> filtersUuids) {
+        List<UUID> filterIds = filtersUuids.stream()
+            .distinct()
+            .toList();
+        List<AbstractFilter> filters;
+        try {
+            filters = getFilters(filterIds);
+        } catch (PowsyblException e) {
+            return Set.of();
+        }
+        return filters.stream()
+            .map(AbstractFilter::getId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     public void ensureFiltersExist(Map<UUID, String> filterNamesByUuid) {
