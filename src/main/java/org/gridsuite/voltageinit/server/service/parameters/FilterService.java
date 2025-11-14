@@ -30,6 +30,7 @@ import org.gridsuite.filter.utils.expertfilter.CombinatorType;
 import org.gridsuite.filter.utils.expertfilter.FieldType;
 import org.gridsuite.filter.utils.expertfilter.OperatorType;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
+import org.gridsuite.voltageinit.server.error.VoltageInitBusinessErrorCode;
 import org.gridsuite.voltageinit.server.error.VoltageInitException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -133,7 +134,7 @@ public class FilterService implements FilterLoader {
             .filter(filterId -> !validFilters.contains(filterId))
             .toList();
         if (!missingFilters.isEmpty()) {
-            throw new VoltageInitException(buildMissingFiltersMessage(missingFilters, filterNamesByUuid));
+            throw new VoltageInitException(VoltageInitBusinessErrorCode.MISSING_FILTER, buildMissingFiltersMessage(missingFilters, filterNamesByUuid));
         }
     }
 
