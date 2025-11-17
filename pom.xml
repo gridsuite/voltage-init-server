@@ -49,7 +49,7 @@
     </developers>
 
     <properties>
-        <gridsuite-dependencies.version>44.1.0-SNAPSHOT</gridsuite-dependencies.version>
+        <gridsuite-dependencies.version>44.1.0</gridsuite-dependencies.version>
         <powsybl-open-reac.version>0.15.0</powsybl-open-reac.version>
         <powsybl-optimizer-commons.version>0.15.0</powsybl-optimizer-commons.version>
         <mockwebserver3.version>5.0.0-alpha.14</mockwebserver3.version>
