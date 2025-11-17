@@ -89,4 +89,3 @@ public class VoltageInitResultContext extends AbstractResultContext<VoltageInitR
         return specificMsgHeaders;
     }
 }
-
