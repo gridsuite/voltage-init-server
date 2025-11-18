@@ -78,6 +78,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -253,7 +254,11 @@ class VoltageInitControllerTest {
             Map<String, List<String>> substationProperty,
             List<Country> countryCodes,
             List<UUID> genericFiltersUuid) throws JsonProcessingException {
-        GlobalFilter globalFilter = new GlobalFilter(nominalVs, countryCodes, genericFiltersUuid, null, substationProperty);
+        GlobalFilter globalFilter = new GlobalFilter();
+        globalFilter.setNominalV(nominalVs);
+        globalFilter.setCountryCode(countryCodes);
+        globalFilter.setSubstationProperty(substationProperty);
+        globalFilter.setGenericFilter(genericFiltersUuid);
         return new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).writeValueAsString(globalFilter);
     }
 
@@ -264,7 +269,7 @@ class VoltageInitControllerTest {
         HttpUrl baseHttpUrl = server.url("");
         String baseUrl = baseHttpUrl.toString().substring(0, baseHttpUrl.toString().length() - 1);
         networkModificationService.setNetworkModificationServerBaseUri(baseUrl);
-        filterService.setFilterServerBaseUri(baseUrl);
+        ReflectionTestUtils.setField(filterService, "filterServerBaseUri", baseUrl);
         doNothing().when(filterService).ensureFiltersExist(anyMap());
 
         // network store service mocking

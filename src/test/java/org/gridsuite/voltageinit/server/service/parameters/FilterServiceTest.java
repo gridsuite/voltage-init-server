@@ -7,6 +7,8 @@
 package org.gridsuite.voltageinit.server.service.parameters;
 
 import com.powsybl.network.store.client.NetworkStoreService;
+import org.gridsuite.computation.dto.GlobalFilter;
+import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.gridsuite.filter.AbstractFilter;
 import org.gridsuite.voltageinit.server.error.VoltageInitException;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,12 +16,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -89,6 +93,18 @@ class FilterServiceTest {
 
         assertTrue(existingFilters.contains(existingId));
         assertFalse(existingFilters.contains(missingId));
+    }
+
+    @Test
+    void testGetResourceFilters() {
+        ResourceFilterDTO resourceFilterDTO = new ResourceFilterDTO(ResourceFilterDTO.DataType.TEXT, ResourceFilterDTO.Type.CONTAINS, List.of("a"), null, null);
+        doReturn(Optional.of(resourceFilterDTO)).when(filterService).getResourceFilter(any(), anyString(), any(), anyList(), any());
+
+        GlobalFilter globalFilter = new GlobalFilter();
+        List<String> res = filterService.getResourceFilters(UUID.randomUUID(), "variant1", globalFilter);
+
+        assertFalse(res.isEmpty());
+        assertEquals(List.of("a"), res);
     }
 }
 
