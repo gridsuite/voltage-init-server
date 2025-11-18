@@ -56,6 +56,13 @@
         <liquibase-hibernate-package>org.gridsuite.voltageinit.server</liquibase-hibernate-package>
         <sonar.organization>gridsuite</sonar.organization>
         <sonar.projectKey>org.gridsuite:voltage-init-server</sonar.projectKey>
+
+        <!--
+        To remove after when using gridsuite dependencies release referencing filter 1.12.0 version or greater
+        and computation version containing merged PR: https://github.com/gridsuite/computation/pull/13
+        -->
+        <gridsuite-filter.version>1.12.0</gridsuite-filter.version>
+        <gridsuite-computation.version>1.6.0-SNAPSHOT</gridsuite-computation.version>
     </properties>
 
     <build>
@@ -177,11 +184,12 @@
          <dependency>
             <groupId>org.gridsuite</groupId>
             <artifactId>gridsuite-filter</artifactId>
+             <version>${gridsuite-filter.version}</version>
         </dependency>
         <dependency>
             <groupId>org.gridsuite</groupId>
             <artifactId>gridsuite-computation</artifactId>
-            <version>1.6.0-SNAPSHOT</version>
+            <version>${gridsuite-computation.version}</version>
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
