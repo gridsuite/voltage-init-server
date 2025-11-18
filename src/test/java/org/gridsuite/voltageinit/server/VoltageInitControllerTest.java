@@ -257,8 +257,8 @@ class VoltageInitControllerTest {
         GlobalFilter globalFilter = new GlobalFilter();
         globalFilter.setNominalV(nominalVs);
         globalFilter.setCountryCode(countryCodes);
-        globalFilter.setSubstationProperty(substationProperty);
         globalFilter.setGenericFilter(genericFiltersUuid);
+        globalFilter.setSubstationProperty(substationProperty);
         return new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).writeValueAsString(globalFilter);
     }
 

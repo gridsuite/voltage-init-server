@@ -49,20 +49,13 @@
     </developers>
 
     <properties>
-        <gridsuite-dependencies.version>44.0.0</gridsuite-dependencies.version>
-        <powsybl-open-reac.version>0.14.0</powsybl-open-reac.version>
-        <powsybl-optimizer-commons.version>0.13.0</powsybl-optimizer-commons.version>
+        <gridsuite-dependencies.version>44.1.0</gridsuite-dependencies.version>
+        <powsybl-open-reac.version>0.15.0</powsybl-open-reac.version>
+        <powsybl-optimizer-commons.version>0.15.0</powsybl-optimizer-commons.version>
         <mockwebserver3.version>5.0.0-alpha.14</mockwebserver3.version>
         <liquibase-hibernate-package>org.gridsuite.voltageinit.server</liquibase-hibernate-package>
         <sonar.organization>gridsuite</sonar.organization>
         <sonar.projectKey>org.gridsuite:voltage-init-server</sonar.projectKey>
-
-        <!--
-        To remove after when using gridsuite dependencies release referencing filter 1.12.0 version or greater
-        and computation version containing merged PR: https://github.com/gridsuite/computation/pull/13
-        -->
-        <gridsuite-filter.version>1.12.0</gridsuite-filter.version>
-        <gridsuite-computation.version>1.6.0</gridsuite-computation.version>
     </properties>
 
     <build>
@@ -184,12 +177,10 @@
          <dependency>
             <groupId>org.gridsuite</groupId>
             <artifactId>gridsuite-filter</artifactId>
-             <version>${gridsuite-filter.version}</version>
         </dependency>
         <dependency>
             <groupId>org.gridsuite</groupId>
             <artifactId>gridsuite-computation</artifactId>
-            <version>${gridsuite-computation.version}</version>
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
