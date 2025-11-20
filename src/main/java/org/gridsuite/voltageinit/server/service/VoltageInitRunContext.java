@@ -27,7 +27,7 @@ public class VoltageInitRunContext extends AbstractComputationRunContext<Void> {
     public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId,
              String reportType, String userId, UUID parametersUuid, Map<String, Double> voltageLevelsIdsRestricted, Boolean debug) {
         super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId,
-            "default-provider",  // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
+            null,
             null, debug);
         this.parametersUuid = parametersUuid;
         this.voltageLevelsIdsRestricted = voltageLevelsIdsRestricted;
