@@ -38,7 +38,7 @@ class FilterServiceTest {
 
     @BeforeEach
     void setUp() {
-        filterService = spy(new FilterService(Mockito.mock(NetworkStoreService.class), "http://filter-server/", null));
+        filterService = spy(new FilterService(Mockito.mock(NetworkStoreService.class), "http://filter-server/"));
     }
 
     @Test
