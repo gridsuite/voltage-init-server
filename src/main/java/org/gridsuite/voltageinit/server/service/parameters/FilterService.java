@@ -15,6 +15,7 @@ import org.gridsuite.computation.service.AbstractFilterService;
 import org.gridsuite.filter.AbstractFilter;
 import org.gridsuite.filter.utils.EquipmentType;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
+import org.gridsuite.voltageinit.server.error.VoltageInitBusinessErrorCode;
 import org.gridsuite.voltageinit.server.error.VoltageInitException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -85,7 +86,7 @@ public class FilterService extends AbstractFilterService {
             .filter(filterId -> !validFilters.contains(filterId))
             .toList();
         if (!missingFilters.isEmpty()) {
-            throw new VoltageInitException(buildMissingFiltersMessage(missingFilters, filterNamesByUuid));
+            throw new VoltageInitException(VoltageInitBusinessErrorCode.MISSING_FILTER, buildMissingFiltersMessage(missingFilters, filterNamesByUuid));
         }
     }
 

@@ -6,14 +6,25 @@
  */
 package org.gridsuite.voltageinit.server.error;
 
+import com.powsybl.ws.commons.error.AbstractBusinessException;
+import lombok.NonNull;
+
 import java.util.Objects;
 
 /**
  * @author Mohamed Ben-rejeb {@literal <mohamed.ben-rejeb at rte-france.com>}
  */
-public class VoltageInitException extends RuntimeException {
+public class VoltageInitException extends AbstractBusinessException {
 
-    public VoltageInitException(String message) {
+    private final VoltageInitBusinessErrorCode errorCode;
+
+    public VoltageInitException(VoltageInitBusinessErrorCode errorCode, String message) {
         super(Objects.requireNonNull(message, "message must not be null"));
+        this.errorCode = Objects.requireNonNull(errorCode, "errorCode must not be null");
+    }
+
+    @Override
+    public @NonNull VoltageInitBusinessErrorCode getBusinessErrorCode() {
+        return errorCode;
     }
 }
