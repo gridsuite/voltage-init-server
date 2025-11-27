@@ -7,14 +7,18 @@
 package org.gridsuite.voltageinit.server.error;
 
 import com.powsybl.ws.commons.error.AbstractBusinessExceptionHandler;
+import com.powsybl.ws.commons.error.PowsyblWsProblemDetail;
 import com.powsybl.ws.commons.error.ServerNameProvider;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.NonNull;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice
-public class RestResponseEntityExceptionHandler extends AbstractBusinessExceptionHandler<VoltageInitException, VoltageInitBusinessErrorCode> {
-    protected RestResponseEntityExceptionHandler(ServerNameProvider serverNameProvider) {
+public class VoltageInitExceptionHandler extends AbstractBusinessExceptionHandler<VoltageInitException, VoltageInitBusinessErrorCode> {
+    protected VoltageInitExceptionHandler(ServerNameProvider serverNameProvider) {
         super(serverNameProvider);
     }
 
@@ -28,5 +32,11 @@ public class RestResponseEntityExceptionHandler extends AbstractBusinessExceptio
         return switch (businessErrorCode) {
             case MISSING_FILTER -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
+    }
+
+    @ExceptionHandler(VoltageInitException.class)
+    protected ResponseEntity<PowsyblWsProblemDetail> handleVoltageInitException(
+            VoltageInitException exception, HttpServletRequest request) {
+        return super.handleDomainException(exception, request);
     }
 }
