@@ -6,19 +6,25 @@
  */
 package org.gridsuite.voltageinit.server.error;
 
+import com.powsybl.ws.commons.error.AbstractBusinessExceptionHandler;
 import com.powsybl.ws.commons.error.ServerNameProvider;
-import org.gridsuite.computation.error.AbstractTypedComputationRestResponseEntityExceptionHandler;
+import lombok.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
 @ControllerAdvice
-public class RestResponseEntityExceptionHandler extends AbstractTypedComputationRestResponseEntityExceptionHandler<VoltageInitBusinessErrorCode> {
+public class RestResponseEntityExceptionHandler extends AbstractBusinessExceptionHandler<VoltageInitException, VoltageInitBusinessErrorCode> {
     protected RestResponseEntityExceptionHandler(ServerNameProvider serverNameProvider) {
-        super(serverNameProvider, VoltageInitBusinessErrorCode.class);
+        super(serverNameProvider);
     }
 
     @Override
-    protected HttpStatus mapSpecificStatus(VoltageInitBusinessErrorCode businessErrorCode) {
+    protected @NonNull VoltageInitBusinessErrorCode getBusinessCode(VoltageInitException e) {
+        return e.getBusinessErrorCode();
+    }
+
+    @Override
+    protected HttpStatus mapStatus(VoltageInitBusinessErrorCode businessErrorCode) {
         return switch (businessErrorCode) {
             case MISSING_FILTER -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
