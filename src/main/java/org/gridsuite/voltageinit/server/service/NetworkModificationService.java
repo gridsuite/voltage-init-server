@@ -55,17 +55,19 @@ public class NetworkModificationService {
 
     private String networkModificationServerBaseUri;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     private final ObjectMapper objectMapper;
 
     private final UuidGeneratorService uuidGeneratorService;
 
     NetworkModificationService(@Value("${gridsuite.services.network-modification-server.base-uri:http://network-modification-server/}") String networkModificationServerBaseUri,
-                               ObjectMapper objectMapper, UuidGeneratorService uuidGeneratorService) {
+                               ObjectMapper objectMapper, UuidGeneratorService uuidGeneratorService,
+                               RestTemplate restTemplate) {
         this.networkModificationServerBaseUri = networkModificationServerBaseUri;
         this.objectMapper = objectMapper;
         this.uuidGeneratorService = uuidGeneratorService;
+        this.restTemplate = restTemplate;
     }
 
     public void setNetworkModificationServerBaseUri(String networkModificationServerBaseUri) {
