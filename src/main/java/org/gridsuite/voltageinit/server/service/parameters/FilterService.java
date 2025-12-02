@@ -18,6 +18,7 @@ import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.gridsuite.voltageinit.server.error.VoltageInitBusinessErrorCode;
 import org.gridsuite.voltageinit.server.error.VoltageInitException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -46,9 +47,10 @@ public class FilterService extends AbstractFilterService {
 
     public static final String FILTERS_NOT_FOUND = "Filters not found";
 
-    public FilterService(NetworkStoreService networkStoreService,
+    public FilterService(RestTemplateBuilder restTemplateBuilder,
+                         NetworkStoreService networkStoreService,
                          @Value("${gridsuite.services.filter-server.base-uri:http://filter-server/}") String filterServerBaseUri) {
-        super(networkStoreService, filterServerBaseUri);
+        super(restTemplateBuilder, networkStoreService, filterServerBaseUri);
     }
 
     public List<FilterEquipments> exportFilters(List<UUID> filtersUuids, UUID networkUuid, String variantId) {
