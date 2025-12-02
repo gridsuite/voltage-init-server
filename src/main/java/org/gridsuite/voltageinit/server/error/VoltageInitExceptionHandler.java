@@ -16,6 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+/**
+ * @author Hugo Marcellin <hugo.marcelin at rte-france.com>
+ */
 @ControllerAdvice
 public class VoltageInitExceptionHandler extends AbstractBusinessExceptionHandler<VoltageInitException, VoltageInitBusinessErrorCode> {
     protected VoltageInitExceptionHandler(ServerNameProvider serverNameProvider) {
