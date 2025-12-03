@@ -27,6 +27,7 @@ import org.gridsuite.voltageinit.server.dto.parameters.IdentifiableAttributes;
 import org.gridsuite.voltageinit.server.entities.parameters.FilterEquipmentsEmbeddable;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
+import org.gridsuite.voltageinit.server.error.VoltageInitBusinessErrorCode;
 import org.gridsuite.voltageinit.server.error.VoltageInitException;
 import org.gridsuite.voltageinit.server.service.VoltageInitRunContext;
 import org.gridsuite.voltageinit.server.util.EquipmentsSelectionType;
@@ -211,7 +212,7 @@ class ParametersTest {
             .withResourceBundles("i18n.reports")
             .withMessageTemplate(COMPUTATION_TYPE).build());
 
-        Mockito.doThrow(new VoltageInitException(FilterService.FILTERS_NOT_FOUND + " [" + FILTER_1 + "]"))
+        Mockito.doThrow(new VoltageInitException(VoltageInitBusinessErrorCode.MISSING_FILTER, FilterService.FILTERS_NOT_FOUND + " [" + FILTER_1 + "]"))
             .when(filterService)
             .ensureFiltersExist(Mockito.anyMap());
 
