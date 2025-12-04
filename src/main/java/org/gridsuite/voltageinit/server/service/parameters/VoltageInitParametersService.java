@@ -225,6 +225,7 @@ public class VoltageInitParametersService {
                                         .withTypedValue("parameters_id", Objects.toString(context.getParametersUuid()), "ID")
                                         .add();
         OpenReacParameters parameters = new OpenReacParameters();
+        parameters.setOptimizationAfterRounding(true);
         final MutableInt missingVoltageLimitsCounter = new MutableInt(0);
         final MutableInt voltageLimitModificationsCounter = new MutableInt(0);
 
