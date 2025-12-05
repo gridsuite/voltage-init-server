@@ -372,7 +372,7 @@ class VoltageInitControllerTest {
             )).when(s3Client).getObject(any(GetObjectRequest.class));
 
             MvcResult result = mockMvc.perform(post(
-                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                     .param(HEADER_DEBUG, "true")
                     .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
@@ -458,7 +458,7 @@ class VoltageInitControllerTest {
             parametersRepository.save(buildVoltageInitParametersEntity());
             UUID parametersUuid = parametersRepository.findAll().get(0).getId();
             MvcResult result = mockMvc.perform(post(
-                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID + "&parametersUuid=" + parametersUuid, NETWORK_UUID)
+                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId=" + VARIANT_2_ID + "&parametersUuid=" + parametersUuid, NETWORK_UUID)
                     .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -495,7 +495,7 @@ class VoltageInitControllerTest {
                 .thenReturn(CompletableFutureTask.runAsync(this::buildNokOpenReacResult, ForkJoinPool.commonPool()));
 
             MvcResult result = mockMvc.perform(post(
-                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                     .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -522,7 +522,7 @@ class VoltageInitControllerTest {
     @Test
     void runWrongNetworkTest() throws Exception {
         MvcResult result = mockMvc.perform(post(
-                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, OTHER_NETWORK_UUID)
+                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId=" + VARIANT_2_ID, OTHER_NETWORK_UUID)
                         .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -543,7 +543,7 @@ class VoltageInitControllerTest {
     @Test
     void runWithReportTest() throws Exception {
         MvcResult result = mockMvc.perform(post(
-                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId={variantId}&reportType=VoltageInit&reportUuid=" + REPORT_UUID + "&reporterId=" + UUID.randomUUID(), NETWORK_UUID, VARIANT_2_ID)
+                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId={variantId}&reportType=VoltageInit&reportUuid=" + REPORT_UUID + "&reporterId=" + UUID.randomUUID(), NETWORK_UUID, VARIANT_2_ID)
                         .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -557,7 +557,7 @@ class VoltageInitControllerTest {
                 .thenReturn(completableFutureResultsTask);
 
             mockMvc.perform(post(
-                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                             .header(HEADER_USER_ID, "userId"))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -620,7 +620,7 @@ class VoltageInitControllerTest {
                 .thenThrow(new PowsyblException("Exception during ampl execution"));
 
             MvcResult result = mockMvc.perform(post(
-                "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&variantId={variantId}&reportType=VoltageInit&reportUuid=" + REPORT_UUID + "&reporterId=" + UUID.randomUUID(), NETWORK_UUID, VARIANT_2_ID)
+                "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId={variantId}&reportType=VoltageInit&reportUuid=" + REPORT_UUID + "&reporterId=" + UUID.randomUUID(), NETWORK_UUID, VARIANT_2_ID)
                     .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
