@@ -58,7 +58,6 @@
         <sonar.projectKey>org.gridsuite:voltage-init-server</sonar.projectKey>
         <!-- To remove after when using gridsuite dependencies release and computation version containing merged PR: https://github.com/gridsuite/computation/pull/19 -->
         <gridsuite-computation.version>1.7.0</gridsuite-computation.version>
-        <powsybl-ws-commons.version>1.34.0</powsybl-ws-commons.version>
         <gridsuite-filter.version>1.15.0</gridsuite-filter.version>
     </properties>
 
@@ -95,12 +94,6 @@
     <dependencyManagement>
         <dependencies>
             <!-- overrides of imports -->
-            <dependency>
-                <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-ws-commons</artifactId>
-                <version>${powsybl-ws-commons.version}</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.gridsuite</groupId>
                 <artifactId>gridsuite-computation</artifactId>
