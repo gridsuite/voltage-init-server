@@ -13,6 +13,7 @@ import lombok.Setter;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
@@ -35,9 +36,9 @@ public class VoltageInitModificationInfos {
 
     private List<BusModificationInfos> buses = new ArrayList<>();
 
-    private String rootNetworkName;
+    private UUID rootNetworkId;
 
-    private String nodeName;
+    private UUID nodeId;
 
     private Instant computationDate;
 

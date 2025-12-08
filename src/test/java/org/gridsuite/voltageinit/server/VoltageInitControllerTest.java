@@ -48,6 +48,7 @@ import org.gridsuite.computation.utils.annotations.PostCompletionAdapter;
 import org.gridsuite.filter.identifierlistfilter.IdentifierListFilter;
 import org.gridsuite.filter.identifierlistfilter.IdentifierListFilterEquipmentAttributes;
 import org.gridsuite.filter.utils.EquipmentType;
+import org.gridsuite.voltageinit.server.dto.NodeReceiver;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
@@ -132,6 +133,7 @@ class VoltageInitControllerTest {
     private static final String VARIANT_2_ID = "variant_2";
     private static final String VARIANT_3_ID = "variant_3";
     private static final UUID FILTER_UUID = UUID.fromString("11111111-3e6c-4d72-b292-d355a97e0d5a");
+    private static final NodeReceiver RECEIVER = new NodeReceiver(UUID.randomUUID(), UUID.randomUUID());
 
     private static final String NOT_OK_RESULT = "NOT_OK";
 
@@ -372,7 +374,7 @@ class VoltageInitControllerTest {
             )).when(s3Client).getObject(any(GetObjectRequest.class));
 
             MvcResult result = mockMvc.perform(post(
-                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=" + URLEncoder.encode(mapper.writeValueAsString(RECEIVER), StandardCharsets.UTF_8) + "&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                     .param(HEADER_DEBUG, "true")
                     .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
@@ -384,7 +386,7 @@ class VoltageInitControllerTest {
             String resultUuid = Objects.requireNonNull(resultMessage.getHeaders().get("resultUuid")).toString();
 
             assertEquals(RESULT_UUID.toString(), resultUuid);
-            assertEquals("me", resultMessage.getHeaders().get("receiver"));
+            assertEquals(URLEncoder.encode(mapper.writeValueAsString(RECEIVER), StandardCharsets.UTF_8), resultMessage.getHeaders().get("receiver"));
 
             // check notification of debug
             Message<byte[]> debugMessage = output.receive(TIMEOUT, "voltageinit.debug");
@@ -458,7 +460,7 @@ class VoltageInitControllerTest {
             parametersRepository.save(buildVoltageInitParametersEntity());
             UUID parametersUuid = parametersRepository.findAll().get(0).getId();
             MvcResult result = mockMvc.perform(post(
-                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId=" + VARIANT_2_ID + "&parametersUuid=" + parametersUuid, NETWORK_UUID)
+                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=" + URLEncoder.encode(mapper.writeValueAsString(RECEIVER), StandardCharsets.UTF_8) + "&variantId=" + VARIANT_2_ID + "&parametersUuid=" + parametersUuid, NETWORK_UUID)
                     .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -480,7 +482,7 @@ class VoltageInitControllerTest {
 
             Message<byte[]> resultMessage = output.receive(TIMEOUT, "voltageinit.result");
             assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get("resultUuid"));
-            assertEquals("me", resultMessage.getHeaders().get("receiver"));
+            assertEquals(URLEncoder.encode(mapper.writeValueAsString(RECEIVER), StandardCharsets.UTF_8), resultMessage.getHeaders().get("receiver"));
             assertEquals(Boolean.TRUE, resultMessage.getHeaders().get(HEADER_REACTIVE_SLACKS_OVER_THRESHOLD));
             Double threshold = resultMessage.getHeaders().get(HEADER_REACTIVE_SLACKS_THRESHOLD_VALUE, Double.class);
             assertNotNull(threshold);
@@ -495,7 +497,7 @@ class VoltageInitControllerTest {
                 .thenReturn(CompletableFutureTask.runAsync(this::buildNokOpenReacResult, ForkJoinPool.commonPool()));
 
             MvcResult result = mockMvc.perform(post(
-                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=" + URLEncoder.encode(mapper.writeValueAsString(RECEIVER), StandardCharsets.UTF_8) + "&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                     .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -504,7 +506,7 @@ class VoltageInitControllerTest {
 
             Message<byte[]> resultMessage = output.receive(TIMEOUT, "voltageinit.result");
             assertEquals(RESULT_UUID.toString(), resultMessage.getHeaders().get(HEADER_RESULT_UUID));
-            assertEquals("me", resultMessage.getHeaders().get(HEADER_RECEIVER));
+            assertEquals(URLEncoder.encode(mapper.writeValueAsString(RECEIVER), StandardCharsets.UTF_8), resultMessage.getHeaders().get(HEADER_RECEIVER));
 
             result = mockMvc.perform(get(
                     "/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
@@ -522,7 +524,7 @@ class VoltageInitControllerTest {
     @Test
     void runWrongNetworkTest() throws Exception {
         MvcResult result = mockMvc.perform(post(
-                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId=" + VARIANT_2_ID, OTHER_NETWORK_UUID)
+                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=" + URLEncoder.encode(mapper.writeValueAsString(RECEIVER), StandardCharsets.UTF_8) + "&variantId=" + VARIANT_2_ID, OTHER_NETWORK_UUID)
                         .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -543,7 +545,7 @@ class VoltageInitControllerTest {
     @Test
     void runWithReportTest() throws Exception {
         MvcResult result = mockMvc.perform(post(
-                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId={variantId}&reportType=VoltageInit&reportUuid=" + REPORT_UUID + "&reporterId=" + UUID.randomUUID(), NETWORK_UUID, VARIANT_2_ID)
+                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=" + URLEncoder.encode(mapper.writeValueAsString(RECEIVER), StandardCharsets.UTF_8) + "&variantId={variantId}&reportType=VoltageInit&reportUuid=" + REPORT_UUID + "&reporterId=" + UUID.randomUUID(), NETWORK_UUID, VARIANT_2_ID)
                         .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -557,7 +559,7 @@ class VoltageInitControllerTest {
                 .thenReturn(completableFutureResultsTask);
 
             mockMvc.perform(post(
-                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId=" + VARIANT_2_ID, NETWORK_UUID)
+                            "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=" + URLEncoder.encode(mapper.writeValueAsString(RECEIVER), StandardCharsets.UTF_8) + "&variantId=" + VARIANT_2_ID, NETWORK_UUID)
                             .header(HEADER_USER_ID, "userId"))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -565,7 +567,7 @@ class VoltageInitControllerTest {
 
             // stop voltage init analysis
             assertNotNull(output.receive(TIMEOUT, "voltageinit.run"));
-            mockMvc.perform(put("/" + VERSION + "/results/{resultUuid}/stop" + "?receiver=me", RESULT_UUID)
+            mockMvc.perform(put("/" + VERSION + "/results/{resultUuid}/stop" + "?receiver=" + URLEncoder.encode(mapper.writeValueAsString(RECEIVER), StandardCharsets.UTF_8), RESULT_UUID)
                             .header("userId", "userId"))
                     .andExpect(status().isOk());
             assertNotNull(output.receive(TIMEOUT, "voltageinit.cancel"));
@@ -574,7 +576,7 @@ class VoltageInitControllerTest {
             Message<byte[]> message = output.receive(TIMEOUT, "voltageinit.cancelfailed");
             assertNotNull(message);
             assertEquals(RESULT_UUID.toString(), message.getHeaders().get("resultUuid"));
-            assertEquals("me", message.getHeaders().get("receiver"));
+            assertEquals(URLEncoder.encode(mapper.writeValueAsString(RECEIVER), StandardCharsets.UTF_8), message.getHeaders().get("receiver"));
             assertEquals(getCancelFailedMessage(COMPUTATION_TYPE), message.getHeaders().get("message"));
 
             //FIXME how to test the case when the computation is still in progress and we send a cancel request
@@ -620,7 +622,7 @@ class VoltageInitControllerTest {
                 .thenThrow(new PowsyblException("Exception during ampl execution"));
 
             MvcResult result = mockMvc.perform(post(
-                "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId={variantId}&reportType=VoltageInit&reportUuid=" + REPORT_UUID + "&reporterId=" + UUID.randomUUID(), NETWORK_UUID, VARIANT_2_ID)
+                "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=" + URLEncoder.encode(mapper.writeValueAsString(RECEIVER), StandardCharsets.UTF_8) + "&variantId={variantId}&reportType=VoltageInit&reportUuid=" + REPORT_UUID + "&reporterId=" + UUID.randomUUID(), NETWORK_UUID, VARIANT_2_ID)
                     .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))

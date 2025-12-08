@@ -24,23 +24,16 @@ public class VoltageInitRunContext extends AbstractComputationRunContext<Void> {
 
     private final Map<String, Double> voltageLevelsIdsRestricted;
 
-    private final String rootNetworkName;
-
-    private final String nodeName;
-
     public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId,
-                                 String reportType, String userId, UUID parametersUuid, Map<String, Double> voltageLevelsIdsRestricted, Boolean debug,
-                                 String rootNetworkName, String nodeName) {
+                                 String reportType, String userId, UUID parametersUuid, Map<String, Double> voltageLevelsIdsRestricted, Boolean debug) {
         super(networkUuid, variantId, receiver, new ReportInfos(reportUuid, reporterId, reportType), userId,
             "default-provider",  // TODO : replace with null when fix in powsybl-ws-commons will handle null provider
             null, debug);
         this.parametersUuid = parametersUuid;
         this.voltageLevelsIdsRestricted = voltageLevelsIdsRestricted;
-        this.rootNetworkName = rootNetworkName;
-        this.nodeName = nodeName;
     }
 
-    public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid, Boolean debug, String rootNetworkName, String nodeName) {
-        this(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, new HashMap<>(), debug, rootNetworkName, nodeName);
+    public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid, Boolean debug) {
+        this(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, new HashMap<>(), debug);
     }
 }

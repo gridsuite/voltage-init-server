@@ -97,7 +97,8 @@ public class NetworkModificationService {
         return terminal != null && terminal.getBusView().getBus() != null ? Optional.of(terminal.getBusView().getBus()) : Optional.empty();
     }
 
-    public UUID createVoltageInitModificationGroup(Network network, OpenReacResult result, boolean isUpdateBusVoltage, String rootNetworkName, String nodeName) {
+    public UUID createVoltageInitModificationGroup(Network network, OpenReacResult result, boolean isUpdateBusVoltage,
+                                                   UUID rootNetworkId, UUID nodeId) {
         UUID modificationsGroupUuid = uuidGeneratorService.generate();
 
         try {
@@ -199,8 +200,8 @@ public class NetworkModificationService {
                 });
             }
 
-            voltageInitModificationInfos.setRootNetworkName(rootNetworkName);
-            voltageInitModificationInfos.setNodeName(nodeName);
+            voltageInitModificationInfos.setRootNetworkId(rootNetworkId);
+            voltageInitModificationInfos.setNodeId(nodeId);
             voltageInitModificationInfos.setComputationDate(Instant.now());
 
             var uriComponentsBuilder = UriComponentsBuilder

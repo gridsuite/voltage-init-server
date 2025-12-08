@@ -6,6 +6,7 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.TypedValue;
@@ -20,6 +21,7 @@ import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.*;
+import org.gridsuite.voltageinit.server.dto.NodeReceiver;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
 import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
@@ -30,6 +32,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -108,9 +112,10 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
         super.postRun(resultContext.getRunContext(), rootReporter, null);
     }
 
-    private UUID createModificationGroup(OpenReacResult openReacResult, Network network, boolean updateBusVoltage, String rootNetworkName, String nodeName) {
+    private UUID createModificationGroup(OpenReacResult openReacResult, Network network, boolean updateBusVoltage,
+                                         UUID rootNetworkId, UUID nodeId) {
         return openReacResult.getStatus() == OpenReacStatus.OK ?
-                networkModificationService.createVoltageInitModificationGroup(network, openReacResult, updateBusVoltage, rootNetworkName, nodeName) :
+                networkModificationService.createVoltageInitModificationGroup(network, openReacResult, updateBusVoltage, rootNetworkId, nodeId) :
                 null;
     }
 
@@ -132,7 +137,20 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
         UUID parametersUuid = context.getParametersUuid();
         VoltageInitParametersInfos param = parametersUuid != null ? voltageInitParametersService.getParameters(parametersUuid) : null;
         boolean updateBusVoltage = param == null || param.isUpdateBusVoltage();
-        UUID modificationsGroupUuid = createModificationGroup(result, network, updateBusVoltage, context.getRootNetworkName(), context.getNodeName());
+
+        String receiver = resultContext.getRunContext().getReceiver();
+        NodeReceiver receiverObj;
+        if (receiver != null) {
+            try {
+                receiverObj = objectMapper.readValue(URLDecoder.decode(receiver, StandardCharsets.UTF_8), NodeReceiver.class);
+            } catch (JsonProcessingException e) {
+                throw new IllegalArgumentException("Can't get root network id and node id from receiver object !!", e);
+            }
+        } else {
+            throw new IllegalArgumentException("Receiver object is null !!");
+        }
+
+        UUID modificationsGroupUuid = createModificationGroup(result, network, updateBusVoltage, receiverObj.getRootNetworkUuid(), receiverObj.getNodeUuid());
         Map<String, Bus> networkBuses = network.getBusView().getBusStream().collect(Collectors.toMap(Bus::getId, Function.identity()));
         // check if at least one reactive slack over the threshold value
         double reactiveSlacksThreshold = voltageInitParametersService.getReactiveSlacksThreshold(context.getParametersUuid());
