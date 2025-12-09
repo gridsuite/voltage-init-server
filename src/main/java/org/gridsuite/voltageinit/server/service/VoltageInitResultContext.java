@@ -29,6 +29,8 @@ public class VoltageInitResultContext extends AbstractResultContext<VoltageInitR
     public static final String PARAMETERS_UUID_HEADER = "parametersUuid";
 
     public static final String VOLTAGE_LEVELS_IDS_RESTRICTED = "voltageLevelsIdsRestricted";
+    public static final String ROOT_NETWORK_NAME_HEADER = "rootNetworkName";
+    public static final String NODE_NAME_HEADER = "nodeName";
 
     public VoltageInitResultContext(UUID resultUuid, VoltageInitRunContext runContext) {
         super(resultUuid, runContext);
@@ -52,6 +54,8 @@ public class VoltageInitResultContext extends AbstractResultContext<VoltageInitR
         String userId = (String) headers.get(HEADER_USER_ID);
         Boolean debug = (Boolean) headers.get(HEADER_DEBUG);
         Map<String, Double> voltageLevelsIdsRestricted;
+        String rootNetworkName = (String) headers.get(ROOT_NETWORK_NAME_HEADER);
+        String nodeName = (String) headers.get(NODE_NAME_HEADER);
         try {
             voltageLevelsIdsRestricted = headers.get(VOLTAGE_LEVELS_IDS_RESTRICTED) != null ?
                     objectMapper.readValue((String) headers.get(VOLTAGE_LEVELS_IDS_RESTRICTED), new TypeReference<>() { }) :
@@ -68,7 +72,8 @@ public class VoltageInitResultContext extends AbstractResultContext<VoltageInitR
         String reporterId = headers.containsKey(REPORTER_ID_HEADER) ? (String) headers.get(REPORTER_ID_HEADER) : null;
         String reportType = headers.containsKey(REPORT_TYPE_HEADER) ? (String) headers.get(REPORT_TYPE_HEADER) : null;
         VoltageInitRunContext runContext = new VoltageInitRunContext(
-                networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, voltageLevelsIdsRestricted, debug);
+                networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, voltageLevelsIdsRestricted, debug,
+                rootNetworkName, nodeName);
         return new VoltageInitResultContext(resultUuid, runContext);
     }
 
@@ -85,6 +90,8 @@ public class VoltageInitResultContext extends AbstractResultContext<VoltageInitR
             } catch (JsonProcessingException e) {
                 throw new UncheckedIOException(e);
             }
+            specificMsgHeaders.put(ROOT_NETWORK_NAME_HEADER, getRunContext().getRootNetworkName());
+            specificMsgHeaders.put(NODE_NAME_HEADER, getRunContext().getNodeName());
         }
 
         return specificMsgHeaders;
