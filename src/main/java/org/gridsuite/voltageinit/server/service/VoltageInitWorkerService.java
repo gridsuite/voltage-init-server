@@ -108,9 +108,9 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
         super.postRun(resultContext.getRunContext(), rootReporter, null);
     }
 
-    private UUID createModificationGroup(OpenReacResult openReacResult, Network network, boolean updateBusVoltage) {
+    private UUID createModificationGroup(OpenReacResult openReacResult, Network network, boolean updateBusVoltage, String rootNetworkName, String nodeName) {
         return openReacResult.getStatus() == OpenReacStatus.OK ?
-                networkModificationService.createVoltageInitModificationGroup(network, openReacResult, updateBusVoltage) :
+                networkModificationService.createVoltageInitModificationGroup(network, openReacResult, updateBusVoltage, rootNetworkName, nodeName) :
                 null;
     }
 
@@ -132,7 +132,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
         UUID parametersUuid = context.getParametersUuid();
         VoltageInitParametersInfos param = parametersUuid != null ? voltageInitParametersService.getParameters(parametersUuid) : null;
         boolean updateBusVoltage = param == null || param.isUpdateBusVoltage();
-        UUID modificationsGroupUuid = createModificationGroup(result, network, updateBusVoltage);
+        UUID modificationsGroupUuid = createModificationGroup(result, network, updateBusVoltage, context.getRootNetworkName(), context.getNodeName());
         Map<String, Bus> networkBuses = network.getBusView().getBusStream().collect(Collectors.toMap(Bus::getId, Function.identity()));
         // check if at least one reactive slack over the threshold value
         double reactiveSlacksThreshold = voltageInitParametersService.getReactiveSlacksThreshold(context.getParametersUuid());
