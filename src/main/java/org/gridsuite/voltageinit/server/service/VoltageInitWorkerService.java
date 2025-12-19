@@ -20,6 +20,7 @@ import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import org.gridsuite.computation.s3.ComputationS3Service;
 import org.gridsuite.computation.service.*;
+import org.gridsuite.voltageinit.server.PropertyServerNameProvider;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
 import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
@@ -69,8 +70,9 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
                                     ComputationS3Service computationS3Service,
                                     ReportService reportService,
                                     VoltageInitObserver voltageInitObserver,
-                                    ObjectMapper objectMapper) {
-        super(networkStoreService, notificationService, reportService, resultService, computationS3Service, executionService, voltageInitObserver, objectMapper);
+                                    ObjectMapper objectMapper,
+                                    PropertyServerNameProvider serverNameProvider) {
+        super(networkStoreService, notificationService, reportService, resultService, computationS3Service, executionService, voltageInitObserver, objectMapper, serverNameProvider);
         this.networkModificationService = Objects.requireNonNull(networkModificationService);
         this.voltageInitParametersService = Objects.requireNonNull(voltageInitParametersService);
     }
@@ -108,9 +110,9 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
         super.postRun(resultContext.getRunContext(), rootReporter, null);
     }
 
-    private UUID createModificationGroup(OpenReacResult openReacResult, Network network, boolean updateBusVoltage) {
+    private UUID createModificationGroup(OpenReacResult openReacResult, Network network, boolean updateBusVoltage, String rootNetworkName, String nodeName) {
         return openReacResult.getStatus() == OpenReacStatus.OK ?
-                networkModificationService.createVoltageInitModificationGroup(network, openReacResult, updateBusVoltage) :
+                networkModificationService.createVoltageInitModificationGroup(network, openReacResult, updateBusVoltage, rootNetworkName, nodeName) :
                 null;
     }
 
@@ -132,7 +134,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
         UUID parametersUuid = context.getParametersUuid();
         VoltageInitParametersInfos param = parametersUuid != null ? voltageInitParametersService.getParameters(parametersUuid) : null;
         boolean updateBusVoltage = param == null || param.isUpdateBusVoltage();
-        UUID modificationsGroupUuid = createModificationGroup(result, network, updateBusVoltage);
+        UUID modificationsGroupUuid = createModificationGroup(result, network, updateBusVoltage, context.getRootNetworkName(), context.getNodeName());
         Map<String, Bus> networkBuses = network.getBusView().getBusStream().collect(Collectors.toMap(Bus::getId, Function.identity()));
         // check if at least one reactive slack over the threshold value
         double reactiveSlacksThreshold = voltageInitParametersService.getReactiveSlacksThreshold(context.getParametersUuid());

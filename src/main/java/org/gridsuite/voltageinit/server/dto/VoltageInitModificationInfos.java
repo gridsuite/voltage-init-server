@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +34,12 @@ public class VoltageInitModificationInfos {
     private List<ShuntCompensatorModificationInfos> shuntCompensators = new ArrayList<>();
 
     private List<BusModificationInfos> buses = new ArrayList<>();
+
+    private String rootNetworkName;
+
+    private String nodeName;
+
+    private Instant computationDate;
 
     public void addGeneratorModification(GeneratorModificationInfos generatorModificationInfos) {
         generators.add(generatorModificationInfos);

@@ -36,6 +36,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -96,7 +97,7 @@ public class NetworkModificationService {
         return terminal != null && terminal.getBusView().getBus() != null ? Optional.of(terminal.getBusView().getBus()) : Optional.empty();
     }
 
-    public UUID createVoltageInitModificationGroup(Network network, OpenReacResult result, boolean isUpdateBusVoltage) {
+    public UUID createVoltageInitModificationGroup(Network network, OpenReacResult result, boolean isUpdateBusVoltage, String rootNetworkName, String nodeName) {
         UUID modificationsGroupUuid = uuidGeneratorService.generate();
 
         try {
@@ -197,6 +198,11 @@ public class NetworkModificationService {
                     }
                 });
             }
+
+            voltageInitModificationInfos.setRootNetworkName(rootNetworkName);
+            voltageInitModificationInfos.setNodeName(nodeName);
+            voltageInitModificationInfos.setComputationDate(Instant.now());
+
             var uriComponentsBuilder = UriComponentsBuilder
                     .fromUriString(getNetworkModificationServerURI() + NETWORK_MODIFICATIONS_PATH)
                     .queryParam(QUERY_PARAM_GROUP_UUID, modificationsGroupUuid);
