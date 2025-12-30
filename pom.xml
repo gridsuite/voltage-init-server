@@ -57,8 +57,8 @@
         <sonar.organization>gridsuite</sonar.organization>
         <sonar.projectKey>org.gridsuite:voltage-init-server</sonar.projectKey>
         <!-- To remove after when using gridsuite dependencies release and computation version containing merged PR: https://github.com/gridsuite/computation/pull/19 -->
-        <gridsuite-computation.version>1.9.0</gridsuite-computation.version>
-        <gridsuite-filter.version>1.15.0</gridsuite-filter.version>
+        <gridsuite-computation.version>1.10.0</gridsuite-computation.version>
+        <gridsuite-filter.version>1.18.0</gridsuite-filter.version>
     </properties>
 
     <build>
