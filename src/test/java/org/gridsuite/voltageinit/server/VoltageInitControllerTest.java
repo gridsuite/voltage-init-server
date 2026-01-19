@@ -250,12 +250,12 @@ class VoltageInitControllerTest {
     }
 
     private String createStringGlobalFilter(
-            List<String> nominalVs,
+            List<List<Integer>> voltageRanges,
             Map<String, List<String>> substationProperty,
             List<Country> countryCodes,
             List<UUID> genericFiltersUuid) throws JsonProcessingException {
         GlobalFilter globalFilter = new GlobalFilter();
-        globalFilter.setNominalV(nominalVs);
+        globalFilter.setVoltageRanges(voltageRanges);
         globalFilter.setCountryCode(countryCodes);
         globalFilter.setGenericFilter(genericFiltersUuid);
         globalFilter.setSubstationProperty(substationProperty);
@@ -412,7 +412,7 @@ class VoltageInitControllerTest {
             assertEquals(MODIFICATIONS_GROUP_UUID, resultDto.getModificationsGroupUuid());
 
             // get result with global filter
-            String globalFilter = createStringGlobalFilter(List.of("380", "150"), Map.of("prop1", List.of("value1", "value1"), "prop2", List.of("value3", "value4")), List.of(Country.FR, Country.IT), List.of(FILTER_UUID));
+            String globalFilter = createStringGlobalFilter(List.of(List.of(360, 400), List.of(130, 170)), Map.of("prop1", List.of("value1", "value1"), "prop2", List.of("value3", "value4")), List.of(Country.FR, Country.IT), List.of(FILTER_UUID));
             result = mockMvc.perform(get(
                     "/" + VERSION + "/results/{resultUuid}" + "?globalFilters=" + URLEncoder.encode(globalFilter, StandardCharsets.UTF_8) + "&networkUuid=" + NETWORK_UUID + "&variantId=" + VARIANT_2_ID, RESULT_UUID))
                 .andExpect(status().isOk())
