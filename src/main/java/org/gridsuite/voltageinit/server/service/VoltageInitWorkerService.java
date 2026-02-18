@@ -98,7 +98,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
             parameters.setDebugDir(context.getDebugDir().toString());
         }
         OpenReacConfig config = OpenReacConfig.load();
-        return OpenReacRunner.runAsync(context.getNetwork(), context.getNetwork().getVariantManager().getWorkingVariantId(), parameters, config, executionService.getComputationManager(), context.getReportNode(), null);
+        return OpenReacRunner.runAsync(context.getNetwork(), context.getNetwork().getVariantManager().getWorkingVariantId(), parameters, config, context.getComputationManager(), context.getReportNode(), null);
     }
 
     @Override
