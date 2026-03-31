@@ -44,6 +44,9 @@ spring:
             <<: *consumeRunRabbitConfig
 
 computation:
+  rabbit:
+    loadbalanced-group:
+      - voltageinitGroup
   s3:
     enabled: true
 
