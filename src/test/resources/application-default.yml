@@ -8,7 +8,10 @@ spring:
     hibernate:
       #to turn off schema validation that fails (because of clob types) and blocks tests even if the the schema is compatible
       ddl-auto: none
-
+  cloud:
+    function:
+      # disable consumeRun2 during test - all of them receive the "voltageinitGroup" messages otherwise
+      definition: consumeRun1;consumeCancel
 logging:
   level:
     org.springframework.orm.jpa: INFO
