@@ -57,7 +57,7 @@
         <sonar.organization>gridsuite</sonar.organization>
         <sonar.projectKey>org.gridsuite:voltage-init-server</sonar.projectKey>
         <!-- FIXME: to be removed at next gridsuite-dependencies upgrade  -->
-        <gridsuite-computation.version>2.0.0</gridsuite-computation.version>
+        <gridsuite-computation.version>2.1.0</gridsuite-computation.version>
     </properties>
 
     <build>
