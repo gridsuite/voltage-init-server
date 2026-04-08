@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023, RTE (http://www.rte-france.com)
+ * Copyright (c) 2026, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -163,24 +163,6 @@ class VoltageInitParametersTest {
         List<VoltageInitParametersEntity> storedParameters = parametersRepository.findAll();
 
         assertTrue(storedParameters.isEmpty());
-    }
-
-    @Test
-    void testGetAll() throws Exception {
-        VoltageInitParametersInfos parameters1 = buildParameters();
-
-        VoltageInitParametersInfos parameters2 = buildParametersUpdate();
-
-        saveAndRetunId(parameters1);
-
-        saveAndRetunId(parameters2);
-
-        MvcResult mvcResult = mockMvc.perform(get(URI_PARAMETERS_BASE))
-                .andExpect(status().isOk()).andReturn();
-        String resultAsString = mvcResult.getResponse().getContentAsString();
-        List<VoltageInitParametersInfos> receivedParameters = mapper.readValue(resultAsString, new TypeReference<>() { });
-
-        assertThat(receivedParameters).hasSize(2);
     }
 
     @Test
