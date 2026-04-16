@@ -11,7 +11,9 @@ import org.gridsuite.computation.dto.ReportInfos;
 import org.gridsuite.computation.service.AbstractComputationRunContext;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -23,6 +25,8 @@ public class VoltageInitRunContext extends AbstractComputationRunContext<Void> {
     private final UUID parametersUuid;
 
     private final Map<String, Double> voltageLevelsIdsRestricted;
+
+    private final Set<String> constantQGeneratorsIds = new HashSet<>();
 
     private final String rootNetworkName;
 
