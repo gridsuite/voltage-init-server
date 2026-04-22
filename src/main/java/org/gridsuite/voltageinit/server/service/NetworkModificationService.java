@@ -97,7 +97,7 @@ public class NetworkModificationService {
         return terminal != null && terminal.getBusView().getBus() != null ? Optional.of(terminal.getBusView().getBus()) : Optional.empty();
     }
 
-    public UUID createVoltageInitModificationGroup(Network network, OpenReacResult result, boolean isUpdateBusVoltage, String rootNetworkName, String nodeName) {
+    public UUID createVoltageInitModificationGroup(Network network, OpenReacResult result, boolean isUpdateBusVoltage, String rootNetworkName, String nodeName, Set<String> constantQGeneratorsIds) {
         UUID modificationsGroupUuid = uuidGeneratorService.generate();
 
         try {
@@ -107,11 +107,14 @@ public class NetworkModificationService {
 
             // generator modifications
             result.getGeneratorModifications().forEach(gm -> {
-                if (gm.getModifs().getTargetV() != null || gm.getModifs().getTargetQ() != null) {
+                Double targetV = gm.getModifs().getTargetV();
+                // skip targetQ modification for constant Q generators
+                Double targetQ = constantQGeneratorsIds.contains(gm.getGeneratorId()) ? null : gm.getModifs().getTargetQ();
+                if (targetV != null || targetQ != null) {
                     GeneratorModificationInfos.GeneratorModificationInfosBuilder builder = GeneratorModificationInfos.builder()
                         .generatorId(gm.getGeneratorId())
-                        .targetV(gm.getModifs().getTargetV())
-                        .targetQ(gm.getModifs().getTargetQ());
+                        .targetV(targetV)
+                        .targetQ(targetQ);
                     voltageInitModificationInfos.addGeneratorModification(builder.build());
                 }
             });
