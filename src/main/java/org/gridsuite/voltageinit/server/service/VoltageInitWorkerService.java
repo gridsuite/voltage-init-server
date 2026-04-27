@@ -110,15 +110,19 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
         super.postRun(resultContext.getRunContext(), rootReporter, null);
     }
 
-    private UUID createModificationGroup(OpenReacResult openReacResult, Network network, boolean updateBusVoltage, String rootNetworkName, String nodeName) {
+    private UUID createModificationGroup(OpenReacResult openReacResult, Network network, boolean updateBusVoltage, String rootNetworkName, String nodeName, Set<String> constantQGeneratorsIds) {
         return openReacResult.getStatus() == OpenReacStatus.OK ?
-                networkModificationService.createVoltageInitModificationGroup(network, openReacResult, updateBusVoltage, rootNetworkName, nodeName) :
+                networkModificationService.createVoltageInitModificationGroup(network, openReacResult, updateBusVoltage, rootNetworkName, nodeName, constantQGeneratorsIds) :
                 null;
     }
 
     @Bean
-    @Override
-    public Consumer<Message<String>> consumeRun() {
+    public Consumer<Message<String>> consumeRun1() {
+        return super.consumeRun();
+    }
+
+    @Bean
+    public Consumer<Message<String>> consumeRun2() {
         return super.consumeRun();
     }
 
@@ -134,7 +138,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
         UUID parametersUuid = context.getParametersUuid();
         VoltageInitParametersInfos param = parametersUuid != null ? voltageInitParametersService.getParameters(parametersUuid) : null;
         boolean updateBusVoltage = param == null || param.isUpdateBusVoltage();
-        UUID modificationsGroupUuid = createModificationGroup(result, network, updateBusVoltage, context.getRootNetworkName(), context.getNodeName());
+        UUID modificationsGroupUuid = createModificationGroup(result, network, updateBusVoltage, context.getRootNetworkName(), context.getNodeName(), context.getConstantQGeneratorsIds());
         Map<String, Bus> networkBuses = network.getBusView().getBusStream().collect(Collectors.toMap(Bus::getId, Function.identity()));
         // check if at least one reactive slack over the threshold value
         double reactiveSlacksThreshold = voltageInitParametersService.getReactiveSlacksThreshold(context.getParametersUuid());
