@@ -8,6 +8,7 @@ package org.gridsuite.voltageinit.server;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.ampl.converter.AmplExportConfig;
 import com.powsybl.commons.PowsyblException;
@@ -598,6 +599,38 @@ class VoltageInitControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
         assertEquals(VoltageInitStatus.NOT_DONE.name(), result.getResponse().getContentAsString());
+    }
+
+    @Test
+    void testStatuses() throws Exception {
+        MvcResult result = mockMvc.perform(post(
+                        "/" + VERSION + "/results/statuses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(List.of(RESULT_UUID, OTHER_RESULT_UUID))))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+        Map<UUID, VoltageInitStatus> statuses = mapper.readValue(result.getResponse().getContentAsString(),
+                new TypeReference<Map<UUID, VoltageInitStatus>>() {
+                });
+        assertTrue(statuses.isEmpty());
+
+        mockMvc.perform(put("/" + VERSION + "/results/invalidate-status?resultUuid=" + RESULT_UUID))
+                .andExpect(status().isOk());
+
+        result = mockMvc.perform(post(
+                        "/" + VERSION + "/results/statuses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(List.of(RESULT_UUID, OTHER_RESULT_UUID))))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+        statuses = mapper.readValue(result.getResponse().getContentAsString(),
+                new TypeReference<Map<UUID, VoltageInitStatus>>() {
+                });
+        assertEquals(1, statuses.size());
+        assertEquals(VoltageInitStatus.NOT_DONE, statuses.get(RESULT_UUID));
+        assertFalse(statuses.containsKey(OTHER_RESULT_UUID));
     }
 
     @Test
