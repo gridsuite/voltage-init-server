@@ -98,7 +98,7 @@ public class VoltageInitResultService extends AbstractComputationResultService<V
     @Transactional(readOnly = true)
     public Map<UUID, VoltageInitStatus> findStatuses(List<UUID> resultUuids) {
         Objects.requireNonNull(resultUuids);
-        List<GlobalStatusEntity> globalEntities = globalStatusRepository.findByResultUuidIn(resultUuids);
+        List<GlobalStatusEntity> globalEntities = globalStatusRepository.findAllById(resultUuids);
         return globalEntities.stream().collect(Collectors.toMap(GlobalStatusEntity::getResultUuid, e -> VoltageInitStatus.valueOf(e.getStatus())));
     }
 
