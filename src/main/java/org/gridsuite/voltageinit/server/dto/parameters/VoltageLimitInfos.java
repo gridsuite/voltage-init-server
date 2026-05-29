@@ -11,12 +11,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
-
 import org.gridsuite.voltageinit.server.entities.parameters.FilterEquipmentsEmbeddable;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageLimitEntity;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
+import java.util.List;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>

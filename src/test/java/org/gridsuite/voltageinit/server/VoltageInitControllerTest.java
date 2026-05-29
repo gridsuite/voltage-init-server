@@ -127,7 +127,8 @@ class VoltageInitControllerTest {
     private static final UUID OTHER_RESULT_UUID = UUID.fromString("0c8de370-3e6c-4d72-b292-d355a97e0d5a");
     private static final Map<String, String> INDICATORS = Map.of("defaultPmax", "1000.000000", "defaultQmax", "300.000000", "minimalQPrange", "1.000000");
     private static final UUID MODIFICATIONS_GROUP_UUID = GENEREATED_RANDOM_UUID;
-    private static final String FILTER_EQUIPMENT_JSON = "[{\"filterId\":\"cf399ef3-7f14-4884-8c82-1c90300da329\",\"identifiableAttributes\":[{\"id\":\"VL1\",\"type\":\"VOLTAGE_LEVEL\"}],\"notFoundEquipments\":[]}]";
+    private static final String FILTER_EQUIPMENT_JSON =
+            "[{\"filterId\":\"cf399ef3-7f14-4884-8c82-1c90300da329\",\"identifiableAttributes\":[{\"id\":\"VL1\",\"type\":\"VOLTAGE_LEVEL\"}],\"notFoundEquipments\":[]}]";
     private static final String VARIANT_1_ID = "variant_1";
     private static final String VARIANT_2_ID = "variant_2";
     private static final String VARIANT_3_ID = "variant_3";
@@ -359,7 +360,8 @@ class VoltageInitControllerTest {
     @Test
     void runTest() throws Exception {
         try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
-            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class), any(ReportNode.class), isNull(AmplExportConfig.class)))
+            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class),
+                    any(ReportNode.class), isNull(AmplExportConfig.class)))
                 .thenReturn(completableFutureResultsTask);
 
             // mock s3 client for run with debug
@@ -412,9 +414,11 @@ class VoltageInitControllerTest {
             assertEquals(MODIFICATIONS_GROUP_UUID, resultDto.getModificationsGroupUuid());
 
             // get result with global filter
-            String globalFilter = createStringGlobalFilter(List.of(List.of(360, 400), List.of(130, 170)), Map.of("prop1", List.of("value1", "value1"), "prop2", List.of("value3", "value4")), List.of(Country.FR, Country.IT), List.of(FILTER_UUID));
+            String globalFilter = createStringGlobalFilter(List.of(List.of(360, 400), List.of(130, 170)), Map.of("prop1", List.of("value1", "value1"), "prop2", List.of("value3", "value4")),
+                    List.of(Country.FR, Country.IT), List.of(FILTER_UUID));
             result = mockMvc.perform(get(
-                    "/" + VERSION + "/results/{resultUuid}" + "?globalFilters=" + URLEncoder.encode(globalFilter, StandardCharsets.UTF_8) + "&networkUuid=" + NETWORK_UUID + "&variantId=" + VARIANT_2_ID, RESULT_UUID))
+                    "/" + VERSION + "/results/{resultUuid}" + "?globalFilters=" + URLEncoder.encode(globalFilter,
+                            StandardCharsets.UTF_8) + "&networkUuid=" + NETWORK_UUID + "&variantId=" + VARIANT_2_ID, RESULT_UUID))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
@@ -451,14 +455,16 @@ class VoltageInitControllerTest {
     @Test
     void runWithReactiveSlacksOverThresholdTest() throws Exception {
         try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
-            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class), any(ReportNode.class), isNull(AmplExportConfig.class)))
+            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class),
+                    any(ReportNode.class), isNull(AmplExportConfig.class)))
                 .thenReturn(completableFutureResultsTask);
 
             // run with parameters and at least one reactive slack over the threshold value
             parametersRepository.save(buildVoltageInitParametersEntity());
             UUID parametersUuid = parametersRepository.findAll().get(0).getId();
             MvcResult result = mockMvc.perform(post(
-                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId=" + VARIANT_2_ID + "&parametersUuid=" + parametersUuid, NETWORK_UUID)
+                    "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId=" + VARIANT_2_ID + "&parametersUuid=" + parametersUuid,
+                            NETWORK_UUID)
                     .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -491,7 +497,8 @@ class VoltageInitControllerTest {
     @Test
     void testReturnsResultAndDoesNotGenerateModificationIfResultNotOk() throws Exception {
         try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
-            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class), any(ReportNode.class), isNull(AmplExportConfig.class)))
+            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class),
+                    any(ReportNode.class), isNull(AmplExportConfig.class)))
                 .thenReturn(CompletableFutureTask.runAsync(this::buildNokOpenReacResult, ForkJoinPool.commonPool()));
 
             MvcResult result = mockMvc.perform(post(
@@ -543,7 +550,8 @@ class VoltageInitControllerTest {
     @Test
     void runWithReportTest() throws Exception {
         MvcResult result = mockMvc.perform(post(
-                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId={variantId}&reportType=VoltageInit&reportUuid=" + REPORT_UUID + "&reporterId=" + UUID.randomUUID(), NETWORK_UUID, VARIANT_2_ID)
+                        "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId={variantId}&reportType=VoltageInit&reportUuid="
+                                + REPORT_UUID + "&reporterId=" + UUID.randomUUID(), NETWORK_UUID, VARIANT_2_ID)
                         .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -553,7 +561,8 @@ class VoltageInitControllerTest {
     @Test
     void stopTest() throws Exception {
         try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
-            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class), any(ReportNode.class), isNull(AmplExportConfig.class)))
+            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class),
+                    any(ReportNode.class), isNull(AmplExportConfig.class)))
                 .thenReturn(completableFutureResultsTask);
 
             mockMvc.perform(post(
@@ -616,11 +625,13 @@ class VoltageInitControllerTest {
     @Test
     void runWithExceptionAndReportSentTest() throws Exception {
         try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
-            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class), any(ReportNode.class), isNull(AmplExportConfig.class)))
+            openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class),
+                    any(ReportNode.class), isNull(AmplExportConfig.class)))
                 .thenThrow(new PowsyblException("Exception during ampl execution"));
 
             MvcResult result = mockMvc.perform(post(
-                "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId={variantId}&reportType=VoltageInit&reportUuid=" + REPORT_UUID + "&reporterId=" + UUID.randomUUID(), NETWORK_UUID, VARIANT_2_ID)
+                "/" + VERSION + "/networks/{networkUuid}/run-and-save?receiver=me&rootNetworkName=rootNetwork1&nodeName=node1&variantId={variantId}&reportType=VoltageInit&reportUuid=" + REPORT_UUID
+                        + "&reporterId=" + UUID.randomUUID(), NETWORK_UUID, VARIANT_2_ID)
                     .header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))

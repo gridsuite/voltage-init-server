@@ -7,7 +7,7 @@
 package org.gridsuite.voltageinit.server.dto;
 
 /**
- * @author Etienne Homer <etienne.homer at rte-france.com
+ * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 public enum VoltageInitStatus {
     NOT_DONE,
@@ -22,5 +22,5 @@ public enum VoltageInitStatus {
     /**
      * {@link com.powsybl.openreac.parameters.output.OpenReacStatus#NOT_OK}
      */
-    NOT_OK;
+    NOT_OK
 }

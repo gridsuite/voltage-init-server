@@ -6,17 +6,14 @@
  */
 package org.gridsuite.voltageinit.server.dto.parameters;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
+import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
+import org.gridsuite.voltageinit.server.util.EquipmentsSelectionType;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-
-import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
-
-import io.swagger.v3.oas.annotations.media.Schema;
-import org.gridsuite.voltageinit.server.util.EquipmentsSelectionType;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>

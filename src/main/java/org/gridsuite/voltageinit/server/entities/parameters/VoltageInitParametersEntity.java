@@ -6,17 +6,14 @@
  */
 package org.gridsuite.voltageinit.server.entities.parameters;
 
-import lombok.*;
-
 import jakarta.persistence.*;
 import jakarta.transaction.Transactional;
-
+import lombok.*;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageLimitInfos;
 import org.gridsuite.voltageinit.server.util.EquipmentsSelectionType;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -108,10 +105,12 @@ public class VoltageInitParametersEntity {
     public void assignAttributes(@NonNull VoltageInitParametersInfos voltageInitParametersInfos) {
         List<VoltageLimitEntity> voltageLimitsEntities = new ArrayList<>();
         if (voltageInitParametersInfos.getVoltageLimitsModification() != null) {
-            voltageLimitsEntities.addAll(voltageInitParametersInfos.getVoltageLimitsModification().stream().map(voltageLimitInfos -> voltageLimitInfos.toEntity(VoltageLimitParameterType.MODIFICATION)).toList());
+            voltageLimitsEntities.addAll(voltageInitParametersInfos.getVoltageLimitsModification().stream().map(voltageLimitInfos -> voltageLimitInfos.toEntity(
+                    VoltageLimitParameterType.MODIFICATION)).toList());
         }
         if (voltageInitParametersInfos.getVoltageLimitsDefault() != null) {
-            voltageLimitsEntities.addAll(voltageInitParametersInfos.getVoltageLimitsDefault().stream().map(voltageLimitInfos -> voltageLimitInfos.toEntity(VoltageLimitParameterType.DEFAULT)).toList());
+            voltageLimitsEntities.addAll(
+                    voltageInitParametersInfos.getVoltageLimitsDefault().stream().map(voltageLimitInfos -> voltageLimitInfos.toEntity(VoltageLimitParameterType.DEFAULT)).toList());
         }
         if (voltageLimits == null) {
             voltageLimits = voltageLimitsEntities;
@@ -124,9 +123,11 @@ public class VoltageInitParametersEntity {
         variableQGenerators = FilterEquipmentsEmbeddable.toEmbeddableFilterEquipments(voltageInitParametersInfos.getVariableQGenerators());
         generatorsSelectionType = voltageInitParametersInfos.getGeneratorsSelectionType() != null ? voltageInitParametersInfos.getGeneratorsSelectionType() : EquipmentsSelectionType.ALL_EXCEPT;
         variableTwoWindingsTransformers = FilterEquipmentsEmbeddable.toEmbeddableFilterEquipments(voltageInitParametersInfos.getVariableTwoWindingsTransformers());
-        twoWindingsTransformersSelectionType = voltageInitParametersInfos.getTwoWindingsTransformersSelectionType() != null ? voltageInitParametersInfos.getTwoWindingsTransformersSelectionType() : EquipmentsSelectionType.NONE_EXCEPT;
+        twoWindingsTransformersSelectionType = voltageInitParametersInfos.getTwoWindingsTransformersSelectionType() != null ? voltageInitParametersInfos.getTwoWindingsTransformersSelectionType() :
+                EquipmentsSelectionType.NONE_EXCEPT;
         variableShuntCompensators = FilterEquipmentsEmbeddable.toEmbeddableFilterEquipments(voltageInitParametersInfos.getVariableShuntCompensators());
-        shuntCompensatorsSelectionType = voltageInitParametersInfos.getShuntCompensatorsSelectionType() != null ? voltageInitParametersInfos.getShuntCompensatorsSelectionType() : EquipmentsSelectionType.NONE_EXCEPT;
+        shuntCompensatorsSelectionType = voltageInitParametersInfos.getShuntCompensatorsSelectionType() != null ? voltageInitParametersInfos.getShuntCompensatorsSelectionType() :
+                EquipmentsSelectionType.NONE_EXCEPT;
         name = voltageInitParametersInfos.getName();
         reactiveSlacksThreshold = voltageInitParametersInfos.getReactiveSlacksThreshold();
         shuntCompensatorActivationThreshold = voltageInitParametersInfos.getShuntCompensatorActivationThreshold();
@@ -169,7 +170,4 @@ public class VoltageInitParametersEntity {
             .build();
     }
 }
-
-
-
 
