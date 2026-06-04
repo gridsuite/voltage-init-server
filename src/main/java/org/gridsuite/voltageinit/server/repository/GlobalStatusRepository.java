@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 import java.util.UUID;
 
 /**
- * @author Etienne Homer <etienne.homer at rte-france.com
+ * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Repository
 public interface GlobalStatusRepository extends JpaRepository<GlobalStatusEntity, UUID> {

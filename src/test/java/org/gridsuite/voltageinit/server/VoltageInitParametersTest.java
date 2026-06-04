@@ -26,12 +26,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.LinkedHashSet;
-
 import static org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService.DEFAULT_REACTIVE_SLACKS_THRESHOLD;
 import static org.gridsuite.voltageinit.utils.assertions.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;

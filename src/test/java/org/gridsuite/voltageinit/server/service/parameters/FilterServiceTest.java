@@ -15,13 +15,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-
+import java.util.UUID;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;

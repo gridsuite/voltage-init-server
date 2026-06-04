@@ -73,7 +73,8 @@ public class VoltageInitParametersService {
 
     @Transactional
     public Optional<UUID> duplicateParameters(UUID sourceParametersId) {
-        Optional<VoltageInitParametersInfos> sourceVoltageInitParametersInfos = voltageInitParametersRepository.findById(sourceParametersId).map(VoltageInitParametersEntity::toVoltageInitParametersInfos);
+        Optional<VoltageInitParametersInfos> sourceVoltageInitParametersInfos = voltageInitParametersRepository.findById(sourceParametersId).map(
+                VoltageInitParametersEntity::toVoltageInitParametersInfos);
         if (sourceVoltageInitParametersInfos.isPresent()) {
             VoltageInitParametersEntity entity = new VoltageInitParametersEntity(sourceVoltageInitParametersInfos.get());
             voltageInitParametersRepository.save(entity);
@@ -140,7 +141,8 @@ public class VoltageInitParametersService {
                                                   Map<String, VoltageLimitEntity> voltageLevelDefaultLimits,
                                                   VoltageLevel voltageLevel,
                                                   Map<String, Double> voltageLevelsIdsRestricted) {
-        final CounterToIncrement counterToIncrementLow = generateLowVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, voltageLevel, voltageLevelsIdsRestricted);
+        final CounterToIncrement counterToIncrementLow = generateLowVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, voltageLevel,
+                voltageLevelsIdsRestricted);
         final CounterToIncrement counterToIncrementHigh = generateHighVoltageLimit(specificVoltageLimits, voltageLevelModificationLimits, voltageLevelDefaultLimits, voltageLevel);
         if (counterToIncrementLow == CounterToIncrement.DEFAULT || counterToIncrementLow == CounterToIncrement.BOTH ||
             counterToIncrementHigh == CounterToIncrement.DEFAULT || counterToIncrementHigh == CounterToIncrement.BOTH) {
@@ -202,7 +204,8 @@ public class VoltageInitParametersService {
             specificVoltageLimits.add(new VoltageLimitOverride(voltageLevelId, VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, highVoltageModificationLimit));
             return CounterToIncrement.MODIFICATION;
         } else if (Double.isNaN(highVoltageLimit) && highVoltageDefaultLimit != null) {
-            specificVoltageLimits.add(new VoltageLimitOverride(voltageLevelId, VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, highVoltageDefaultLimit + (highVoltageModificationLimit != null ? highVoltageModificationLimit : 0.0)));
+            specificVoltageLimits.add(new VoltageLimitOverride(voltageLevelId, VoltageLimitType.HIGH_VOLTAGE_LIMIT, false,
+                    highVoltageDefaultLimit + (highVoltageModificationLimit != null ? highVoltageModificationLimit : 0.0)));
             if (highVoltageModificationLimit != null) {
                 return CounterToIncrement.BOTH;
             } else {
@@ -214,6 +217,7 @@ public class VoltageInitParametersService {
     }
 
     @Transactional(readOnly = true)
+    @SuppressWarnings("checkstyle:LambdaBodyLength")
     public OpenReacParameters buildOpenReacParameters(VoltageInitRunContext context, Network network) {
         final long startTime = System.nanoTime();
         final ReportNode reportNode = context.getReportNode().newReportNode()

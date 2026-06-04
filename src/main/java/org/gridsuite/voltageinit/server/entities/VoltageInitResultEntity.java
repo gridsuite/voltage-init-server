@@ -43,7 +43,8 @@ public class VoltageInitResultEntity {
     private List<ReactiveSlackEmbeddable> reactiveSlacks;
 
     @ElementCollection
-    @CollectionTable(foreignKey = @ForeignKey(name = "voltageInitResultEntity_busVoltages_fk1"), indexes = {@Index(name = "voltageInitResultEntity_busVoltages_idx1", columnList = "voltage_init_result_entity_result_uuid")})
+    @CollectionTable(foreignKey = @ForeignKey(name = "voltageInitResultEntity_busVoltages_fk1"), indexes = {@Index(name = "voltageInitResultEntity_busVoltages_idx1",
+            columnList = "voltage_init_result_entity_result_uuid")})
     private List<BusVoltageEmbeddable> busVoltages;
 
     @Column

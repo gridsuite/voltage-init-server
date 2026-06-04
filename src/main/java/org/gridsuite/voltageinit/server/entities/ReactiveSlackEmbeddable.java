@@ -6,12 +6,11 @@
  */
 package org.gridsuite.voltageinit.server.entities;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Embeddable;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>

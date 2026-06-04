@@ -40,7 +40,6 @@ import java.util.stream.Collectors;
 
 import static org.gridsuite.voltageinit.server.util.ReportUtil.checkReportWithKey;
 
-
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
@@ -98,7 +97,8 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
             parameters.setDebugDir(context.getDebugDir().toString());
         }
         OpenReacConfig config = OpenReacConfig.load();
-        return OpenReacRunner.runAsync(context.getNetwork(), context.getNetwork().getVariantManager().getWorkingVariantId(), parameters, config, executionService.getComputationManager(), context.getReportNode(), null);
+        return OpenReacRunner.runAsync(context.getNetwork(), context.getNetwork().getVariantManager().getWorkingVariantId(), parameters, config, executionService.getComputationManager(),
+                context.getReportNode(), null);
     }
 
     @Override

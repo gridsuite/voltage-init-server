@@ -6,11 +6,9 @@
  */
 package org.gridsuite.voltageinit.server.entities.parameters;
 
-import lombok.*;
-
 import jakarta.persistence.*;
+import lombok.*;
 import org.gridsuite.voltageinit.server.util.VoltageLimitParameterType;
-
 import java.util.List;
 import java.util.UUID;
 

@@ -44,7 +44,8 @@ public class VoltageInitRunContext extends AbstractComputationRunContext<Void> {
         this.nodeName = nodeName;
     }
 
-    public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid, Boolean debug, String rootNetworkName, String nodeName) {
+    public VoltageInitRunContext(UUID networkUuid, String variantId, String receiver, UUID reportUuid, String reporterId, String reportType, String userId, UUID parametersUuid, Boolean debug,
+            String rootNetworkName, String nodeName) {
         this(networkUuid, variantId, receiver, reportUuid, reporterId, reportType, userId, parametersUuid, new HashMap<>(), debug, rootNetworkName, nodeName);
     }
 }

@@ -8,7 +8,6 @@ package org.gridsuite.voltageinit.server.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Identifiable;
@@ -35,11 +34,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-
 import static com.powsybl.iidm.network.IdentifiableType.TWO_WINDINGS_TRANSFORMER;
 
 /**
@@ -97,6 +94,7 @@ public class NetworkModificationService {
         return terminal != null && terminal.getBusView().getBus() != null ? Optional.of(terminal.getBusView().getBus()) : Optional.empty();
     }
 
+    @SuppressWarnings("checkstyle:LambdaBodyLength")
     public UUID createVoltageInitModificationGroup(Network network, OpenReacResult result, boolean isUpdateBusVoltage, String rootNetworkName, String nodeName, Set<String> constantQGeneratorsIds) {
         UUID modificationsGroupUuid = uuidGeneratorService.generate();
 
@@ -109,6 +107,7 @@ public class NetworkModificationService {
             result.getGeneratorModifications().forEach(gm -> {
                 Double targetV = gm.getModifs().getTargetV();
                 // skip targetQ modification for constant Q generators
+                @SuppressWarnings("checkstyle:LambdaBodyLength")
                 Double targetQ = constantQGeneratorsIds.contains(gm.getGeneratorId()) ? null : gm.getModifs().getTargetQ();
                 if (targetV != null || targetQ != null) {
                     GeneratorModificationInfos.GeneratorModificationInfosBuilder builder = GeneratorModificationInfos.builder()
