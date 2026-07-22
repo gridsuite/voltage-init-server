@@ -54,8 +54,6 @@ class VoltageInitParametersTest {
 
     private static final String URI_PARAMETERS_GET_PUT = URI_PARAMETERS_BASE + "/";
 
-    private static final String DUPLICATE_FROM_PARAMETER = "duplicateFrom";
-
     @Autowired
     private MockMvc mockMvc;
 
@@ -172,10 +170,10 @@ class VoltageInitParametersTest {
             .andExpect(status().isOk()).andReturn();
         VoltageInitParametersInfos createdParameters = parametersRepository.findAll().get(0).toVoltageInitParametersInfos();
 
-        mockMvc.perform(post(URI_PARAMETERS_BASE).queryParam(DUPLICATE_FROM_PARAMETER, UUID.randomUUID().toString()))
+        mockMvc.perform(post(URI_PARAMETERS_BASE + "/{uuid}/duplicate", UUID.randomUUID()))
             .andExpect(status().isNotFound());
 
-        mockMvc.perform(post(URI_PARAMETERS_BASE).queryParam(DUPLICATE_FROM_PARAMETER, createdParameters.getUuid().toString()))
+        mockMvc.perform(post(URI_PARAMETERS_BASE + "/{uuid}/duplicate", createdParameters.getUuid()))
             .andExpect(status().isOk());
 
         VoltageInitParametersInfos duplicatedParameters = parametersRepository.findAll().get(1).toVoltageInitParametersInfos();
