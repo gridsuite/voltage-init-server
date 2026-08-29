@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.gridsuite.computation.service.NotificationService.HEADER_USER_ID;
@@ -91,6 +92,13 @@ public class VoltageInitController {
     public ResponseEntity<String> getStatus(@Parameter(description = "Result UUID") @PathVariable("resultUuid") UUID resultUuid) {
         VoltageInitStatus result = voltageInitService.getStatus(resultUuid);
         return ResponseEntity.ok().body(result != null ? result.name() : null);
+    }
+
+    @PostMapping(value = "/results/statuses", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get voltage init statuses from the database")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage init statuses")})
+    public ResponseEntity<Map<UUID, VoltageInitStatus>> getStatuses(@Parameter(description = "Result uuids") @RequestBody List<UUID> resultUuids) {
+        return ResponseEntity.ok().body(voltageInitService.getStatuses(resultUuids));
     }
 
     @PutMapping(value = "/results/invalidate-status", produces = APPLICATION_JSON_VALUE)
