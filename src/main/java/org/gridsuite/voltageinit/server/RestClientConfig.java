@@ -13,33 +13,36 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.powsybl.commons.report.ReportNodeDeserializer;
 import com.powsybl.commons.report.ReportNodeJsonModule;
 import com.powsybl.openreac.parameters.input.json.OpenReactJsonModule;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.web.client.RestClientCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
 @Configuration
-public class RestTemplateConfig {
+public class RestClientConfig {
 
     @Bean
-    public RestTemplate restTemplate(RestTemplateBuilder builder) {
-        final RestTemplate restTemplate = builder.build();
+    public RestClient restClient(RestClient.Builder builder) {
+        return builder.build();
+    }
 
-        //find and replace Jackson message converter with our own
-        for (int i = 0; i < restTemplate.getMessageConverters().size(); i++) {
-            final HttpMessageConverter<?> httpMessageConverter = restTemplate.getMessageConverters().get(i);
-            if (httpMessageConverter instanceof MappingJackson2HttpMessageConverter) {
-                restTemplate.getMessageConverters().set(i, mappingJackson2HttpMessageConverter());
+    @Bean
+    public RestClientCustomizer restClientCustomizer() {
+        return restClientBuilder -> restClientBuilder.messageConverters(messageConverters -> {
+            //find and replace Jackson message converter with our own
+            for (int i = 0; i < messageConverters.size(); i++) {
+                final HttpMessageConverter<?> httpMessageConverter = messageConverters.get(i);
+                if (httpMessageConverter instanceof MappingJackson2HttpMessageConverter) {
+                    messageConverters.set(i, mappingJackson2HttpMessageConverter());
+                }
             }
-        }
-
-        return restTemplate;
+        });
     }
 
     private MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter() {
