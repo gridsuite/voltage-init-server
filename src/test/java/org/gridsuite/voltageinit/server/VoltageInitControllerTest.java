@@ -14,14 +14,10 @@ import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.computation.CompletableFutureTask;
 import com.powsybl.computation.ComputationManager;
-import com.powsybl.iidm.modification.GeneratorModification;
-import com.powsybl.iidm.modification.ShuntCompensatorModification;
-import com.powsybl.iidm.modification.StaticVarCompensatorModification;
-import com.powsybl.iidm.modification.VscConverterStationModification;
+import com.powsybl.iidm.modification.*;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
-import com.powsybl.iidm.network.Country;
-import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.VariantManagerConstants;
+import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.extensions.VoltageRegulationAdder;
 import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
@@ -97,6 +93,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ForkJoinPool;
 
+import static com.powsybl.iidm.network.test.EurostagTutorialExample1Factory.NGEN;
+import static com.powsybl.iidm.network.test.EurostagTutorialExample1Factory.VLGEN;
 import static com.powsybl.network.store.model.NetworkStoreApi.VERSION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.gridsuite.computation.s3.ComputationS3Service.METADATA_FILE_NAME;
@@ -183,6 +181,7 @@ class VoltageInitControllerTest {
         GeneratorModification.Modifs m2 = new GeneratorModification.Modifs();
         m2.setTargetQ(50.);
         openReacAmplIOFiles.getNetworkModifications().getGeneratorModifications().add(new GeneratorModification("GEN2", m2));
+        openReacAmplIOFiles.getNetworkModifications().getBatteryModifications().add(new BatteryModification("BAT", 215., 51.));
 
         openReacAmplIOFiles.getNetworkModifications().getTapPositionModifications().add(new RatioTapPositionModification("NHV2_NLOAD", 2));
         openReacAmplIOFiles.getNetworkModifications().getTapPositionModifications().add(new RatioTapPositionModification("unknown2WT", 2));
@@ -275,10 +274,14 @@ class VoltageInitControllerTest {
 
         // network store service mocking
         network = EurostagTutorialExample1Factory.createWithMoreGenerators(new NetworkFactoryImpl());
-        network.getVoltageLevel("VLGEN").newShuntCompensator()
+
+        VoltageLevel vlgen = network.getVoltageLevel(VLGEN);
+        Bus ngen = vlgen.getBusBreakerView().getBus(NGEN);
+
+        vlgen.newShuntCompensator()
             .setId("SHUNT_1")
-            .setBus("NGEN")
-            .setConnectableBus("NGEN")
+            .setBus(ngen.getId())
+            .setConnectableBus(ngen.getId())
             .setTargetV(30.)
             .setTargetDeadband(10)
             .setVoltageRegulatorOn(false)
@@ -289,6 +292,21 @@ class VoltageInitControllerTest {
             .add()
             .setSectionCount(1)
             .add();
+
+        Battery bat = vlgen.newBattery()
+                .setId("BAT")
+                .setBus(ngen.getId())
+                .setConnectableBus(ngen.getId())
+                .setMinP(-9999.99)
+                .setMaxP(9999.99)
+                .setTargetP(607.0)
+                .setTargetQ(301.0)
+                .add();
+        bat.newExtension(VoltageRegulationAdder.class)
+                .withTargetV(215.)
+                .withTargetV(12)
+                .withVoltageRegulatorOn(false)
+                .add();
 
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_1_ID);
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
