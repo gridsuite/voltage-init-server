@@ -304,7 +304,6 @@ class VoltageInitControllerTest {
                 .add();
         bat.newExtension(VoltageRegulationAdder.class)
                 .withTargetV(215.)
-                .withTargetV(12)
                 .withVoltageRegulatorOn(false)
                 .add();
 
