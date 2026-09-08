@@ -18,10 +18,9 @@ import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.gridsuite.voltageinit.server.error.VoltageInitBusinessErrorCode;
 import org.gridsuite.voltageinit.server.error.VoltageInitException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.ArrayList;
@@ -47,10 +46,10 @@ public class FilterService extends AbstractFilterService {
 
     public static final String FILTERS_NOT_FOUND = "Filters not found";
 
-    public FilterService(RestTemplateBuilder restTemplateBuilder,
+    public FilterService(RestClient.Builder restClientBuilder,
                          NetworkStoreService networkStoreService,
                          @Value("${gridsuite.services.filter-server.base-uri:http://filter-server/}") String filterServerBaseUri) {
-        super(restTemplateBuilder, networkStoreService, filterServerBaseUri);
+        super(restClientBuilder, networkStoreService, filterServerBaseUri);
     }
 
     public List<FilterEquipments> exportFilters(List<UUID> filtersUuids, UUID networkUuid, String variantId) {
@@ -59,8 +58,10 @@ public class FilterService extends AbstractFilterService {
         String path = UriComponentsBuilder.fromPath(DELIMITER + FILTER_SERVER_API_VERSION + "/filters/export?networkUuid=" + networkUuid + variant + ids)
                 .buildAndExpand()
                 .toUriString();
-        return restTemplate.exchange(filterServerBaseUri + path, HttpMethod.GET, null, new ParameterizedTypeReference<List<FilterEquipments>>() { })
-                .getBody();
+        return restClient.get()
+                .uri(filterServerBaseUri + path)
+                .retrieve()
+                .body(new ParameterizedTypeReference<List<FilterEquipments>>() { });
     }
 
     public Set<UUID> getFiltersExistence(Collection<UUID> filtersUuids) {
@@ -110,4 +111,3 @@ public class FilterService extends AbstractFilterService {
         }
     }
 }
-
