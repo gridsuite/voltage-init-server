@@ -16,13 +16,10 @@ import org.gridsuite.computation.service.UuidGeneratorService;
 import org.gridsuite.voltageinit.server.dto.*;
 import org.jgrapht.alg.util.Pair;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import java.time.Instant;
 import java.util.*;
@@ -43,7 +40,7 @@ public class NetworkModificationService {
 
     private String networkModificationServerBaseUri;
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     private final ObjectMapper objectMapper;
 
@@ -51,11 +48,11 @@ public class NetworkModificationService {
 
     NetworkModificationService(@Value("${gridsuite.services.network-modification-server.base-uri:http://network-modification-server/}") String networkModificationServerBaseUri,
                                ObjectMapper objectMapper, UuidGeneratorService uuidGeneratorService,
-                               RestTemplate restTemplate) {
+                               RestClient restClient) {
         this.networkModificationServerBaseUri = networkModificationServerBaseUri;
         this.objectMapper = objectMapper;
         this.uuidGeneratorService = uuidGeneratorService;
-        this.restTemplate = restTemplate;
+        this.restClient = restClient;
     }
 
     public void setNetworkModificationServerBaseUri(String networkModificationServerBaseUri) {
@@ -74,7 +71,10 @@ public class NetworkModificationService {
             .toUriString();
 
         try {
-            restTemplate.delete(getNetworkModificationServerURI() + path);
+            restClient.delete()
+                .uri(getNetworkModificationServerURI() + path)
+                .retrieve()
+                .toBodilessEntity();
         } catch (HttpStatusCodeException e) {
             throw new PowsyblException("Error deleting modifications group", e);
         }
@@ -232,12 +232,14 @@ public class NetworkModificationService {
                     .buildAndExpand()
                     .toUriString();
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
+            String body = objectMapper.writeValueAsString(org.springframework.data.util.Pair.of(voltageInitModificationInfos, List.of()));
 
-            HttpEntity<String> httpEntity = new HttpEntity<>(objectMapper.writeValueAsString(org.springframework.data.util.Pair.of(voltageInitModificationInfos, List.of())), headers);
-
-            restTemplate.exchange(path, HttpMethod.POST, httpEntity, Void.class);
+            restClient.post()
+                .uri(path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .toBodilessEntity();
         } catch (JsonProcessingException e) {
             throw new PowsyblException("Error generating json modifications", e);
         } catch (HttpStatusCodeException e) {
