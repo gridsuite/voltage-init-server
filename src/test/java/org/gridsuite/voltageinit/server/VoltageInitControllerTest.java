@@ -304,7 +304,7 @@ class VoltageInitControllerTest {
                 .add();
         bat.newExtension(VoltageRegulationAdder.class)
                 .withTargetV(215.)
-                .withVoltageRegulatorOn(false)
+                .withVoltageRegulatorOn(true)
                 .add();
 
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_1_ID);
