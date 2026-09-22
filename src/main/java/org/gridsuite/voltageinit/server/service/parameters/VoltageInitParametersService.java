@@ -91,6 +91,13 @@ public class VoltageInitParametersService {
             .orElse(null);
     }
 
+    @Transactional(readOnly = true)
+    public List<UUID> getFilterUuids(UUID parametersUuid) {
+        return voltageInitParametersRepository.findById(parametersUuid)
+            .map(VoltageInitParametersEntity::getFilterUuids)
+            .orElse(List.of());
+    }
+
     @Transactional
     public double getReactiveSlacksThreshold(UUID parametersUuid) {
         return Optional.ofNullable(parametersUuid)

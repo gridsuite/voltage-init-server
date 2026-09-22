@@ -30,6 +30,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
+
 import static org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService.DEFAULT_REACTIVE_SLACKS_THRESHOLD;
 import static org.gridsuite.voltageinit.utils.assertions.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -178,6 +180,56 @@ class VoltageInitParametersTest {
 
         VoltageInitParametersInfos duplicatedParameters = parametersRepository.findAll().get(1).toVoltageInitParametersInfos();
         assertThat(duplicatedParameters).recursivelyEquals(createdParameters);
+    }
+
+    @Test
+    void testGetFilterUuids() throws Exception {
+        UUID modificationLimitFilter = UUID.randomUUID();
+        UUID defaultLimitFilter = UUID.randomUUID();
+        UUID generatorsFilter = UUID.randomUUID();
+        UUID transformersFilter = UUID.randomUUID();
+        UUID shuntsFilter = UUID.randomUUID();
+        VoltageInitParametersInfos parameters = VoltageInitParametersInfos.builder()
+            .voltageLimitsModification(List.of(buildVoltageLimit(modificationLimitFilter, shuntsFilter)))
+            .voltageLimitsDefault(List.of(buildVoltageLimit(defaultLimitFilter)))
+            .variableQGenerators(List.of(buildFilter(generatorsFilter)))
+            .variableTwoWindingsTransformers(List.of(buildFilter(transformersFilter), buildFilter(generatorsFilter)))
+            .variableShuntCompensators(List.of(buildFilter(shuntsFilter)))
+            .build();
+        UUID parametersUuid = saveAndRetunId(parameters);
+
+        List<UUID> filterUuids = getFilterUuids(parametersUuid);
+
+        // every filter of the parameters, only once
+        assertEquals(5, filterUuids.size());
+        assertEquals(Set.of(modificationLimitFilter, defaultLimitFilter, generatorsFilter, transformersFilter, shuntsFilter), Set.copyOf(filterUuids));
+    }
+
+    @Test
+    void testGetFilterUuidsWithoutFilter() throws Exception {
+        UUID defaultParametersUuid = parametersRepository.save(new VoltageInitParametersEntity(VoltageInitParametersInfos.builder().build())).getId();
+
+        assertTrue(getFilterUuids(defaultParametersUuid).isEmpty());
+        assertTrue(getFilterUuids(UUID.randomUUID()).isEmpty());
+    }
+
+    private List<UUID> getFilterUuids(UUID parametersUuid) throws Exception {
+        MvcResult mvcResult = mockMvc.perform(get(URI_PARAMETERS_GET_PUT + parametersUuid + "/filter-uuids"))
+            .andExpect(status().isOk()).andReturn();
+        return mapper.readValue(mvcResult.getResponse().getContentAsString(), new TypeReference<>() { });
+    }
+
+    private static FilterEquipments buildFilter(UUID filterUuid) {
+        return FilterEquipments.builder().filterId(filterUuid).filterName("filter-" + filterUuid).build();
+    }
+
+    private static VoltageLimitInfos buildVoltageLimit(UUID... filterUuids) {
+        return VoltageLimitInfos.builder()
+            .priority(0)
+            .lowVoltageLimit(2.0)
+            .highVoltageLimit(20.0)
+            .filters(Stream.of(filterUuids).map(VoltageInitParametersTest::buildFilter).toList())
+            .build();
     }
 
     /** Save parameters into the repository and return its UUID. */
