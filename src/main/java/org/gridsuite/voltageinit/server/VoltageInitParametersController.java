@@ -17,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -66,6 +67,14 @@ public class VoltageInitParametersController {
         VoltageInitParametersInfos parameters = parametersService.getParameters(parametersUuid);
         return parameters != null ? ResponseEntity.ok().body(parametersService.getParameters(parametersUuid))
                 : ResponseEntity.notFound().build();
+    }
+
+    @GetMapping(value = "/{uuid}/filter-uuids", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get filter uuids referenced by the given parameters")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The filter uuids")})
+    public ResponseEntity<List<UUID>> getFilterUuids(
+            @Parameter(description = "parameters UUID") @PathVariable("uuid") UUID parametersUuid) {
+        return ResponseEntity.ok().body(parametersService.getFilterUuids(parametersUuid));
     }
 
     @PutMapping(value = "/{uuid}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
