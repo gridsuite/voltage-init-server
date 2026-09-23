@@ -20,6 +20,8 @@ spring:
           destination: ${powsybl-ws.rabbitmq.destination.prefix:}voltageinit.debug
         publishResult-out-0:
           destination: ${powsybl-ws.rabbitmq.destination.prefix:}voltageinit.result
+        publishRunning-out-0:
+          destination: ${powsybl-ws.rabbitmq.destination.prefix:}voltageinit.running
         consumeCancel-in-0:
           destination: ${powsybl-ws.rabbitmq.destination.prefix:}voltageinit.cancel
         publishCancel-out-0:
@@ -28,7 +30,7 @@ spring:
           destination: ${powsybl-ws.rabbitmq.destination.prefix:}voltageinit.stopped
         publishCancelFailed-out-0:
           destination: ${powsybl-ws.rabbitmq.destination.prefix:}voltageinit.cancelfailed
-      output-bindings: publishRun-out-0;publishDebug-out-0;publishResult-out-0;publishCancel-out-0;publishStopped-out-0;publishCancelFailed-out-0
+      output-bindings: publishRun-out-0;publishDebug-out-0;publishResult-out-0;publishRunning-out-0;publishCancel-out-0;publishStopped-out-0;publishCancelFailed-out-0
       rabbit:
         bindings:
           consumeRun1-in-0: &consumeRunRabbitConfig

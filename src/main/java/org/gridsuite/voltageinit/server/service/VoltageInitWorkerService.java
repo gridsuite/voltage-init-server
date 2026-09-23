@@ -180,4 +180,9 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
     protected String getComputationType() {
         return COMPUTATION_TYPE;
     }
+
+    @Override
+    protected void setRunningStatus(UUID resultUuid) {
+        resultService.insertStatus(List.of(resultUuid), VoltageInitStatus.RUNNING);
+    }
 }
