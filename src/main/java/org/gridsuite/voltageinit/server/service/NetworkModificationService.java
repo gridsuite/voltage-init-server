@@ -36,7 +36,6 @@ public class NetworkModificationService {
     private static final String GROUP_PATH = "groups" + DELIMITER + "{groupUuid}";
     private static final String NETWORK_MODIFICATIONS_PATH = "network-modifications";
     private static final String QUERY_PARAM_GROUP_UUID = "groupUuid";
-    public static final String QUERY_PARAM_ERROR_ON_GROUP_NOT_FOUND = "errorOnGroupNotFound";
 
     private String networkModificationServerBaseUri;
 
@@ -66,7 +65,6 @@ public class NetworkModificationService {
     public void deleteModificationsGroup(UUID groupUUid) {
         Objects.requireNonNull(groupUUid);
         var path = UriComponentsBuilder.fromPath(GROUP_PATH)
-            .queryParam(QUERY_PARAM_ERROR_ON_GROUP_NOT_FOUND, false)
             .buildAndExpand(groupUUid)
             .toUriString();
 
