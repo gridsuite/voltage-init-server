@@ -60,8 +60,8 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
         Objects.requireNonNull(runContext);
         var resultUuid = uuidGeneratorService.generate();
 
-        // update status to running status
-        setStatus(List.of(resultUuid), VoltageInitStatus.RUNNING);
+        // update status to preloading status
+        setStatus(List.of(resultUuid), VoltageInitStatus.PRELOADING);
         notificationService.sendRunMessage(new VoltageInitResultContext(resultUuid, runContext).toMessage(objectMapper));
         return resultUuid;
     }
