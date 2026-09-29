@@ -34,6 +34,7 @@ public class VoltageInitExceptionHandler extends AbstractBusinessExceptionHandle
     protected HttpStatus mapStatus(VoltageInitBusinessErrorCode businessErrorCode) {
         return switch (businessErrorCode) {
             case MISSING_FILTER -> HttpStatus.INTERNAL_SERVER_ERROR;
+            case CANNOT_BE_CANCELED -> HttpStatus.BAD_REQUEST;
         };
     }
 

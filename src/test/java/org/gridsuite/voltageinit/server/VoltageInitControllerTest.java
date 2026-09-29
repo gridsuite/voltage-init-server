@@ -56,6 +56,7 @@ import org.gridsuite.voltageinit.server.dto.parameters.VoltageLimitInfos;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.repository.parameters.VoltageInitParametersRepository;
 import org.gridsuite.voltageinit.server.service.NetworkModificationService;
+import org.gridsuite.voltageinit.server.service.VoltageInitResultService;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.gridsuite.voltageinit.server.util.EquipmentsSelectionType;
 import org.jgrapht.alg.util.Pair;
@@ -172,6 +173,8 @@ class VoltageInitControllerTest {
     private OpenReacParameters openReacParameters;
     private OpenReacResult openReacResult;
     private CompletableFutureTask<OpenReacResult> completableFutureResultsTask;
+    @MockitoSpyBean
+    private VoltageInitResultService voltageInitResultService;
 
     private OpenReacResult buildOpenReacResult() {
         OpenReacAmplIOFiles openReacAmplIOFiles = new OpenReacAmplIOFiles(openReacParameters, null, network, false, ReportNode.NO_OP);
@@ -560,6 +563,7 @@ class VoltageInitControllerTest {
 
     @Test
     void stopTest() throws Exception {
+        when(voltageInitResultService.findStatus(RESULT_UUID)).thenReturn(VoltageInitStatus.RUNNING);
         try (MockedStatic<OpenReacRunner> openReacRunnerMockedStatic = Mockito.mockStatic(OpenReacRunner.class)) {
             openReacRunnerMockedStatic.when(() -> OpenReacRunner.runAsync(eq(network), eq(VARIANT_2_ID), any(OpenReacParameters.class), any(OpenReacConfig.class), any(ComputationManager.class),
                     any(ReportNode.class), isNull(AmplExportConfig.class)))
