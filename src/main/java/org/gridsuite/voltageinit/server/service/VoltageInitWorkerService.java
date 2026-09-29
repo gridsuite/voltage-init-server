@@ -23,8 +23,6 @@ import org.gridsuite.computation.service.*;
 import org.gridsuite.voltageinit.server.PropertyServerNameProvider;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
 import org.gridsuite.voltageinit.server.dto.parameters.VoltageInitParametersInfos;
-import org.gridsuite.voltageinit.server.error.VoltageInitBusinessErrorCode;
-import org.gridsuite.voltageinit.server.error.VoltageInitException;
 import org.gridsuite.voltageinit.server.service.parameters.VoltageInitParametersService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -189,9 +187,7 @@ public class VoltageInitWorkerService extends AbstractWorkerService<OpenReacResu
     }
 
     @Override
-    protected void canBeCancelled(UUID resultUuid) {
-        if (resultService.findStatus(resultUuid) != VoltageInitStatus.RUNNING) {
-            throw new VoltageInitException(VoltageInitBusinessErrorCode.CANNOT_BE_CANCELED, "Voltage init cannot be cancelled because it is not running");
-        }
+    protected boolean canBeCancelled(UUID resultUuid) {
+        return resultService.findStatus(resultUuid) != VoltageInitStatus.RUNNING;
     }
 }
