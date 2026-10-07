@@ -23,6 +23,8 @@ import java.util.List;
 public class VoltageInitModificationInfos {
     private String type = "VOLTAGE_INIT_MODIFICATION";
 
+    private List<BatteryModificationInfos> batteries = new ArrayList<>();
+
     private List<GeneratorModificationInfos> generators = new ArrayList<>();
 
     private List<TransformerModificationInfos> transformers = new ArrayList<>();
@@ -43,6 +45,10 @@ public class VoltageInitModificationInfos {
 
     public void addGeneratorModification(GeneratorModificationInfos generatorModificationInfos) {
         generators.add(generatorModificationInfos);
+    }
+
+    public void addBatteryModification(BatteryModificationInfos batteryModificationInfos) {
+        batteries.add(batteryModificationInfos);
     }
 
     public void addTransformerModification(TransformerModificationInfos transformerModificationInfos) {

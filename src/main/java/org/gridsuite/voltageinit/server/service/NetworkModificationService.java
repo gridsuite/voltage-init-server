@@ -9,21 +9,11 @@ package org.gridsuite.voltageinit.server.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.iidm.network.Bus;
-import com.powsybl.iidm.network.Identifiable;
-import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.ShuntCompensator;
-import com.powsybl.iidm.network.Terminal;
-import com.powsybl.iidm.network.TwoWindingsTransformer;
+import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.extensions.VoltageRegulation;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import org.gridsuite.computation.service.UuidGeneratorService;
-import org.gridsuite.voltageinit.server.dto.BusModificationInfos;
-import org.gridsuite.voltageinit.server.dto.GeneratorModificationInfos;
-import org.gridsuite.voltageinit.server.dto.ShuntCompensatorModificationInfos;
-import org.gridsuite.voltageinit.server.dto.StaticVarCompensatorModificationInfos;
-import org.gridsuite.voltageinit.server.dto.TransformerModificationInfos;
-import org.gridsuite.voltageinit.server.dto.VoltageInitModificationInfos;
-import org.gridsuite.voltageinit.server.dto.VscConverterStationModificationInfos;
+import org.gridsuite.voltageinit.server.dto.*;
 import org.jgrapht.alg.util.Pair;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -46,7 +36,6 @@ public class NetworkModificationService {
     private static final String GROUP_PATH = "groups" + DELIMITER + "{groupUuid}";
     private static final String NETWORK_MODIFICATIONS_PATH = "network-modifications";
     private static final String QUERY_PARAM_GROUP_UUID = "groupUuid";
-    public static final String QUERY_PARAM_ERROR_ON_GROUP_NOT_FOUND = "errorOnGroupNotFound";
 
     private String networkModificationServerBaseUri;
 
@@ -76,7 +65,6 @@ public class NetworkModificationService {
     public void deleteModificationsGroup(UUID groupUUid) {
         Objects.requireNonNull(groupUUid);
         var path = UriComponentsBuilder.fromPath(GROUP_PATH)
-            .queryParam(QUERY_PARAM_ERROR_ON_GROUP_NOT_FOUND, false)
             .buildAndExpand(groupUUid)
             .toUriString();
 
@@ -141,6 +129,36 @@ public class NetworkModificationService {
                     .ratioTapChangerTargetV(targetV.get())
                     .legSide(tp.getLegSide());
                 voltageInitModificationInfos.addTransformerModification(builder.build());
+            });
+
+            // battery modifications
+            result.getBatteryModifications().forEach(batMod -> {
+                String batteryId = batMod.getBatteryId();
+                targetV.set(null);
+                Battery battery = network.getBattery(batteryId);
+                if (battery != null) {
+                    VoltageRegulation voltageRegulation = battery.getExtension(VoltageRegulation.class);
+                    if (voltageRegulation != null) {
+                        Optional<Bus> bus = getRegulatingBus(voltageRegulation.getRegulatingTerminal());
+                        bus.ifPresent(b -> {
+                            Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
+                            if (busUpdate != null) {
+                                targetV.set(busUpdate.getFirst() * b.getVoltageLevel().getNominalV());
+                            }
+                        });
+                    }
+                }
+
+                Double targetQ = batMod.getTargetQ();
+                if (targetV.get() != null || targetQ != null) {
+                    voltageInitModificationInfos.addBatteryModification(
+                            BatteryModificationInfos.builder()
+                                    .batteryId(batteryId)
+                                    .targetV(targetV.get())
+                                    .targetQ(targetQ)
+                                    .build()
+                    );
+                }
             });
 
             // static var compensator modifications
