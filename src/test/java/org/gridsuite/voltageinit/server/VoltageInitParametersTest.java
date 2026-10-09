@@ -98,19 +98,7 @@ class VoltageInitParametersTest {
     @Test
     void testCreateDefault() throws Exception {
         mockMvc.perform(post(URI_PARAMETERS_BASE)).andExpect(status().isOk()).andReturn();
-        VoltageInitParametersInfos createdParameters = parametersRepository.findAll().get(0).toVoltageInitParametersInfos();
-        assertNotNull(createdParameters);
-        assertTrue(createdParameters.getVoltageLimitsDefault().isEmpty());
-        assertNull(createdParameters.getVariableShuntCompensators());
-        assertEquals(EquipmentsSelectionType.NONE_EXCEPT, createdParameters.getShuntCompensatorsSelectionType());
-        assertNull(createdParameters.getVariableTwoWindingsTransformers());
-        assertEquals(EquipmentsSelectionType.NONE_EXCEPT, createdParameters.getTwoWindingsTransformersSelectionType());
-        assertNull(createdParameters.getVariableQGenerators());
-        assertEquals(EquipmentsSelectionType.ALL_EXCEPT, createdParameters.getGeneratorsSelectionType());
-        assertTrue(createdParameters.getVoltageLimitsModification().isEmpty());
-        assertEquals(DEFAULT_REACTIVE_SLACKS_THRESHOLD, createdParameters.getReactiveSlacksThreshold());
-        assertEquals(0., createdParameters.getShuntCompensatorActivationThreshold());
-        assertFalse(createdParameters.isUpdateBusVoltage());
+        assertDefaultParameters(parametersRepository.findAll().get(0).toVoltageInitParametersInfos());
     }
 
     @Test
@@ -148,6 +136,29 @@ class VoltageInitParametersTest {
     }
 
     @Test
+    void testUpdateWithoutBodyIsRejected() throws Exception {
+        VoltageInitParametersInfos parameters = buildParameters();
+        UUID parametersUuid = saveAndRetunId(parameters);
+
+        // missing body is mapped to 500 by the shared ComputationExceptionHandler
+        mockMvc.perform(put(URI_PARAMETERS_GET_PUT + parametersUuid).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
+
+        VoltageInitParametersInfos storedParameters = parametersRepository.findById(parametersUuid).get().toVoltageInitParametersInfos();
+        assertThat(storedParameters).recursivelyEquals(parameters);
+    }
+
+    @Test
+    void testReset() throws Exception {
+        UUID parametersUuid = saveAndRetunId(buildParameters());
+
+        mockMvc.perform(put(URI_PARAMETERS_GET_PUT + parametersUuid + "/reset"))
+                .andExpect(status().isOk());
+
+        assertDefaultParameters(parametersRepository.findById(parametersUuid).get().toVoltageInitParametersInfos());
+    }
+
+    @Test
     void testDelete() throws Exception {
 
         VoltageInitParametersInfos parametersToDelete = buildParameters();
@@ -178,6 +189,21 @@ class VoltageInitParametersTest {
 
         VoltageInitParametersInfos duplicatedParameters = parametersRepository.findAll().get(1).toVoltageInitParametersInfos();
         assertThat(duplicatedParameters).recursivelyEquals(createdParameters);
+    }
+
+    private static void assertDefaultParameters(VoltageInitParametersInfos createdParameters) {
+        assertNotNull(createdParameters);
+        assertTrue(createdParameters.getVoltageLimitsDefault().isEmpty());
+        assertNull(createdParameters.getVariableShuntCompensators());
+        assertEquals(EquipmentsSelectionType.NONE_EXCEPT, createdParameters.getShuntCompensatorsSelectionType());
+        assertNull(createdParameters.getVariableTwoWindingsTransformers());
+        assertEquals(EquipmentsSelectionType.NONE_EXCEPT, createdParameters.getTwoWindingsTransformersSelectionType());
+        assertNull(createdParameters.getVariableQGenerators());
+        assertEquals(EquipmentsSelectionType.ALL_EXCEPT, createdParameters.getGeneratorsSelectionType());
+        assertTrue(createdParameters.getVoltageLimitsModification().isEmpty());
+        assertEquals(DEFAULT_REACTIVE_SLACKS_THRESHOLD, createdParameters.getReactiveSlacksThreshold());
+        assertEquals(0., createdParameters.getShuntCompensatorActivationThreshold());
+        assertFalse(createdParameters.isUpdateBusVoltage());
     }
 
     /** Save parameters into the repository and return its UUID. */

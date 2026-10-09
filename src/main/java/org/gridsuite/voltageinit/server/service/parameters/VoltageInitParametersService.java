@@ -103,12 +103,13 @@ public class VoltageInitParametersService {
     @Transactional
     public void updateParameters(UUID parametersUuid, VoltageInitParametersInfos parametersInfos) {
         VoltageInitParametersEntity entity = voltageInitParametersRepository.findById(parametersUuid).orElseThrow();
-        //if the parameters is null it means it's a reset to defaultValues
-        if (parametersInfos == null) {
-            entity.update(getDefaultParametersInfos());
-        } else {
-            entity.update(parametersInfos);
-        }
+        entity.update(parametersInfos);
+    }
+
+    @Transactional
+    public void resetParameters(UUID parametersUuid) {
+        VoltageInitParametersEntity entity = voltageInitParametersRepository.findById(parametersUuid).orElseThrow();
+        entity.update(getDefaultParametersInfos());
     }
 
     public void deleteParameters(UUID parametersUuid) {
