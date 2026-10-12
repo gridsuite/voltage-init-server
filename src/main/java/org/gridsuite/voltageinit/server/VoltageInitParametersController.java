@@ -79,7 +79,7 @@ public class VoltageInitParametersController {
     }
 
     @PutMapping(value = "/{uuid}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Update parameters")
+    @Operation(summary = "Reset parameters")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "parameters were updated")})
     public ResponseEntity<Void> resetParameters(
             @Parameter(description = "parameters UUID") @PathVariable("uuid") UUID parametersUuid) {
