@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.powsybl.commons.report.ReportNodeDeserializer;
 import com.powsybl.commons.report.ReportNodeJsonModule;
 import com.powsybl.openreac.parameters.input.json.OpenReactJsonModule;
-import org.springframework.boot.web.client.RestClientCustomizer;
+import org.springframework.boot.restclient.RestClientCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
