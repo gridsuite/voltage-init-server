@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
@@ -132,6 +134,21 @@ public class VoltageInitParametersEntity {
         reactiveSlacksThreshold = voltageInitParametersInfos.getReactiveSlacksThreshold();
         shuntCompensatorActivationThreshold = voltageInitParametersInfos.getShuntCompensatorActivationThreshold();
         updateBusVoltage = voltageInitParametersInfos.isUpdateBusVoltage();
+    }
+
+    public List<UUID> getFilterUuids() {
+        Stream<FilterEquipmentsEmbeddable> limitFilters = voltageLimits == null ? Stream.empty() :
+                voltageLimits.stream().flatMap(voltageLimit -> nullSafe(voltageLimit.getFilters()));
+        return Stream.of(limitFilters, nullSafe(variableQGenerators), nullSafe(variableTwoWindingsTransformers), nullSafe(variableShuntCompensators))
+                .flatMap(Function.identity())
+                .map(FilterEquipmentsEmbeddable::getFilterId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+    }
+
+    private static Stream<FilterEquipmentsEmbeddable> nullSafe(List<FilterEquipmentsEmbeddable> filters) {
+        return filters == null ? Stream.empty() : filters.stream();
     }
 
     private List<VoltageLimitInfos> toVoltageLimits(List<VoltageLimitEntity> voltageLimits, VoltageLimitParameterType voltageLimitParameterType) {
