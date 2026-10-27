@@ -338,7 +338,7 @@ class VoltageInitControllerTest {
             @Override
             public MockResponse dispatch(RecordedRequest request) {
                 String path = Objects.requireNonNull(request.getPath());
-                if (path.matches("/v1/groups/.*") && request.getMethod().equals("DELETE")) {
+                if (path.matches("/v1/groups/.*") && request.getMethod().equals("DELETE") && request.getHeaders().get(HEADER_USER_ID) != null) {
                     return new MockResponse(200);
                 } else if (path.matches("/v1/network-modifications\\?groupUuid=.*") && request.getMethod().equals("POST")) {
                     return new MockResponse(200);
