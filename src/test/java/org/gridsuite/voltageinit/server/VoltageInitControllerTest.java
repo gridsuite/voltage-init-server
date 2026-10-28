@@ -372,7 +372,7 @@ class VoltageInitControllerTest {
 
     @AfterEach
     void tearDown() throws Exception {
-        mockMvc.perform(delete("/" + VERSION + "/results"))
+        mockMvc.perform(delete("/" + VERSION + "/results").header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk());
         parametersRepository.deleteAll();
     }
@@ -465,7 +465,7 @@ class VoltageInitControllerTest {
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
                 .andExpect(status().isNotFound());
             // test one result deletion
-            mockMvc.perform(delete("/" + VERSION + "/results").queryParam("resultsUuids", RESULT_UUID.toString()))
+            mockMvc.perform(delete("/" + VERSION + "/results").queryParam("resultsUuids", RESULT_UUID.toString()).header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk());
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                 .andExpect(status().isNotFound());

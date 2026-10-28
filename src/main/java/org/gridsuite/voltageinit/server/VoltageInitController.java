@@ -81,7 +81,7 @@ public class VoltageInitController {
     @Operation(summary = "Delete voltage init results from the database")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "All voltage init results have been deleted")})
     public ResponseEntity<Void> deleteResults(@Parameter(description = "Results UUID") @RequestParam(value = "resultsUuids", required = false) List<UUID> resultsUuids,
-                                              @RequestHeader(name = HEADER_USER_ID, required = false) String userId) {
+                                              @RequestHeader(HEADER_USER_ID) String userId) {
         voltageInitService.deleteResults(resultsUuids, userId);
         return ResponseEntity.ok().build();
     }

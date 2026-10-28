@@ -37,9 +37,6 @@ import java.util.stream.Collectors;
 @Service
 public class VoltageInitService extends AbstractComputationService<VoltageInitRunContext, VoltageInitResultService, VoltageInitStatus> {
 
-    //TODO propagate the user ID and remove the technical user ID
-    private static final String TECHNICAL_USER_ID = "voltage-init-server";
-
     @Autowired
     NetworkModificationService networkModificationService;
 
@@ -111,14 +108,13 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
 
     @Transactional
     public void deleteResults(List<UUID> resultUuids, String userId) {
-        String deletingUserId = Objects.requireNonNullElse(userId, TECHNICAL_USER_ID);
         List<VoltageInitResultEntity> results = CollectionUtils.isEmpty(resultUuids)
             ? resultService.findAll()
             : resultUuids.stream().map(resultService::find).flatMap(Optional::stream).toList();
         results.stream()
             .map(VoltageInitResultEntity::getModificationsGroupUuid)
             .filter(Objects::nonNull)
-            .forEach(groupUuid -> CompletableFuture.runAsync(() -> networkModificationService.deleteModificationsGroup(groupUuid, deletingUserId)));
+            .forEach(groupUuid -> CompletableFuture.runAsync(() -> networkModificationService.deleteModificationsGroup(groupUuid, userId)));
         super.deleteResults(resultUuids);
     }
 
