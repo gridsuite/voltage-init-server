@@ -17,7 +17,7 @@ import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.modification.*;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
 import com.powsybl.iidm.network.*;
-import com.powsybl.iidm.network.extensions.VoltageRegulationAdder;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
@@ -305,10 +305,11 @@ class VoltageInitControllerTest {
                 .setTargetP(607.0)
                 .setTargetQ(301.0)
                 .add();
-        bat.newExtension(VoltageRegulationAdder.class)
-                .withTargetV(215.)
-                .withVoltageRegulatorOn(true)
-                .add();
+        bat.setLocalTargetV(215.)
+                .newVoltageRegulation()
+                .withMode(RegulationMode.VOLTAGE)
+                .withRegulating(true)
+                .build();
 
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_1_ID);
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
