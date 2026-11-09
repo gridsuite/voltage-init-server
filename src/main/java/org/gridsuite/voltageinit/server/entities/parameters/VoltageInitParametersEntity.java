@@ -93,6 +93,18 @@ public class VoltageInitParametersEntity {
     @Column(name = "updateBusVoltage")
     private boolean updateBusVoltage;
 
+    @Column(name = "penaltyInvestReaPos")
+    private double penaltyInvestReaPos;
+
+    @Column(name = "penaltyInvestReaNeg")
+    private double penaltyInvestReaNeg;
+
+    @Column(name = "penaltyActivePower")
+    private double penaltyActivePower;
+
+    @Column(name = "penaltyUnitsReactive")
+    private double penaltyUnitsReactive;
+
     public VoltageInitParametersEntity(@NonNull VoltageInitParametersInfos voltageInitParametersInfos) {
         this.date = Instant.now().truncatedTo(ChronoUnit.MICROS);
         assignAttributes(voltageInitParametersInfos);
@@ -132,6 +144,10 @@ public class VoltageInitParametersEntity {
         reactiveSlacksThreshold = voltageInitParametersInfos.getReactiveSlacksThreshold();
         shuntCompensatorActivationThreshold = voltageInitParametersInfos.getShuntCompensatorActivationThreshold();
         updateBusVoltage = voltageInitParametersInfos.isUpdateBusVoltage();
+        penaltyInvestReaPos = voltageInitParametersInfos.getPenaltyInvestReaPos();
+        penaltyInvestReaNeg = voltageInitParametersInfos.getPenaltyInvestReaNeg();
+        penaltyActivePower = voltageInitParametersInfos.getPenaltyActivePower();
+        penaltyUnitsReactive = voltageInitParametersInfos.getPenaltyUnitsReactive();
     }
 
     private List<VoltageLimitInfos> toVoltageLimits(List<VoltageLimitEntity> voltageLimits, VoltageLimitParameterType voltageLimitParameterType) {
@@ -167,6 +183,10 @@ public class VoltageInitParametersEntity {
             .reactiveSlacksThreshold(this.getReactiveSlacksThreshold())
             .shuntCompensatorActivationThreshold(this.getShuntCompensatorActivationThreshold())
             .updateBusVoltage(this.isUpdateBusVoltage())
+            .penaltyInvestReaPos(this.getPenaltyInvestReaPos())
+            .penaltyInvestReaNeg(this.getPenaltyInvestReaNeg())
+            .penaltyActivePower(this.getPenaltyActivePower())
+            .penaltyUnitsReactive(this.getPenaltyUnitsReactive())
             .build();
     }
 }

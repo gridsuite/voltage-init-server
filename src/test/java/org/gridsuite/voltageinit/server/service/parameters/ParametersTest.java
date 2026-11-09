@@ -150,7 +150,7 @@ class ParametersTest {
     private ListAssert<VoltageLimitOverride> testsBuildSpecificVoltageLimitsCommon(List<VoltageLimitEntity> voltageLimits, String reportFilename) throws Exception {
         final VoltageInitParametersEntity voltageInitParameters = entityManager.persistFlushFind(
             new VoltageInitParametersEntity(null, null, "", voltageLimits, null, EquipmentsSelectionType.ALL_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, null,
-                    EquipmentsSelectionType.NONE_EXCEPT, 100., 0., false)
+                    EquipmentsSelectionType.NONE_EXCEPT, 100., 0., false, 10, 10, 1, 0.1)
         );
         final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId(), false, "rootNetwork1", "node1");
         context.setReportNode(ReportNode.newRootReportNode()
@@ -207,7 +207,7 @@ class ParametersTest {
         final VoltageLimitEntity voltageLimit = new VoltageLimitEntity(null, 5., 10., 0, VoltageLimitParameterType.DEFAULT, List.of(new FilterEquipmentsEmbeddable(FILTER_UUID_1, FILTER_1)));
         final VoltageInitParametersEntity voltageInitParameters = entityManager.persistFlushFind(
             new VoltageInitParametersEntity(null, null, "", List.of(voltageLimit), null, EquipmentsSelectionType.ALL_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, null,
-                    EquipmentsSelectionType.NONE_EXCEPT, 100., 0., false)
+                    EquipmentsSelectionType.NONE_EXCEPT, 100., 0., false, 10, 10, 1, 0.1)
         );
         final VoltageInitRunContext context = new VoltageInitRunContext(NETWORK_UUID, VARIANT_ID_1, null, REPORT_UUID, null, "", "", voltageInitParameters.getId(), false, "rootNetwork1", "node1");
         context.setReportNode(ReportNode.newRootReportNode()
@@ -287,7 +287,7 @@ class ParametersTest {
         final VoltageLimitEntity vl4 = new VoltageLimitEntity(null, -20.0, 10.0, 0, VoltageLimitParameterType.MODIFICATION, List.of(new FilterEquipmentsEmbeddable(filterUuidS3VL1, filterIdS3VL1)));
         final VoltageInitParametersEntity voltageInitParameters = entityManager.persistFlushFind(
             new VoltageInitParametersEntity(null, null, "", List.of(vl1, vl2, vl3, vl4), null, EquipmentsSelectionType.ALL_EXCEPT, null, EquipmentsSelectionType.NONE_EXCEPT, null,
-                    EquipmentsSelectionType.NONE_EXCEPT, 100., 0., false)
+                    EquipmentsSelectionType.NONE_EXCEPT, 100., 0., false, 10, 10, 1, 0.1)
         );
 
         final VoltageInitRunContext context = new VoltageInitRunContext(networkUuid, variantId, null, REPORT_UUID, null, "", "", voltageInitParameters.getId(), false, "rootNetwork1", "node1");

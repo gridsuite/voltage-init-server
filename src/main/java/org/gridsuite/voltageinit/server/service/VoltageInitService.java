@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -105,27 +106,16 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
             resultEntity.getReactiveSlacksThreshold());
     }
 
-    @Override
     @Transactional
-    public void deleteResult(UUID resultUuid) {
-        Optional<VoltageInitResultEntity> result = resultService.find(resultUuid);
-        result.ifPresent(r -> {
-            if (r.getModificationsGroupUuid() != null) {
-                CompletableFuture.runAsync(() -> networkModificationService.deleteModificationsGroup(r.getModificationsGroupUuid()));
-            }
-        });
-        super.deleteResult(resultUuid);
-    }
-
-    @Override
-    @Transactional
-    public void deleteResults() {
-        resultService.findAll().forEach(r -> {
-            if (r.getModificationsGroupUuid() != null) {
-                networkModificationService.deleteModificationsGroup(r.getModificationsGroupUuid());
-            }
-        });
-        super.deleteResults();
+    public void deleteResults(List<UUID> resultUuids, String userId) {
+        List<VoltageInitResultEntity> results = CollectionUtils.isEmpty(resultUuids)
+            ? resultService.findAll()
+            : resultUuids.stream().map(resultService::find).flatMap(Optional::stream).toList();
+        results.stream()
+            .map(VoltageInitResultEntity::getModificationsGroupUuid)
+            .filter(Objects::nonNull)
+            .forEach(groupUuid -> CompletableFuture.runAsync(() -> networkModificationService.deleteModificationsGroup(groupUuid, userId)));
+        super.deleteResults(resultUuids);
     }
 
     @Transactional(readOnly = true)
