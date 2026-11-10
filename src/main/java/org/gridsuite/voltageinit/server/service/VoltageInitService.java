@@ -112,13 +112,7 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
         super.deleteResults(resultUuids);
     }
 
-    @Transactional
-    public void deleteAllResults(String userId) {
-        deleteModificationsGroups(resultService.findAll(), userId);
-        super.deleteAllResults();
-    }
-
-    private void deleteModificationsGroups(List<VoltageInitResultEntity> results, String userId) {
+    void deleteModificationsGroups(List<VoltageInitResultEntity> results, String userId) {
         results.stream()
             .map(VoltageInitResultEntity::getModificationsGroupUuid)
             .filter(Objects::nonNull)
