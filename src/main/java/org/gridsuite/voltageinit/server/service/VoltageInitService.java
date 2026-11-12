@@ -24,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -108,14 +107,16 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
 
     @Transactional
     public void deleteResults(List<UUID> resultUuids, String userId) {
-        List<VoltageInitResultEntity> results = CollectionUtils.isEmpty(resultUuids)
-            ? resultService.findAll()
-            : resultUuids.stream().map(resultService::find).flatMap(Optional::stream).toList();
+        Objects.requireNonNull(resultUuids, "resultUuids must not be null");
+        deleteModificationsGroups(resultUuids.stream().map(resultService::find).flatMap(Optional::stream).toList(), userId);
+        super.deleteResults(resultUuids);
+    }
+
+    void deleteModificationsGroups(List<VoltageInitResultEntity> results, String userId) {
         results.stream()
             .map(VoltageInitResultEntity::getModificationsGroupUuid)
             .filter(Objects::nonNull)
             .forEach(groupUuid -> CompletableFuture.runAsync(() -> networkModificationService.deleteModificationsGroup(groupUuid, userId)));
-        super.deleteResults(resultUuids);
     }
 
     @Transactional(readOnly = true)
