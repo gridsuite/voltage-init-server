@@ -65,7 +65,7 @@
         <!-- FIXME: to be removed at next gridsuite-dependencies upgrade  -->
         <gridsuite-computation.version>2.10.0</gridsuite-computation.version>
         <!-- FIXME: to be removed at next gridsuite-dependencies upgrade  -->
-        <gridsuite-filter.version>1.36.0</gridsuite-filter.version>
+        <gridsuite-filter.version>2.0.0</gridsuite-filter.version>
     </properties>
 
     <build>
