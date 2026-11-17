@@ -115,7 +115,11 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
             .map(VoltageInitResultEntity::getModificationsGroupUuid)
             .filter(Objects::nonNull)
             .forEach(groupUuid -> CompletableFuture.runAsync(() -> networkModificationService.deleteModificationsGroup(groupUuid, userId)));
-        super.deleteResults(resultUuids);
+        if (resultUuids == null) {
+            resultService.deleteAll();
+        } else {
+            super.deleteResults(resultUuids);
+        }
     }
 
     @Transactional(readOnly = true)

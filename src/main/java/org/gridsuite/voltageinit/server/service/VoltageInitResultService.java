@@ -95,7 +95,6 @@ public class VoltageInitResultService extends AbstractComputationResultService<V
     }
 
     @Transactional
-    @Override
     public void deleteAll() {
         globalStatusRepository.deleteAll();
         resultRepository.deleteAll();
