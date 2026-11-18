@@ -6,8 +6,10 @@
  */
 package org.gridsuite.voltageinit.server.service;
 
+import org.gridsuite.voltageinit.server.repository.GlobalStatusRepository;
 import org.gridsuite.voltageinit.server.repository.ResultRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Hugo Marcellin <hugo.marcelin at rte-france.com>
@@ -15,12 +17,23 @@ import org.springframework.stereotype.Service;
 @Service
 public class SupervisionService {
     private final ResultRepository resultRepository;
+    private final GlobalStatusRepository globalStatusRepository;
+    private final VoltageInitService voltageInitService;
 
-    public SupervisionService(ResultRepository resultRepository) {
+    public SupervisionService(ResultRepository resultRepository, GlobalStatusRepository globalStatusRepository, VoltageInitService voltageInitService) {
         this.resultRepository = resultRepository;
+        this.globalStatusRepository = globalStatusRepository;
+        this.voltageInitService = voltageInitService;
     }
 
     public Integer getResultsCount() {
         return (int) resultRepository.count();
+    }
+
+    @Transactional
+    public void deleteAllResults(String userId) {
+        voltageInitService.deleteModificationsGroups(resultRepository.findAll(), userId);
+        globalStatusRepository.deleteAll();
+        resultRepository.deleteAll();
     }
 }
