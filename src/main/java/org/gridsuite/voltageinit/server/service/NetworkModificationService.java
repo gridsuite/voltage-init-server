@@ -10,7 +10,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.*;
-import com.powsybl.iidm.network.extensions.VoltageRegulation;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import org.gridsuite.computation.service.UuidGeneratorService;
 import org.gridsuite.voltageinit.server.dto.*;
@@ -117,7 +116,7 @@ public class NetworkModificationService {
                 if (identifiable != null && identifiable.getType() == TWO_WINDINGS_TRANSFORMER) {  // Only for 2WT
                     TwoWindingsTransformer twoWindingsTransformer = (TwoWindingsTransformer) identifiable;
                     if (twoWindingsTransformer.getRatioTapChanger() != null) {
-                        Optional<Bus> bus = getRegulatingBus(twoWindingsTransformer.getRatioTapChanger().getRegulationTerminal());
+                        Optional<Bus> bus = getRegulatingBus(twoWindingsTransformer.getRatioTapChanger().getRegulatingTerminal());
                         bus.ifPresent(b -> {
                             Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
                             if (busUpdate != null) {
@@ -140,9 +139,8 @@ public class NetworkModificationService {
                 targetV.set(null);
                 Battery battery = network.getBattery(batteryId);
                 if (battery != null) {
-                    VoltageRegulation voltageRegulation = battery.getExtension(VoltageRegulation.class);
-                    if (voltageRegulation != null) {
-                        Optional<Bus> bus = getRegulatingBus(voltageRegulation.getRegulatingTerminal());
+                    if (battery.getVoltageRegulation() != null) {
+                        Optional<Bus> bus = getRegulatingBus(battery.getRegulatingTerminal());
                         bus.ifPresent(b -> {
                             Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
                             if (busUpdate != null) {

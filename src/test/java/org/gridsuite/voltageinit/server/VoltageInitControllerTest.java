@@ -17,7 +17,7 @@ import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.modification.*;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
 import com.powsybl.iidm.network.*;
-import com.powsybl.iidm.network.extensions.VoltageRegulationAdder;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
@@ -285,9 +285,12 @@ class VoltageInitControllerTest {
             .setId("SHUNT_1")
             .setBus(ngen.getId())
             .setConnectableBus(ngen.getId())
-            .setTargetV(30.)
-            .setTargetDeadband(10)
-            .setVoltageRegulatorOn(false)
+            .newVoltageRegulation()
+                .withMode(RegulationMode.VOLTAGE)
+                .withTargetValue(30.)
+                .withTargetDeadband(10)
+                .withRegulating(false)
+                .add()
             .newLinearModel()
             .setMaximumSectionCount(1)
             .setBPerSection(1)
@@ -303,12 +306,13 @@ class VoltageInitControllerTest {
                 .setMinP(-9999.99)
                 .setMaxP(9999.99)
                 .setTargetP(607.0)
-                .setTargetQ(301.0)
+                .setLocalTargetQ(301.0)
                 .add();
-        bat.newExtension(VoltageRegulationAdder.class)
-                .withTargetV(215.)
-                .withVoltageRegulatorOn(true)
-                .add();
+        bat.setLocalTargetV(215.)
+                .newVoltageRegulation()
+                .withMode(RegulationMode.VOLTAGE)
+                .withRegulating(true)
+                .build();
 
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_1_ID);
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
