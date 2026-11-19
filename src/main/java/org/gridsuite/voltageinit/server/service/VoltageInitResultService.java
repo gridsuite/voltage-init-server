@@ -94,16 +94,6 @@ public class VoltageInitResultService extends AbstractComputationResultService<V
         }
     }
 
-    @Transactional
-    public void deleteAll() {
-        globalStatusRepository.deleteAll();
-        resultRepository.deleteAll();
-    }
-
-    public List<VoltageInitResultEntity> findAll() {
-        return resultRepository.findAll();
-    }
-
     @Transactional(readOnly = true)
     public Optional<VoltageInitResultEntity> find(UUID resultUuid) {
         Objects.requireNonNull(resultUuid);
