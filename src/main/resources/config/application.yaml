@@ -1,6 +1,9 @@
 spring:
   application:
     name: voltage-init-server
+  http:
+    converters:
+      preferred-json-mapper: jackson2
 
   cloud:
     function:
