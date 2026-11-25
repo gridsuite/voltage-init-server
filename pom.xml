@@ -58,7 +58,7 @@
         <gridsuite-dependencies.version>51.1.0</gridsuite-dependencies.version>
         <powsybl-open-reac.version>0.18.0</powsybl-open-reac.version>
         <powsybl-optimizer-commons.version>0.18.0</powsybl-optimizer-commons.version>
-        <mockwebserver3.version>5.0.0-alpha.14</mockwebserver3.version>
+        <mockwebserver3.version>5.5.1</mockwebserver3.version>
         <liquibase-hibernate-package>org.gridsuite.voltageinit.server</liquibase-hibernate-package>
         <sonar.organization>gridsuite</sonar.organization>
         <sonar.projectKey>org.gridsuite:voltage-init-server</sonar.projectKey>
