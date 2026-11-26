@@ -7,7 +7,9 @@
 package org.gridsuite.voltageinit.server.dto.parameters;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.gridsuite.voltageinit.server.entities.parameters.VoltageInitParametersEntity;
 import org.gridsuite.voltageinit.server.util.EquipmentsSelectionType;
@@ -54,6 +56,14 @@ public class VoltageInitParametersInfos {
     double shuntCompensatorActivationThreshold;
 
     boolean updateBusVoltage;
+
+    private double penaltyInvestReaPos;
+
+    private double penaltyInvestReaNeg;
+
+    private double penaltyActivePower;
+
+    private double penaltyUnitsReactive;
 
     public VoltageInitParametersEntity toEntity() {
         return new VoltageInitParametersEntity(this);

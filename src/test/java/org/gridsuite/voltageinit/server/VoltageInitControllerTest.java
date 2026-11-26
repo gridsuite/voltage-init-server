@@ -34,15 +34,15 @@ import mockwebserver3.Dispatcher;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
-import mockwebserver3.junit5.internal.MockWebServerExtension;
+import mockwebserver3.junit5.StartStop;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.service.ReportService;
 import org.gridsuite.computation.service.UuidGeneratorService;
 import org.gridsuite.computation.utils.annotations.PostCompletionAdapter;
-import org.gridsuite.filter.identifierlistfilter.IdentifierListFilter;
-import org.gridsuite.filter.identifierlistfilter.IdentifierListFilterEquipmentAttributes;
+import org.gridsuite.filter.dto.identifierlistfilter.IdentifierListFilter;
+import org.gridsuite.filter.dto.identifierlistfilter.IdentifierListFilterEquipmentAttributes;
 import org.gridsuite.filter.utils.EquipmentType;
 import org.gridsuite.voltageinit.server.dto.VoltageInitResult;
 import org.gridsuite.voltageinit.server.dto.VoltageInitStatus;
@@ -56,10 +56,10 @@ import org.gridsuite.voltageinit.server.service.VoltageInitResultService;
 import org.gridsuite.voltageinit.server.service.parameters.FilterService;
 import org.gridsuite.voltageinit.server.util.EquipmentsSelectionType;
 import org.jgrapht.alg.util.Pair;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -112,7 +112,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * @author Etienne Homer <etienne.homer at rte-france.com>
  */
-@ExtendWith(MockWebServerExtension.class)
 @AutoConfigureMockMvc
 @SpringBootTest
 @ContextHierarchy({@ContextConfiguration(classes = {VoltageInitApplication.class, TestChannelBinderConfiguration.class})})
@@ -136,6 +135,9 @@ class VoltageInitControllerTest {
     private static final String NOT_OK_RESULT = "NOT_OK";
 
     private static final int TIMEOUT = 1000;
+
+    @StartStop
+    final MockWebServer server = new MockWebServer();
 
     @Autowired
     private OutputDestination output;
@@ -266,7 +268,7 @@ class VoltageInitControllerTest {
     }
 
     @BeforeEach
-    void setUp(final MockWebServer server) throws JsonProcessingException {
+    void setUp() throws JsonProcessingException {
         MockitoAnnotations.initMocks(this);
 
         HttpUrl baseHttpUrl = server.url("");
@@ -336,18 +338,24 @@ class VoltageInitControllerTest {
         final Dispatcher dispatcher = new Dispatcher() {
             @SneakyThrows
             @Override
-            public MockResponse dispatch(RecordedRequest request) {
-                String path = Objects.requireNonNull(request.getPath());
-                if (path.matches("/v1/groups/.*") && request.getMethod().equals("DELETE")) {
-                    return new MockResponse(200);
+            public @NonNull MockResponse dispatch(RecordedRequest request) {
+                String path = Objects.requireNonNull(request.getTarget());
+                if (path.matches("/v1/groups/.*") && request.getMethod().equals("DELETE") && request.getHeaders().get(HEADER_USER_ID) != null) {
+                    return new MockResponse.Builder()
+                            .code(200)
+                            .build();
                 } else if (path.matches("/v1/network-modifications\\?groupUuid=.*") && request.getMethod().equals("POST")) {
-                    return new MockResponse(200);
+                    return new MockResponse.Builder()
+                            .code(200)
+                            .build();
                 } else if (path.matches("/v1/filters/export\\?networkUuid=" + NETWORK_UUID + "&variantId=" + VARIANT_2_ID + "&ids=.*")) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), FILTER_EQUIPMENT_JSON);
                 } else if (path.matches("/v1/filters/metadata\\?ids=" + FILTER_UUID)) {
                     return new MockResponse(200, Headers.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE), identifierListFilterJson);
                 }
-                return new MockResponse(418);
+                return new MockResponse.Builder()
+                        .code(418)
+                        .build();
             }
         };
         server.setDispatcher(dispatcher);
@@ -372,7 +380,7 @@ class VoltageInitControllerTest {
 
     @AfterEach
     void tearDown() throws Exception {
-        mockMvc.perform(delete("/" + VERSION + "/results"))
+        mockMvc.perform(delete("/" + VERSION + "/supervision/results").header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk());
         parametersRepository.deleteAll();
     }
@@ -464,8 +472,14 @@ class VoltageInitControllerTest {
             // should throw not found if result does not exist
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", OTHER_RESULT_UUID))
                 .andExpect(status().isNotFound());
+            String resultsCount = mockMvc.perform(get("/" + VERSION + "/supervision/results-count")).andReturn().getResponse().getContentAsString();
+            assertNotEquals("0", resultsCount);
+            mockMvc.perform(delete("/" + VERSION + "/results").header(HEADER_USER_ID, "userId")).andExpect(status().isBadRequest());
+            mockMvc.perform(delete("/" + VERSION + "/results").queryParam("resultsUuids", "").header(HEADER_USER_ID, "userId")).andExpect(status().isOk());
+            mockMvc.perform(get("/" + VERSION + "/supervision/results-count")).andExpect(content().string(resultsCount));
+
             // test one result deletion
-            mockMvc.perform(delete("/" + VERSION + "/results").queryParam("resultsUuids", RESULT_UUID.toString()))
+            mockMvc.perform(delete("/" + VERSION + "/results").queryParam("resultsUuids", RESULT_UUID.toString()).header(HEADER_USER_ID, "userId"))
                 .andExpect(status().isOk());
             mockMvc.perform(get("/" + VERSION + "/results/{resultUuid}", RESULT_UUID))
                 .andExpect(status().isNotFound());

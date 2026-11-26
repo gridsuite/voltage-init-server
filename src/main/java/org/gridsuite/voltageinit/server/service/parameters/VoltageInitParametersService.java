@@ -57,6 +57,10 @@ public class VoltageInitParametersService {
     private final VoltageInitParametersRepository voltageInitParametersRepository;
 
     public static final double DEFAULT_REACTIVE_SLACKS_THRESHOLD = 500.;
+    public static final double DEFAULT_PENALTY_INVEST_REA_POS = 10.;
+    public static final double DEFAULT_PENALTY_INVEST_REA_NEG = 10.;
+    public static final double DEFAULT_PENALTY_ACTIVE_POWER = 1.;
+    public static final double DEFAULT_PENALTY_UNITS_REACTIVE = 0.1;
 
     public VoltageInitParametersService(VoltageInitParametersRepository voltageInitParametersRepository, FilterService filterService) {
         this.voltageInitParametersRepository = voltageInitParametersRepository;
@@ -103,12 +107,13 @@ public class VoltageInitParametersService {
     @Transactional
     public void updateParameters(UUID parametersUuid, VoltageInitParametersInfos parametersInfos) {
         VoltageInitParametersEntity entity = voltageInitParametersRepository.findById(parametersUuid).orElseThrow();
-        //if the parameters is null it means it's a reset to defaultValues
-        if (parametersInfos == null) {
-            entity.update(getDefaultParametersInfos());
-        } else {
-            entity.update(parametersInfos);
-        }
+        entity.update(parametersInfos);
+    }
+
+    @Transactional
+    public void resetParameters(UUID parametersUuid) {
+        VoltageInitParametersEntity entity = voltageInitParametersRepository.findById(parametersUuid).orElseThrow();
+        entity.update(getDefaultParametersInfos());
     }
 
     public void deleteParameters(UUID parametersUuid) {
@@ -116,7 +121,13 @@ public class VoltageInitParametersService {
     }
 
     private VoltageInitParametersInfos getDefaultParametersInfos() {
-        return VoltageInitParametersInfos.builder().reactiveSlacksThreshold(DEFAULT_REACTIVE_SLACKS_THRESHOLD).build();
+        return VoltageInitParametersInfos.builder()
+                .reactiveSlacksThreshold(DEFAULT_REACTIVE_SLACKS_THRESHOLD)
+                .penaltyInvestReaPos(DEFAULT_PENALTY_INVEST_REA_POS)
+                .penaltyInvestReaNeg(DEFAULT_PENALTY_INVEST_REA_NEG)
+                .penaltyActivePower(DEFAULT_PENALTY_ACTIVE_POWER)
+                .penaltyUnitsReactive(DEFAULT_PENALTY_UNITS_REACTIVE)
+                .build();
     }
 
     private Map<String, VoltageLimitEntity> resolveVoltageLevelLimits(VoltageInitRunContext context, List<VoltageLimitEntity> voltageLimits) {
@@ -276,6 +287,10 @@ public class VoltageInitParametersService {
                 .addVariableShuntCompensators(variableShuntCompensatorsIds);
 
             parameters.setShuntCompensatorActivationAlertThreshold(voltageInitParameters.getShuntCompensatorActivationThreshold());
+            parameters.setPenaltyInvestReaPos(voltageInitParameters.getPenaltyInvestReaPos());
+            parameters.setPenaltyInvestReaNeg(voltageInitParameters.getPenaltyInvestReaNeg());
+            parameters.setPenaltyActivePower(voltageInitParameters.getPenaltyActivePower());
+            parameters.setPenaltyUnitsReactive(voltageInitParameters.getPenaltyUnitsReactive());
         });
 
         logVoltageLimitsModifications(reportNode, network, parameters.getSpecificVoltageLimits());

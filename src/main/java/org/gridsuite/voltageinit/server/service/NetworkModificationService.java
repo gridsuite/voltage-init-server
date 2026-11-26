@@ -25,6 +25,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import static com.powsybl.iidm.network.IdentifiableType.TWO_WINDINGS_TRANSFORMER;
+import static org.gridsuite.computation.service.NotificationService.HEADER_USER_ID;
 
 /**
  * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
@@ -62,8 +63,9 @@ public class NetworkModificationService {
         return this.networkModificationServerBaseUri + DELIMITER + NETWORK_MODIFICATION_API_VERSION + DELIMITER;
     }
 
-    public void deleteModificationsGroup(UUID groupUUid) {
+    public void deleteModificationsGroup(UUID groupUUid, String userId) {
         Objects.requireNonNull(groupUUid);
+        Objects.requireNonNull(userId);
         var path = UriComponentsBuilder.fromPath(GROUP_PATH)
             .buildAndExpand(groupUUid)
             .toUriString();
@@ -71,6 +73,7 @@ public class NetworkModificationService {
         try {
             restClient.delete()
                 .uri(getNetworkModificationServerURI() + path)
+                .header(HEADER_USER_ID, userId)
                 .retrieve()
                 .toBodilessEntity();
         } catch (HttpStatusCodeException e) {

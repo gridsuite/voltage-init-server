@@ -9,7 +9,7 @@ package org.gridsuite.voltageinit.server.service.parameters;
 import com.powsybl.network.store.client.NetworkStoreService;
 import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
-import org.gridsuite.filter.AbstractFilter;
+import org.gridsuite.filter.dto.AbstractFilter;
 import org.gridsuite.voltageinit.server.error.VoltageInitException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

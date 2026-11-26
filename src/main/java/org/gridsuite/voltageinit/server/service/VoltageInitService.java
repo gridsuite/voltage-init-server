@@ -105,27 +105,18 @@ public class VoltageInitService extends AbstractComputationService<VoltageInitRu
             resultEntity.getReactiveSlacksThreshold());
     }
 
-    @Override
     @Transactional
-    public void deleteResult(UUID resultUuid) {
-        Optional<VoltageInitResultEntity> result = resultService.find(resultUuid);
-        result.ifPresent(r -> {
-            if (r.getModificationsGroupUuid() != null) {
-                CompletableFuture.runAsync(() -> networkModificationService.deleteModificationsGroup(r.getModificationsGroupUuid()));
-            }
-        });
-        super.deleteResult(resultUuid);
+    public void deleteResults(List<UUID> resultUuids, String userId) {
+        Objects.requireNonNull(resultUuids, "resultUuids must not be null");
+        deleteModificationsGroups(resultUuids.stream().map(resultService::find).flatMap(Optional::stream).toList(), userId);
+        super.deleteResults(resultUuids);
     }
 
-    @Override
-    @Transactional
-    public void deleteResults() {
-        resultService.findAll().forEach(r -> {
-            if (r.getModificationsGroupUuid() != null) {
-                networkModificationService.deleteModificationsGroup(r.getModificationsGroupUuid());
-            }
-        });
-        super.deleteResults();
+    void deleteModificationsGroups(List<VoltageInitResultEntity> results, String userId) {
+        results.stream()
+            .map(VoltageInitResultEntity::getModificationsGroupUuid)
+            .filter(Objects::nonNull)
+            .forEach(groupUuid -> CompletableFuture.runAsync(() -> networkModificationService.deleteModificationsGroup(groupUuid, userId)));
     }
 
     @Transactional(readOnly = true)

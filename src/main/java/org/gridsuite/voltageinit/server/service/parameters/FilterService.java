@@ -12,7 +12,7 @@ import lombok.NonNull;
 import org.gridsuite.computation.dto.GlobalFilter;
 import org.gridsuite.computation.dto.ResourceFilterDTO;
 import org.gridsuite.computation.service.AbstractFilterService;
-import org.gridsuite.filter.AbstractFilter;
+import org.gridsuite.filter.dto.AbstractFilter;
 import org.gridsuite.filter.utils.EquipmentType;
 import org.gridsuite.voltageinit.server.dto.parameters.FilterEquipments;
 import org.gridsuite.voltageinit.server.error.VoltageInitBusinessErrorCode;

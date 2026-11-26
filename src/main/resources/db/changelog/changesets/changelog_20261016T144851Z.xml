@@ -1,0 +1,23 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="lesoteti (generated)" id="1792162142316-1">
+        <addColumn tableName="voltage_init_parameters">
+            <column defaultValueNumeric="1.0" name="penalty_active_power" type="FLOAT(53)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="lesoteti (generated)" id="1792162142316-2">
+        <addColumn tableName="voltage_init_parameters">
+            <column defaultValueNumeric="10.0" name="penalty_invest_rea_neg" type="FLOAT(53)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="lesoteti (generated)" id="1792162142316-3">
+        <addColumn tableName="voltage_init_parameters">
+            <column defaultValueNumeric="10.0" name="penalty_invest_rea_pos" type="FLOAT(53)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="lesoteti (generated)" id="1792162142316-4">
+        <addColumn tableName="voltage_init_parameters">
+            <column defaultValueNumeric="0.1" name="penalty_units_reactive" type="FLOAT(53)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
